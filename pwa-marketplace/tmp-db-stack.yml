@@ -1,0 +1,28 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: marketplace_db
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: ${MYSQL_DB_USER_PASSWORD}
+    ports:
+      - "3306:3306"
+    secrets:
+      - mysql_root_password
+      - mysql_db_user_password
+    volumes:
+      # Changing default MySQL data path implies changing default MySQL data folder in config file (my.cnf) and new path permissions
+      # Mounting db_data volume to /var/lib/mysql for persistent storage
+      - db_data:/var/lib/mysql
+
+# Define external secrets to avoid hardcoding sensitive info in this file
+secrets:
+  mysql_root_password:
+    external: true
+  mysql_db_user_password:
+    external: true
+
+# Define named volumes as persistent storage
+volumes:
+  db_data:

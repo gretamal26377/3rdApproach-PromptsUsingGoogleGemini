@@ -17,6 +17,8 @@ services:
     ports:
       # First number is host machine's port and second is container's port
       - "3000:3000"
+    # Mounting host machine's path to container's path. This way,
+    # changes in host machine's path are reflected in container's path without rebuilding the image.
     # Before the colon, host machine's path and after, it's the container's path
     volumes:
       - ./frontend:/marketplace-pwa/frontend
@@ -84,10 +86,10 @@ services:
       context: ./database
       dockerfile: Dockerfile
     environment:
-      MYSQL_ROOT_PASSWORD: /run/secrets/mysql_root_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: marketplace_db
       MYSQL_USER: db_user
-      MYSQL_PASSWORD: /run/secrets/mysql_db_user_password
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_db_user_password
     ports:
       - "3306:3306"
     secrets:
@@ -97,6 +99,12 @@ services:
       # Changing default MySQL data path implies changing default MySQL data folder in config file (my.cnf) and new path permissions
       # Mounting db_data volume to /var/lib/mysql for persistent storage
       - db_data:/var/lib/mysql
+      # Mounting init scripts to the path that MySQL image checks to run initialization scripts
+      - ./database/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/:ro
+      # Set proper permissions for the mounted scripts (if not, MySQL container may not start)
+      # This command is for Linux/MacOS host machines. For Windows, use the command in the other file
+      # RUN chmod +x /docker-entrypoint-initdb.d/*.sh
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     restart: always
 
 # Define external secrets to avoid hardcoding sensitive info in this file

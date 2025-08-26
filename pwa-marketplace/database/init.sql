@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS customer_addresses (
 CREATE TABLE IF NOT EXISTS order_statuses (
     status_id INT AUTO_INCREMENT PRIMARY KEY,
     -- e.g., 'open', 'pending', 'partial', 'complete', 'shipped', 'delivered', 'canceled'
-    status VARCHAR(50) UNIQUE NOT NULL,
+    status_code VARCHAR(50) UNIQUE NOT NULL,
     status_description TEXT
 );
 
@@ -187,15 +187,15 @@ INSERT INTO... */
 
 /* ---------------------- users ---------------------- */
 CREATE TABLE IF NOT EXISTS users_history (
-  hist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT,
-  op_type ENUM('INSERT','UPDATE','DELETE') NOT NULL,
-  changed_by VARCHAR(100), -- set from app via: SET @audit_user = 'user@example.com';
-  changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  data_before JSON,
-  data_after JSON,
-  INDEX idx_users_history_user (user_id),
-  INDEX idx_users_history_time (changed_at)
+    hist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    op_type ENUM('INSERT','UPDATE','DELETE') NOT NULL,
+    changed_by VARCHAR(100), -- set from app via: SET @audit_user = 'user@example.com';
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_before JSON,
+    data_after JSON,
+    INDEX idx_users_history_user (user_id),
+    INDEX idx_users_history_time (changed_at)
 );
 
 -- Change the delimiter from ; to $$ because by default RDBMS executes a command at each ;
@@ -1012,7 +1012,7 @@ BEGIN
     NEW.status_id,
     'INSERT',
     COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('status_id', NEW.status_id, 'status', NEW.status, 'status_description', NEW.status_description)
+    JSON_OBJECT('status_id', NEW.status_id, 'status_code', NEW.status_code, 'status_description', NEW.status_description)
   );
 END$$
 
@@ -1025,8 +1025,8 @@ BEGIN
     OLD.status_id,
     'UPDATE',
     COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('status_id', OLD.status_id, 'status', OLD.status, 'status_description', OLD.status_description),
-    JSON_OBJECT('status_id', NEW.status_id, 'status', NEW.status, 'status_description', NEW.status_description)
+    JSON_OBJECT('status_id', OLD.status_id, 'status_code', OLD.status_code, 'status_description', OLD.status_description),
+    JSON_OBJECT('status_id', NEW.status_id, 'status_code', NEW.status_code, 'status_description', NEW.status_description)
   );
 END$$
 
@@ -1039,7 +1039,7 @@ BEGIN
     OLD.status_id,
     'DELETE',
     COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('status_id', OLD.status_id, 'status', OLD.status, 'status_description', OLD.status_description)
+    JSON_OBJECT('status_id', OLD.status_id, 'status_code', OLD.status_code, 'status_description', OLD.status_description)
   );
 END$$
 
@@ -1169,7 +1169,7 @@ BEGIN
     'DELETE',
     COALESCE(@audit_user, 'system'),
     JSON_OBJECT('order_id', OLD.order_id, 'store_product_service_id', OLD.store_product_service_id, 'product_service_quantity', OLD.product_service_quantity)
-  );
+  );  
 END$$
 
 -- Reset delimiter back to default ';'
