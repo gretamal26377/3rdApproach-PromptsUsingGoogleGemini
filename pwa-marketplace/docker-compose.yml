@@ -21,7 +21,7 @@ services:
     # changes in host machine's path are reflected in container's path without rebuilding the image.
     # Before the colon, host machine's path and after, it's the container's path
     volumes:
-      - ./frontend:/marketplace-pwa/frontend
+      - ./frontend:/pwa-marketplace/frontend:ro
     # Define environment variables
     environment:
       - REACT_APP_API_BASE_URL=http://backend-customer:5000/api
@@ -40,7 +40,7 @@ services:
       # each frontend run in different container, they can use the same port
       - "3001:3000"
     volumes:
-      - ./frontend:/marketplace-pwa/frontend
+      - ./frontend:/pwa-marketplace/frontend:ro
     environment:
       - REACT_APP_API_BASE_URL=http://backend-admin:5001/api
     depends_on:
@@ -54,11 +54,11 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./backend/app:/marketplace-pwa/backend/app
+      - ./backend/app:/pwa-marketplace/backend/app:ro
     depends_on:
       - db
     # Corresponds to working directory inside the container
-    working_dir: /marketplace-pwa/backend/app/customer
+    working_dir: /pwa-marketplace/backend/app/customer
     command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
     environment:
       - BACKEND_TYPE=customer
@@ -71,10 +71,10 @@ services:
     ports:
       - "5001:5000"
     volumes:
-      - ./backend/app:/marketplace-pwa/backend/app
+      - ./backend/app:/pwa-marketplace/backend/app:ro
     depends_on:
       - db
-    working_dir: /marketplace-pwa/backend/app/admin
+    working_dir: /pwa-marketplace/backend/app/admin
     command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
     environment:
       - BACKEND_TYPE=admin
@@ -86,6 +86,7 @@ services:
       context: ./database
       dockerfile: Dockerfile
     environment:
+      # This mysql image doesn't support *_FILE env vars, so it's commented out
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: marketplace_db
       MYSQL_USER: db_user
@@ -97,22 +98,22 @@ services:
       - mysql_db_user_password
     volumes:
       # Changing default MySQL data path implies changing default MySQL data folder in config file (my.cnf) and new path permissions
-      # Mounting db_data volume to /var/lib/mysql for persistent storage
+      # Mounting db_data volume to /var/lib/mysql for persistent storage. 
+      # This way, /var/lib/mysql data is not lost when container is removed
       - db_data:/var/lib/mysql
       # Mounting init scripts to the path that MySQL image checks to run initialization scripts
       - ./database/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/:ro
-      # Set proper permissions for the mounted scripts (if not, MySQL container may not start)
-      # This command is for Linux/MacOS host machines. For Windows, use the command in the other file
-      # RUN chmod +x /docker-entrypoint-initdb.d/*.sh
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Notice: Set proper permissions (bash: chmod +x) for the mounted script files (if not, MySQL container may not start)
     restart: always
 
 # Define external secrets to avoid hardcoding sensitive info in this file
 secrets:
   mysql_root_password:
-    external: true
+    file: ./database/secrets/mysql_root_password
+    # external: true
   mysql_db_user_password:
-    external: true
+    file: ./database/secrets/mysql_db_user_password
+    # external: true
 
 # Define named volumes as persistent storage
 volumes:
