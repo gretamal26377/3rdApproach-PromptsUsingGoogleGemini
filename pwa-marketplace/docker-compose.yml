@@ -1,7 +1,5 @@
 # filepath: pwa-marketplace/docker-compose.yml
-# This file is thought to be used in production, so it doesn't override 
-# (doesn't run docker-compose.override.yml) the default settings
-# To run use the usual command: docker compose -f docker-compose.yml up
+# To run use the usual command: docker compose -d up
 
 # version: "3.8" // When I run I receive a warning msg noticing attribute `version` is obsolete
 # and it suggests to remove it, so I did it
@@ -86,7 +84,6 @@ services:
       context: ./database
       dockerfile: Dockerfile
     environment:
-      # This mysql image doesn't support *_FILE env vars, so it's commented out
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: marketplace_db
       MYSQL_DB_USER: db_user
@@ -110,7 +107,7 @@ services:
 secrets:
   mysql_root_password:
     file: ./database/secrets/mysql_root_password.txt
-    # external: true
+    # external: true  -- Valid for Docker Swarm secrets, not for Docker Compose secrets
   mysql_db_user_password:
     file: ./database/secrets/mysql_db_user_password.txt
     # external: true
