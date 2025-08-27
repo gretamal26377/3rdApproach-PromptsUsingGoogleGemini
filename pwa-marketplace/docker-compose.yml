@@ -89,8 +89,8 @@ services:
       # This mysql image doesn't support *_FILE env vars, so it's commented out
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: marketplace_db
-      MYSQL_USER: db_user
-      MYSQL_PASSWORD_FILE: /run/secrets/mysql_db_user_password
+      MYSQL_DB_USER: db_user
+      MYSQL_DB_USER_PASSWORD_FILE: /run/secrets/mysql_db_user_password
     ports:
       - "3306:3306"
     secrets:
@@ -109,10 +109,10 @@ services:
 # Define external secrets to avoid hardcoding sensitive info in this file
 secrets:
   mysql_root_password:
-    file: ./database/secrets/mysql_root_password
+    file: ./database/secrets/mysql_root_password.txt
     # external: true
   mysql_db_user_password:
-    file: ./database/secrets/mysql_db_user_password
+    file: ./database/secrets/mysql_db_user_password.txt
     # external: true
 
 # Define named volumes as persistent storage
