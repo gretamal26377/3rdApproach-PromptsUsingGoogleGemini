@@ -4,6 +4,15 @@
 # version: "3.8" // When I run I receive a warning msg noticing attribute `version` is obsolete
 # and it suggests to remove it, so I did it
 
+# Reusable DB credentials defined via YAML anchor, to avoid repetition.
+# So we can use `<<: *database-credentials` to merge/include these env vars in each service
+x-database-credentials: &database-credentials
+  # Files mounted by Docker Compose secrets (available at /run/secrets/<name>)
+  MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+  MYSQL_DATABASE: marketplace_db
+  MYSQL_DB_USER: db_user
+  MYSQL_DB_USER_PASSWORD_FILE: /run/secrets/mysql_db_user_password
+
 services:
   frontend-customer:
     build:
@@ -58,8 +67,13 @@ services:
     # Corresponds to working directory inside the container
     working_dir: /pwa-marketplace/backend/app/customer
     command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
+    # Use mapping style so we can merge the shared DB credentials via YAML anchor
     environment:
-      - BACKEND_TYPE=customer
+      <<: *database-credentials
+      BACKEND_TYPE: customer
+    # Make the DB user password secret available inside the backend container
+    secrets:
+      - mysql_db_user_password
     restart: always
 
   backend-admin:
@@ -75,7 +89,10 @@ services:
     working_dir: /pwa-marketplace/backend/app/admin
     command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
     environment:
-      - BACKEND_TYPE=admin
+      <<: *database-credentials
+      BACKEND_TYPE: admin
+    secrets:
+      - mysql_db_user_password
     restart: always
 
   db:
@@ -83,11 +100,9 @@ services:
     build:
       context: ./database
       dockerfile: Dockerfile
+    # Reuse the same credentials block for the database service and keep any MySQL-specific names
     environment:
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
-      MYSQL_DATABASE: marketplace_db
-      MYSQL_DB_USER: db_user
-      MYSQL_DB_USER_PASSWORD_FILE: /run/secrets/mysql_db_user_password
+      <<: *database-credentials
     ports:
       - "3306:3306"
     secrets:
