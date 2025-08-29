@@ -2,5 +2,9 @@ Flask
 Flask-SQLAlchemy
 Flask-Migrate
 mysql-connector-python
+PyMySQL
 PyJWT
+cryptography
 python-dotenv
+sqlacodegen
+alembic

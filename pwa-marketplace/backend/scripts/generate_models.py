@@ -13,8 +13,9 @@ Usage (from repository root):
 Or run from backend/:
   python scripts/generate_models.py --out=app/shared/models.py
 
-If --url is not provided the script will try to load the project's Config
-file at backend/app/shared/config.py and use its SQLALCHEMY_DATABASE_URI.
+If --url argument is not provided the script will try to load the project's Config
+file at backend/app/shared/config.py through importlib import mechanism and use its 
+SQLALCHEMY_DATABASE_URI
 
 IMPORTANT: This script will overwrite the target file. Review the generated
 output before committing.
