@@ -64,8 +64,8 @@ marketplace/
 
 ### Prerequisites
 
-- Node.js and npm installed.
-- Docker installed.
+- Node.js and npm installed
+- Docker installed
 
 ### Installation
 
@@ -107,10 +107,11 @@ The `frontend` folder contains the React application. `npm install` installs the
 
 ## Backend Setup (Conceptual)
 
-The `backend` folder is included in the project structure, but the actual code is not provided. A complete implementation would involve:
+The `backend` folder 
 
 1.  Creating a Node.js/Express.js application.
-2.  Installing dependencies (e.g., `express`, `mysql2`, `body-parser`, `cors`).
+2.  Installing dependencies  
+    python -m pip install -r backend\requirements.txt  
 3.  Connecting to the MySQL database using a library like `mysql2`.
 4.  Defining API endpoints for:
     - User authentication (login, signup, logout)

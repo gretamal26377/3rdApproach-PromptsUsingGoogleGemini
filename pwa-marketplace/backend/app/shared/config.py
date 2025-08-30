@@ -17,7 +17,7 @@ class Config:
         )
 
         # Try to read password from env var, if not set fallback to an empty string
-        password = os.environ.get('MYSQL_DB_USER_PASSWORD', '')
+        password = os.environ.get('MYSQL_DB_USER_PASSWORD', 'pharmaFacilDBrootPW')
         try:
             # If path exists, read the password from the file
             if os.path.exists(pw_file):
@@ -28,8 +28,8 @@ class Config:
             pass # This command does nothing, it's Python syntax, it's used as a placeholder
                  # to indicate that we are intentionally ignoring exceptions here
 
-        user = os.environ.get('MYSQL_DB_USER', 'db_user')
-        host = os.environ.get('MYSQL_HOST', 'db')
+        user = os.environ.get('MYSQL_DB_USER', 'root')
+        host = os.environ.get('MYSQL_HOST', 'localhost')
         dbname = os.environ.get('MYSQL_DATABASE', 'marketplace_db')
 
         SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{user}:{password}@{host}:3306/{dbname}"
