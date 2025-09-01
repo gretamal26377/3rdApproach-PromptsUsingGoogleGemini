@@ -3,7 +3,6 @@ FROM python:3.9-slim-buster
 # This is default ARG if it's not set in docker-compose.yml.
 # If Dockerfile is run directly, it will use "customer" as default ARG
 # Notice: In Dockerfile(s) can't have inline comments, just above or below the code
-# var definition available at build-time (for Docker build)
 ARG BACKEND_TYPE=customer
 # var definition available at runtime (for Docker run)
 ENV BACKEND_TYPE=${BACKEND_TYPE}

@@ -27,6 +27,7 @@ services:
     # Mounting host machine's path to container's path. This way,
     # changes in host machine's path are reflected in container's path without rebuilding the image.
     # Before the colon, host machine's path and after, it's the container's path
+    # Choose rw for dev, :ro or no mount for production
     volumes:
       - ./frontend:/pwa-marketplace/frontend:ro
     # Define environment variables
@@ -83,7 +84,7 @@ services:
     ports:
       - "5001:5000"
     volumes:
-      - ./backend/app:/pwa-marketplace/backend/app:ro
+      - ./backend/app:/pwa-marketplace/backend/app:rw
     depends_on:
       - db
     working_dir: /pwa-marketplace/backend/app/admin
