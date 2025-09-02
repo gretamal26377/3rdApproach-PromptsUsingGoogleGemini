@@ -1,4 +1,4 @@
-# filepath: .\marketplace-pwa\backend\wait-for-it.sh
+# filepath: .\pwa-marketplace\backend\wait-for-it.sh
 #!/usr/bin/env bash
 host="$1"
 port="$2"

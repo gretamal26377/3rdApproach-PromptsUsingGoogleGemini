@@ -67,7 +67,9 @@ services:
       - db
     # Corresponds to working directory inside the container
     working_dir: /pwa-marketplace/backend/app/customer
-    command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
+    # command: Override default command defined in Dockerfile (eg: CMD)
+    # command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
+    command: ["python", "__init__.py"]
     # Use mapping style so we can merge the shared DB credentials via YAML anchor
     environment:
       <<: *database-credentials
@@ -88,7 +90,8 @@ services:
     depends_on:
       - db
     working_dir: /pwa-marketplace/backend/app/admin
-    command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
+    # command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
+    command: ["python", "__init__.py"]
     environment:
       <<: *database-credentials
       BACKEND_TYPE: admin

@@ -10,7 +10,10 @@ migrate = Migrate()
 def init_extensions(app):
     """
     Initialize DB related extensions on the provided Flask app.
-    Call this from the app factory (create_app) in each blueprint package.
+    Call this from the app factory (create_app) in each blueprint package
     """
+    # Wires the Flask app with the SQLAlchemy instance
     db.init_app(app)
+    # Wires the Flask app with the Flask-Migrate instance and
+    # binds it to the SQLAlchemy instance
     migrate.init_app(app, db)
