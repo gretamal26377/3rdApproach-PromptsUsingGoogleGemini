@@ -61,15 +61,21 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    # mount the whole backend so gunicorn can import app.* modules
     volumes:
-      - ./backend/app:/pwa-marketplace/backend/app:ro
+      - ./backend:/pwa-marketplace/backend:cached
     depends_on:
       - db
+
     # Corresponds to working directory inside the container
-    working_dir: /pwa-marketplace/backend/app/customer
+    # Run from repository backend root so imports like `app.customer.wsgi` work
+    working_dir: /pwa-marketplace/backend
+
     # command: Override default command defined in Dockerfile (eg: CMD)
     # command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
-    command: ["python", "__init__.py"]
+    # Use gunicorn to serve the WSGI app as a long-running process
+    command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5000", "app.customer.wsgi:app"]
+    
     # Use mapping style so we can merge the shared DB credentials via YAML anchor
     environment:
       <<: *database-credentials
@@ -86,12 +92,15 @@ services:
     ports:
       - "5001:5000"
     volumes:
-      - ./backend/app:/pwa-marketplace/backend/app:rw
+      - ./backend:/pwa-marketplace/backend:rw
     depends_on:
       - db
-    working_dir: /pwa-marketplace/backend/app/admin
+
+    working_dir: /pwa-marketplace/backend
+
     # command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
-    command: ["python", "__init__.py"]
+    command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5001", "app.admin.wsgi:app"]
+
     environment:
       <<: *database-credentials
       BACKEND_TYPE: admin
