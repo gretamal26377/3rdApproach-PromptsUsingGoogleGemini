@@ -72,8 +72,12 @@ services:
     working_dir: /pwa-marketplace/backend
 
     # command: Override default command defined in Dockerfile (eg: CMD)
-    # command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
     # Use gunicorn to serve the WSGI app as a long-running process
+    # --worker=3 means 3 concurrent requests can be handled at the same time
+    # rule of thumb: workers limit = 2 * number_of_CPU_cores + 1
+    # --bind=0.0.0.0:5000 means bind (listen for incoming requests) to all interfaces
+    # (container's localhost, other containers and any host's port mapped to
+    # the container) on container port 5000
     command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5000", "app.customer.wsgi:app"]
     
     # Use mapping style so we can merge the shared DB credentials via YAML anchor
@@ -98,7 +102,6 @@ services:
 
     working_dir: /pwa-marketplace/backend
 
-    # command: ["./wait-for-it.sh", "db", "3306", "--", "python", "__init__.py"]
     command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5001", "app.admin.wsgi:app"]
 
     environment:

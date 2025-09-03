@@ -9,13 +9,7 @@ ARG BACKEND_TYPE=customer
 # You need both to pass the value from build-time into the running container
 ENV BACKEND_TYPE=${BACKEND_TYPE}
 
-# Prevents Python from writing .pyc files to disk (python compiled files inside
-# __pycache__ folders). This is good practice in Docker containers,
-# because containers are meant to be immutable and stateless.
-# Python compiling is quick, so no having .pyc files impacts performance in negligible way
 ENV PYTHONDONTWRITEBYTECODE=1
-# Forces Python to output logs and print statements directly
-# to terminal (stdout/stderr) without buffering
 ENV PYTHONUNBUFFERED=1
 
 # Notice: WORKDIR sets the default working folder in Docker image/container
