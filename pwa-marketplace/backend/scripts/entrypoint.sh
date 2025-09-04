@@ -14,12 +14,12 @@ set -e
 # initializing. Prefer waiting here (entrypoint) rather than in each worker
 MYSQL_HOST="${MYSQL_HOST:-db}"
 MYSQL_PORT="${MYSQL_PORT:-3306}"
-if [ -x "./wait-for-it.sh" ]; then
-  echo "Waiting for DB at ${MYSQL_HOST}:${MYSQL_PORT} using ./wait-for-it.sh..."
-  ./wait-for-it.sh "$MYSQL_HOST" "$MYSQL_PORT" echo "DB ready"
-elif [ -f "./wait-for-it.sh" ]; then
+if [ -x "./scripts/wait-for-it.sh" ]; then
+  echo "Waiting for DB at ${MYSQL_HOST}:${MYSQL_PORT} using ./scripts/wait-for-it.sh..."
+  ./scripts/wait-for-it.sh "$MYSQL_HOST" "$MYSQL_PORT" echo "DB ready"
+elif [ -f "./scripts/wait-for-it.sh" ]; then
   echo "Found wait-for-it.sh but it's not executable; running with bash"
-  bash ./wait-for-it.sh "$MYSQL_HOST" "$MYSQL_PORT" echo "DB ready"
+  bash ./scripts/wait-for-it.sh "$MYSQL_HOST" "$MYSQL_PORT" echo "DB ready"
 fi
 
 # Build DATABASE_URL from secret file or environment if DATABASE_URL not already set

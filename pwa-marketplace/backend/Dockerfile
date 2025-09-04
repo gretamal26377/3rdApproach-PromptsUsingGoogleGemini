@@ -27,25 +27,39 @@ WORKDIR /pwa-marketplace/backend
 # Source Path (1st argument): Always relative to the build context, and is not affected by WORKDIR
 # Build Context: Folder specified as context: in your docker-compose.yml or with docker build when Dockerfile is run directly
 # Destination Path (2nd argument): Affected by WORKDIR if you use a relative path (stating with ./)
-
-
 # Install Python dependencies
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source
-COPY . .
+# Copy shared code and scripts
+COPY ./app/shared ./app/shared
+COPY ./scripts ./scripts
 
-# Ensure entrypoint script is present and executable. The entrypoint is expected
-# to build DATABASE_URL from secrets and then exec the supplied CMD (or overridden
-# if it's run from docker-compose and it has command: directive)
-COPY ./entrypoint.sh ./entrypoint.sh
-RUN chmod +x ./entrypoint.sh
+# Conditionally copy only the relevant backend folder
+RUN if [ "$BACKEND_TYPE" = "admin" ]; then \
+      cp -r ./app/admin ./app/selected && \
+      echo 'FROM admin backend'; \
+    elif [ "$BACKEND_TYPE" = "customer" ]; then \
+      cp -r ./app/customer ./app/selected && \
+      echo 'FROM customer backend'; \
+    else \
+      echo "Unknown BACKEND_TYPE: $BACKEND_TYPE" && exit 1; \
+    fi
+
+# Optionally remove the original admin/customer folders to keep image clean
+# Issue?
+RUN rm -rf ./app/admin ./app/customer
+
+# Ensure scripts are executable
+RUN chmod +x ./scripts/entrypoint.sh ./scripts/wait-for-it.sh
 
 # Entrypoint builds runtime secrets/ENV (DATABASE_URL) and then execs the CMD
-ENTRYPOINT ["./entrypoint.sh"]
+# (if CMD isn't overridden for docker-compose having a command: directive)
+ENTRYPOINT ["./scripts/entrypoint.sh"]
 
-# Default command: run the customer WSGI app with gunicorn so the image can be run
-# directly. docker-compose services will override this CMD to point to the admin
-# WSGI app when needed
-CMD ["gunicorn", "--workers=3", "--bind=0.0.0.0:5000", "app.customer.wsgi:app"]
+
+# Set default CMD based on BACKEND_TYPE 
+CMD ["/bin/sh", "-c", "if [ '$BACKEND_TYPE' = 'admin' ]; \
+     then exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.selected.wsgi:app; \
+     else exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.selected.wsgi:app; \
+     fi"]
