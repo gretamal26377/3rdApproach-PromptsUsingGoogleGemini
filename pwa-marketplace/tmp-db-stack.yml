@@ -2,10 +2,10 @@ services:
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD_FILE}
       MYSQL_DATABASE: marketplace_db
       MYSQL_USER: db_user
-      MYSQL_PASSWORD: ${MYSQL_DB_USER_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD_FILE}
     ports:
       - "3306:3306"
     secrets:

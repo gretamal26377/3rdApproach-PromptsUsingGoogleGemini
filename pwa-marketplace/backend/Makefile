@@ -20,7 +20,7 @@ start-db:
 generate-models: start-db
 	@echo "Generating models inside container $(SERVICE) and writing to $(OUT)..."
 	docker compose -f $(COMPOSE_FILE) exec $(SERVICE) sh -lc '\
-	  pw=$$(cat /run/secrets/mysql_db_user_password 2>/dev/null || echo $$MYSQL_DB_USER_PASSWORD); \
-	  sqlacodegen "mysql+pymysql://$$MYSQL_DB_USER:$${pw}@db:3306/$$MYSQL_DATABASE" --outfile $(OUT) \
+	  pw=$$(cat /run/secrets/mysql_db_user_password 2>/dev/null || echo $$MYSQL_PASSWORD); \
+	  sqlacodegen "mysql+pymysql://$$MYSQL_USER:$${pw}@db:3306/$$MYSQL_DATABASE" --outfile $(OUT) \
 	'
 	@echo "Generated file written to $(OUT). Review and git add/commit as needed"

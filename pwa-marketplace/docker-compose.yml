@@ -7,11 +7,13 @@
 # Reusable DB credentials defined via YAML anchor, to avoid repetition.
 # So we can use `<<: *database-credentials` to merge/include these env vars in each service
 x-database-credentials: &database-credentials
+  # These special env var names are used by the official MySQL Docker image
+  # to create root password and an additional db_user automatically at container 1st start
   # Files mounted by Docker Compose secrets (available at /run/secrets/<name>)
   MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
   MYSQL_DATABASE: marketplace_db
-  MYSQL_DB_USER: db_user
-  MYSQL_DB_USER_PASSWORD_FILE: /run/secrets/mysql_db_user_password
+  MYSQL_USER: db_user
+  MYSQL_PASSWORD_FILE: /run/secrets/mysql_db_user_password
 
 services:
   frontend-customer:
@@ -29,6 +31,7 @@ services:
     # Before the colon, host machine's path and after, it's the container's path
     # Choose rw for dev, :ro or no mount for production
     volumes:
+      # Mounting is only suggested for development, in production use :ro or no mount
       - ./frontend:/pwa-marketplace/frontend:ro
     # Define environment variables
     environment:
@@ -61,9 +64,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    # mount the whole backend so gunicorn can import app.* modules
     volumes:
-      - ./backend:/pwa-marketplace/backend:cached
+      - ./backend:/pwa-marketplace/backend:ro
     depends_on:
       - db
 
@@ -116,7 +118,6 @@ services:
     build:
       context: ./database
       dockerfile: Dockerfile
-    # Reuse the same credentials block for the database service and keep any MySQL-specific names
     environment:
       <<: *database-credentials
     ports:
@@ -125,13 +126,17 @@ services:
       - mysql_root_password
       - mysql_db_user_password
     volumes:
-      # Changing default MySQL data path implies changing default MySQL data folder in config file (my.cnf) and new path permissions
-      # Mounting db_data volume to /var/lib/mysql for persistent storage. 
-      # This way, /var/lib/mysql data is not lost when container is removed
+      # Changing default MySQL data path implies changing default
+      # MySQL data folder in config file (my.cnf) and new path permissions.
+      # Mounting db_data volume to /var/lib/mysql in order to persists
+      # this folder data. This way, /var/lib/mysql data is not lost when
+      # container is removed
       - db_data:/var/lib/mysql
-      # Mounting init scripts to the path that MySQL image checks to run initialization scripts
+      # Mounting init scripts to the path that MySQL image run when starting
+      # If there are multiple scripts, they will be executed in alphabetical order
       - ./database/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/:ro
-      # Notice: Set proper permissions (bash: chmod +x) for the mounted script files (if not, MySQL container may not start)
+      # Notice: Set proper permissions (bash: chmod +x) for the mounted 
+      # script files (if not, MySQL container may not start)
     restart: always
 
 # Define external secrets to avoid hardcoding sensitive info in this file

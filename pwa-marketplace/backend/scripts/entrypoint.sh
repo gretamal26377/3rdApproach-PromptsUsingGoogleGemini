@@ -30,15 +30,14 @@ if [ -z "${DATABASE_URL:-}" ]; then
     # remove potential CR/LF
     PASSWORD=$(tr -d '\r\n' < "$PW_FILE")
   else
-    PASSWORD="${MYSQL_DB_USER_PASSWORD:-}"
+    PASSWORD="${MYSQL_DB_USER_PASSWORD_FILE:-}"
   fi
 
-  MYSQL_USER="${MYSQL_DB_USER:-db_user}"
-  MYSQL_HOST="${MYSQL_HOST:-db}"
-  MYSQL_DB="${MYSQL_DATABASE:-marketplace_db}"
+  MYSQL_USER="${MYSQL_USER:-db_user}"
+  MYSQL_DATABASE="${MYSQL_DATABASE:-marketplace_db}"
 
   if [ -n "$PASSWORD" ]; then
-    export DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${PASSWORD}@${MYSQL_HOST}:3306/${MYSQL_DB}"
+    export DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${PASSWORD}@${MYSQL_HOST}:3306/${MYSQL_DATABASE}"
   fi
 fi
 

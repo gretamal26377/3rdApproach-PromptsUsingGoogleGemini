@@ -37,18 +37,14 @@ COPY ./scripts ./scripts
 
 # Conditionally copy only the relevant backend folder
 RUN if [ "$BACKEND_TYPE" = "admin" ]; then \
-      cp -r ./app/admin ./app/selected && \
+      cp -r ./app/admin ./app/admin && \
       echo 'FROM admin backend'; \
     elif [ "$BACKEND_TYPE" = "customer" ]; then \
-      cp -r ./app/customer ./app/selected && \
+      cp -r ./app/customer ./app/customer && \
       echo 'FROM customer backend'; \
     else \
       echo "Unknown BACKEND_TYPE: $BACKEND_TYPE" && exit 1; \
     fi
-
-# Optionally remove the original admin/customer folders to keep image clean
-# Issue?
-RUN rm -rf ./app/admin ./app/customer
 
 # Ensure scripts are executable
 RUN chmod +x ./scripts/entrypoint.sh ./scripts/wait-for-it.sh
@@ -56,10 +52,9 @@ RUN chmod +x ./scripts/entrypoint.sh ./scripts/wait-for-it.sh
 # Entrypoint builds runtime secrets/ENV (DATABASE_URL) and then execs the CMD
 # (if CMD isn't overridden for docker-compose having a command: directive)
 ENTRYPOINT ["./scripts/entrypoint.sh"]
-
-
+    
 # Set default CMD based on BACKEND_TYPE 
 CMD ["/bin/sh", "-c", "if [ '$BACKEND_TYPE' = 'admin' ]; \
-     then exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.selected.wsgi:app; \
-     else exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.selected.wsgi:app; \
+     then exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.admin.wsgi:app; \
+     else exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.customer.wsgi:app; \
      fi"]
