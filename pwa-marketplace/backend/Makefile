@@ -11,16 +11,19 @@ SERVICE ?= backend-admin
 OUT ?= app/shared/models.py
 COMPOSE_FILE ?= ../docker-compose.yml
 
+# .PHONY: is a special built-in target that tells Makefile 
+# that the following targets aren't files
 .PHONY: generate-models start-db
 
 start-db:
 	@echo "Ensuring db and $(SERVICE) are running (using $(COMPOSE_FILE))..."
 	docker compose -f $(COMPOSE_FILE) up -d db $(SERVICE)
 
+# start-db is right there, it's a generate-models' dependency
 generate-models: start-db
 	@echo "Generating models inside container $(SERVICE) and writing to $(OUT)..."
 	docker compose -f $(COMPOSE_FILE) exec $(SERVICE) sh -lc '\
-	  pw=$$(cat /run/secrets/mysql_db_user_password 2>/dev/null || echo $$MYSQL_PASSWORD); \
+	  pw=$$(cat /run/secrets/mysql_db_user_password 2>/dev/null || echo $$MYSQL_PASSWORD_FILE); \
 	  sqlacodegen "mysql+pymysql://$$MYSQL_USER:$${pw}@db:3306/$$MYSQL_DATABASE" --outfile $(OUT) \
 	'
 	@echo "Generated file written to $(OUT). Review and git add/commit as needed"

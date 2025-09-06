@@ -80,7 +80,7 @@ marketplace/
 
     ```bash
     cd database
-    docker-compose up -d
+    docker-compose up -d db
     ```
 
 3.  **Navigate to the `frontend` folder and install dependencies and start the frontend:**
@@ -146,3 +146,7 @@ The provided Dockerfiles and `docker-compose.yml` files can be used to deploy th
 - Improve the UI/UX.
 - Add support for multiple languages.
 - Implement a review system.
+
+## Gral Notes
+
+- "from typing import Optional": (import use) def find(id: int) -> Optional[User]: signals the function may return a User or None

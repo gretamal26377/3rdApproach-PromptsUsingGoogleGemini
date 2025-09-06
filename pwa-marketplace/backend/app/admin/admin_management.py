@@ -1,5 +1,6 @@
 from ..shared.models import User, db
 import logging
+# bleach is used to sanitize inputs to prevent XSS attacks
 import bleach
 
 def get_users_logic():

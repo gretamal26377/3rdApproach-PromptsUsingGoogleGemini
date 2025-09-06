@@ -1,13 +1,5 @@
-FROM python:3.9-slim-buster
-
-# This is default ARG if it's not set in docker-compose.yml.
-# If Dockerfile is run directly, it will use "customer" as default ARG
-# Notice: In Dockerfile(s) can't have inline comments, just above or below the code
-# ARG: var definition available at build-time (for docker build)
-ARG BACKEND_TYPE=customer
-# ENV: var definition available at runtime (for Docker run)
-# You need both to pass the value from build-time into the running container
-ENV BACKEND_TYPE=${BACKEND_TYPE}
+# Stage 1: Create base image with all common dependencies
+FROM python:3.9-slim-buster AS base
 
 # Prevents Python from writing .pyc files to disk (python compiled files inside
 # __pycache__ folders). This is good practice in Docker containers,
@@ -31,23 +23,34 @@ WORKDIR /pwa-marketplace/backend
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy shared code and scripts
+# Copy shared code and scripts that are common to both backends
 COPY ./app/shared ./app/shared
 COPY ./scripts ./scripts
 
-# Conditionally copy only the relevant backend folder
-RUN if [ "$BACKEND_TYPE" = "admin" ]; then \
-      cp -r ./app/admin ./app/admin && \
-      echo 'FROM admin backend'; \
-    elif [ "$BACKEND_TYPE" = "customer" ]; then \
-      cp -r ./app/customer ./app/customer && \
-      echo 'FROM customer backend'; \
-    else \
-      echo "Unknown BACKEND_TYPE: $BACKEND_TYPE" && exit 1; \
-    fi
-
 # Ensure scripts are executable
 RUN chmod +x ./scripts/entrypoint.sh ./scripts/wait-for-it.sh
+
+# Stage 2: Create a builder for the 'admin' backend
+# FROM base AS builder-admin
+# COPY ./app/admin ./app/admin
+
+# Stage 3: Create a builder for the 'customer' backend
+# FROM base AS builder-customer
+# COPY ./app/customer ./app/customer
+
+# Stage 4: Final image - select which builder to use based on the build argument
+# This is default ARG if it's not set in docker-compose.yml.
+# If Dockerfile is run directly, it will use "customer" as default ARG
+# Notice: In Dockerfile(s) can't have inline comments, just above or below the code
+# ARG: var definition available at build-time (for docker build)
+ARG BACKEND_TYPE=customer
+# Below line is equivalent to: COPY ./app/${BACKEND_TYPE} ./app/${BACKEND_TYPE}
+# FROM builder-${BACKEND_TYPE} AS final
+COPY ./app/${BACKEND_TYPE} ./app/${BACKEND_TYPE}
+
+# ENV: var definition available at runtime (for Docker run)
+# You need both to pass the value from build-time into the running container
+ENV BACKEND_TYPE=${BACKEND_TYPE}
 
 # Entrypoint builds runtime secrets/ENV (DATABASE_URL) and then execs the CMD
 # (if CMD isn't overridden for docker-compose having a command: directive)

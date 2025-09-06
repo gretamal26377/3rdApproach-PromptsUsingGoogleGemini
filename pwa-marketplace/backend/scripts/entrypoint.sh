@@ -23,14 +23,16 @@ elif [ -f "./scripts/wait-for-it.sh" ]; then
 fi
 
 # Build DATABASE_URL from secret file or environment if DATABASE_URL not already set
+# -z: True if the string is null (an empty string)
+# ":-": corresponds to or (:) + default empty string (-)
 if [ -z "${DATABASE_URL:-}" ]; then
-  PW_FILE="${DATABASE_PASSWORD_FILE:-${MYSQL_DB_USER_PASSWORD_FILE:-/run/secrets/mysql_db_user_password}}"
+  PW_FILE="${MYSQL_PASSWORD_FILE:-/run/secrets/mysql_db_user_password}"
   PASSWORD=""
   if [ -f "$PW_FILE" ]; then
     # remove potential CR/LF
     PASSWORD=$(tr -d '\r\n' < "$PW_FILE")
   else
-    PASSWORD="${MYSQL_DB_USER_PASSWORD_FILE:-}"
+    PASSWORD="${PW_FILE:-}"
   fi
 
   MYSQL_USER="${MYSQL_USER:-db_user}"
