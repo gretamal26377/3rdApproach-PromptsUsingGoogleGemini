@@ -5,6 +5,7 @@ import decimal
 from sqlalchemy import BigInteger, DECIMAL, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+# Base class for declarative models
 class Base(DeclarativeBase):
     pass
 

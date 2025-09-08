@@ -8,7 +8,7 @@
 #   COMPOSE_FILE - location of docker-compose.yml relative to this Makefile (default: ../docker-compose.yml)
 
 SERVICE ?= backend-admin
-OUT ?= app/shared/models.py
+OUT ?= app/shared/models_sql2orm.py
 COMPOSE_FILE ?= ../docker-compose.yml
 
 # .PHONY: is a special built-in target that tells Makefile 
