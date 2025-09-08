@@ -160,19 +160,13 @@ CREATE TABLE IF NOT EXISTS order_details (
     product_service_price DECIMAL(10, 2) NOT NULL, -- price at the time of order
     product_service_tot_price DECIMAL(10, 2) NOT NULL, -- paid order total price 
     product_service_status_id INT NOT NULL,
+    product_service_filled_quantity INT NOT NULL DEFAULT 0,
+    product_service_filled_tot_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     FOREIGN KEY (product_service_status_id) REFERENCES order_statuses(status_id),
     FOREIGN KEY (order_id) REFERENCES orders(order_id),
     FOREIGN KEY (store_product_service_id) REFERENCES store_products_services(id)
 );
 
-CREATE TABLE IF NOT EXISTS order_details_filling (
-    order_id INT NOT NULL,
-    store_product_service_id INT NOT NULL, -- references store_products_services.id
-    PRIMARY KEY (order_id, store_product_service_id),
-    product_service_quantity INT NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id),
-    FOREIGN KEY (store_product_service_id) REFERENCES store_products_services(id)
-);
 
 
 /* It's possible to create dummy data for testing purposes using the following SQL commands.
@@ -473,20 +467,6 @@ CREATE TABLE IF NOT EXISTS order_details_history (
   INDEX (changed_at)
 );
 
-/* ---------------------- order_details_filling ---------------------- */
-CREATE TABLE IF NOT EXISTS order_details_filling_history (
-  hist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  order_id INT,
-  store_product_service_id INT,
-  op_type ENUM('INSERT','UPDATE','DELETE') NOT NULL,
-  changed_by VARCHAR(100),
-  changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  data_before JSON,
-  data_after JSON,
-  INDEX (order_id),
-  INDEX (store_product_service_id),
-  INDEX (changed_at)
-);
 
 -- Create triggers for all tables (use one DELIMITER block)
 DELIMITER $$
@@ -1128,49 +1108,6 @@ BEGIN
   );
 END$$
 
-/* ---------- order_details_filling triggers ---------- */
-CREATE TRIGGER trg_order_details_filling_after_insert
-AFTER INSERT ON order_details_filling
-FOR EACH ROW
-BEGIN
-  INSERT INTO order_details_filling_history (order_id, store_product_service_id, op_type, changed_by, data_after)
-  VALUES (
-    NEW.order_id,
-    NEW.store_product_service_id,
-    'INSERT',
-    COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('order_id', NEW.order_id, 'store_product_service_id', NEW.store_product_service_id, 'product_service_quantity', NEW.product_service_quantity)
-  );
-END$$
-
-CREATE TRIGGER trg_order_details_filling_before_update
-BEFORE UPDATE ON order_details_filling
-FOR EACH ROW
-BEGIN
-  INSERT INTO order_details_filling_history (order_id, store_product_service_id, op_type, changed_by, data_before, data_after)
-  VALUES (
-    OLD.order_id,
-    OLD.store_product_service_id,
-    'UPDATE',
-    COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('order_id', OLD.order_id, 'store_product_service_id', OLD.store_product_service_id, 'product_service_quantity', OLD.product_service_quantity),
-    JSON_OBJECT('order_id', NEW.order_id, 'store_product_service_id', NEW.store_product_service_id, 'product_service_quantity', NEW.product_service_quantity)
-  );
-END$$
-
-CREATE TRIGGER trg_order_details_filling_before_delete
-BEFORE DELETE ON order_details_filling
-FOR EACH ROW
-BEGIN
-  INSERT INTO order_details_filling_history (order_id, store_product_service_id, op_type, changed_by, data_before)
-  VALUES (
-    OLD.order_id,
-    OLD.store_product_service_id,
-    'DELETE',
-    COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('order_id', OLD.order_id, 'store_product_service_id', OLD.store_product_service_id, 'product_service_quantity', OLD.product_service_quantity)
-  );  
-END$$
 
 -- Reset delimiter back to default ';'
 DELIMITER ;

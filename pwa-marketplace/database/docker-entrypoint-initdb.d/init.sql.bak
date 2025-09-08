@@ -1,6 +1,13 @@
 CREATE DATABASE IF NOT EXISTS marketplace_db;
 USE marketplace_db;
 
+/* Ensure status lookup table exists before tables that reference it */
+CREATE TABLE IF NOT EXISTS entity_statuses (
+    status_id INT AUTO_INCREMENT PRIMARY KEY,
+    status_code VARCHAR(50) UNIQUE NOT NULL, -- e.g., 'active', 'inactive', 'banned'
+    status_description TEXT
+);
+
 CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     user_email VARCHAR(100) UNIQUE NOT NULL,
@@ -8,30 +15,24 @@ CREATE TABLE IF NOT EXISTS users (
     user_password_hash VARCHAR(255) NOT NULL,
     user_phone VARCHAR(20) NOT NULL,
     user_status_id INT NOT NULL,
-    FOREIGN KEY (user_status_id) REFERENCES entity_statuses(status_id)
-);
-
-CREATE TABLE IF NOT EXISTS entity_statuses (
-    status_id INT AUTO_INCREMENT PRIMARY KEY,
-    status_code VARCHAR(50) UNIQUE NOT NULL, -- e.g., 'active', 'inactive', 'banned'
-    status_description TEXT
+    FOREIGN KEY (user_status_id) REFERENCES entity_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS stores (
     store_id INT AUTO_INCREMENT PRIMARY KEY,
     store_email VARCHAR(100) UNIQUE NOT NULL,
-    store_name VARCHAR(100) NOT NULL
+    store_name VARCHAR(100) NOT NULL,
     store_description TEXT,
     store_phone VARCHAR(20),
     store_address TEXT NOT NULL,
     store_status_id INT NOT NULL,
-    FOREIGN KEY (store_status_id) REFERENCES entity_statuses(status_id)
+    FOREIGN KEY (store_status_id) REFERENCES entity_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS roles (
     role_id INT AUTO_INCREMENT PRIMARY KEY,
     role_code VARCHAR(50) UNIQUE NOT NULL,
-    role_description TEXT,
+    role_description TEXT
 );
 
 CREATE TABLE IF NOT EXISTS store_user_role (
@@ -40,10 +41,10 @@ CREATE TABLE IF NOT EXISTS store_user_role (
     role_id INT NOT NULL,
     status_id INT NOT NULL,
     PRIMARY KEY (store_id, user_id),
-    FOREIGN KEY (store_id) REFERENCES stores(store_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (role_id) REFERENCES roles(role_id),
-    FOREIGN KEY (status_id) REFERENCES entity_statuses(status_id)
+    FOREIGN KEY (store_id) REFERENCES stores (store_id),
+    FOREIGN KEY (user_id) REFERENCES users (user_id),
+    FOREIGN KEY (role_id) REFERENCES roles (role_id),
+    FOREIGN KEY (status_id) REFERENCES entity_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -52,7 +53,7 @@ CREATE TABLE IF NOT EXISTS categories (
     category_description TEXT,
     category_pic_path VARCHAR(255),
     category_status_id INT NOT NULL,
-    FOREIGN KEY (category_status_id) REFERENCES entity_statuses(status_id)
+    FOREIGN KEY (category_status_id) REFERENCES entity_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS products_services (
@@ -62,25 +63,25 @@ CREATE TABLE IF NOT EXISTS products_services (
     product_service_pic_path VARCHAR(255),
     product_service_category_id INT NOT NULL,
     product_service_status_id INT NOT NULL,
-    FOREIGN KEY (product_service_category_id) REFERENCES categories(category_id),
-    FOREIGN KEY (product_service_status_id) REFERENCES entity_statuses(status_id)
+    FOREIGN KEY (product_service_category_id) REFERENCES categories (category_id),
+    FOREIGN KEY (product_service_status_id) REFERENCES entity_statuses (status_id)
 );
 
 /* Composite PK was discarded as AI suggested it was best practice only for
    Pure join/association tables (many-to-many) and few other specific cases */
 CREATE TABLE IF NOT EXISTS store_products_services (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  store_id INT NOT NULL,
-  product_service_id INT NOT NULL,
-  price DECIMAL(10,2) NOT NULL,
-  stock INT NOT NULL,
-  UNIQUE KEY uk_store_product (store_id, product_service_id),
-  INDEX idx_store (store_id),
-  INDEX idx_product_service (product_service_id),
-  status_id INT NOT NULL,
-  FOREIGN KEY (status_id) REFERENCES entity_statuses(status_id),
-  FOREIGN KEY (store_id) REFERENCES stores(store_id),
-  FOREIGN KEY (product_service_id) REFERENCES products_services(product_service_id)
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    store_id INT NOT NULL,
+    product_service_id INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    stock INT NOT NULL,
+    UNIQUE KEY uk_store_product (store_id, product_service_id),
+    INDEX idx_store (store_id),
+    INDEX idx_product_service (product_service_id),
+    status_id INT NOT NULL,
+    FOREIGN KEY (status_id) REFERENCES entity_statuses (status_id),
+    FOREIGN KEY (store_id) REFERENCES stores (store_id),
+    FOREIGN KEY (product_service_id) REFERENCES products_services (product_service_id)
 );
 
 CREATE TABLE IF NOT EXISTS customers (
@@ -90,7 +91,7 @@ CREATE TABLE IF NOT EXISTS customers (
     customer_password_hash VARCHAR(255) NOT NULL,
     customer_phone VARCHAR(20) NOT NULL,
     customer_status_id INT NOT NULL,
-    FOREIGN KEY (customer_status_id) REFERENCES entity_statuses(status_id)
+    FOREIGN KEY (customer_status_id) REFERENCES entity_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS countries (
@@ -98,7 +99,7 @@ CREATE TABLE IF NOT EXISTS countries (
     country_name VARCHAR(100) NOT NULL,
     country_code VARCHAR(10) UNIQUE NOT NULL,
     country_status_id INT NOT NULL,
-    FOREIGN KEY (country_status_id) REFERENCES entity_statuses(status_id)
+    FOREIGN KEY (country_status_id) REFERENCES entity_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS states_regions (
@@ -106,38 +107,38 @@ CREATE TABLE IF NOT EXISTS states_regions (
     state_region_name VARCHAR(100) NOT NULL,
     state_region_code VARCHAR(10) UNIQUE NOT NULL,
     country_id INT NOT NULL,
-    FOREIGN KEY (country_id) REFERENCES countries(country_id),
+    FOREIGN KEY (country_id) REFERENCES countries (country_id),
     state_region_status_id INT NOT NULL,
-    FOREIGN KEY (state_region_status_id) REFERENCES entity_statuses(status_id)
+    FOREIGN KEY (state_region_status_id) REFERENCES entity_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS cities (
     city_id INT AUTO_INCREMENT PRIMARY KEY,
     city_name VARCHAR(100) NOT NULL,
     state_region_id INT NOT NULL,
-    FOREIGN KEY (state_region_id) REFERENCES states_regions(state_region_id),
+    FOREIGN KEY (state_region_id) REFERENCES states_regions (state_region_id),
     city_status_id INT NOT NULL,
-    FOREIGN KEY (city_status_id) REFERENCES entity_statuses(status_id)
+    FOREIGN KEY (city_status_id) REFERENCES entity_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS customer_addresses (
     address_id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
-    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+    FOREIGN KEY (customer_id) REFERENCES customers (customer_id),
     address_line1 VARCHAR(255) NOT NULL,
     address_line2 VARCHAR(255),
     city_id INT NOT NULL,
-    FOREIGN KEY (city_id) REFERENCES cities(city_id),
+    FOREIGN KEY (city_id) REFERENCES cities (city_id),
     google_maps_url VARCHAR(255) NOT NULL,
     address_status_id INT NOT NULL,
-    FOREIGN KEY (address_status_id) REFERENCES entity_statuses(status_id),
+    FOREIGN KEY (address_status_id) REFERENCES entity_statuses (status_id),
     postal_code VARCHAR(20) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS order_statuses (
     status_id INT AUTO_INCREMENT PRIMARY KEY,
     -- e.g., 'open', 'pending', 'partial', 'complete', 'shipped', 'delivered', 'canceled'
-    status VARCHAR(50) UNIQUE NOT NULL,
+    status_code VARCHAR(50) UNIQUE NOT NULL,
     status_description TEXT
 );
 
@@ -146,9 +147,9 @@ CREATE TABLE IF NOT EXISTS orders (
     order_tot_quantity INT NOT NULL,
     order_tot_price DECIMAL(10, 2) NOT NULL,
     customer_id INT NOT NULL,
-    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+    FOREIGN KEY (customer_id) REFERENCES customers (customer_id),
     order_status_id INT NOT NULL,
-    FOREIGN KEY (order_status_id) REFERENCES order_statuses(status_id),
+    FOREIGN KEY (order_status_id) REFERENCES order_statuses (status_id)
 );
 
 CREATE TABLE IF NOT EXISTS order_details (
@@ -159,19 +160,13 @@ CREATE TABLE IF NOT EXISTS order_details (
     product_service_price DECIMAL(10, 2) NOT NULL, -- price at the time of order
     product_service_tot_price DECIMAL(10, 2) NOT NULL, -- paid order total price 
     product_service_status_id INT NOT NULL,
+    product_service_filled_quantity INT NOT NULL DEFAULT 0,
+    product_service_filled_tot_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     FOREIGN KEY (product_service_status_id) REFERENCES order_statuses(status_id),
     FOREIGN KEY (order_id) REFERENCES orders(order_id),
     FOREIGN KEY (store_product_service_id) REFERENCES store_products_services(id)
 );
 
-CREATE TABLE IF NOT EXISTS order_details_filling (
-    order_id INT NOT NULL,
-    store_product_service_id INT NOT NULL, -- references store_products_services.id
-    PRIMARY KEY (order_id, store_product_service_id),
-    product_service_quantity INT NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id),
-    FOREIGN KEY (store_product_service_id) REFERENCES store_products_services(id)
-);
 
 
 /* It's possible to create dummy data for testing purposes using the following SQL commands.
@@ -186,15 +181,15 @@ INSERT INTO... */
 
 /* ---------------------- users ---------------------- */
 CREATE TABLE IF NOT EXISTS users_history (
-  hist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT,
-  op_type ENUM('INSERT','UPDATE','DELETE') NOT NULL,
-  changed_by VARCHAR(100), -- set from app via: SET @audit_user = 'user@example.com';
-  changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  data_before JSON,
-  data_after JSON,
-  INDEX idx_users_history_user (user_id),
-  INDEX idx_users_history_time (changed_at)
+    hist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    op_type ENUM('INSERT','UPDATE','DELETE') NOT NULL,
+    changed_by VARCHAR(100), -- set from app via: SET @audit_user = 'user@example.com';
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_before JSON,
+    data_after JSON,
+    INDEX idx_users_history_user (user_id),
+    INDEX idx_users_history_time (changed_at)
 );
 
 -- Change the delimiter from ; to $$ because by default RDBMS executes a command at each ;
@@ -472,20 +467,6 @@ CREATE TABLE IF NOT EXISTS order_details_history (
   INDEX (changed_at)
 );
 
-/* ---------------------- order_details_filling ---------------------- */
-CREATE TABLE IF NOT EXISTS order_details_filling_history (
-  hist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  order_id INT,
-  store_product_service_id INT,
-  op_type ENUM('INSERT','UPDATE','DELETE') NOT NULL,
-  changed_by VARCHAR(100),
-  changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  data_before JSON,
-  data_after JSON,
-  INDEX (order_id),
-  INDEX (store_product_service_id),
-  INDEX (changed_at)
-);
 
 -- Create triggers for all tables (use one DELIMITER block)
 DELIMITER $$
@@ -1011,7 +992,7 @@ BEGIN
     NEW.status_id,
     'INSERT',
     COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('status_id', NEW.status_id, 'status', NEW.status, 'status_description', NEW.status_description)
+    JSON_OBJECT('status_id', NEW.status_id, 'status_code', NEW.status_code, 'status_description', NEW.status_description)
   );
 END$$
 
@@ -1024,8 +1005,8 @@ BEGIN
     OLD.status_id,
     'UPDATE',
     COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('status_id', OLD.status_id, 'status', OLD.status, 'status_description', OLD.status_description),
-    JSON_OBJECT('status_id', NEW.status_id, 'status', NEW.status, 'status_description', NEW.status_description)
+    JSON_OBJECT('status_id', OLD.status_id, 'status_code', OLD.status_code, 'status_description', OLD.status_description),
+    JSON_OBJECT('status_id', NEW.status_id, 'status_code', NEW.status_code, 'status_description', NEW.status_description)
   );
 END$$
 
@@ -1038,7 +1019,7 @@ BEGIN
     OLD.status_id,
     'DELETE',
     COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('status_id', OLD.status_id, 'status', OLD.status, 'status_description', OLD.status_description)
+    JSON_OBJECT('status_id', OLD.status_id, 'status_code', OLD.status_code, 'status_description', OLD.status_description)
   );
 END$$
 
@@ -1127,48 +1108,8 @@ BEGIN
   );
 END$$
 
-/* ---------- order_details_filling triggers ---------- */
-CREATE TRIGGER trg_order_details_filling_after_insert
-AFTER INSERT ON order_details_filling
-FOR EACH ROW
-BEGIN
-  INSERT INTO order_details_filling_history (order_id, store_product_service_id, op_type, changed_by, data_after)
-  VALUES (
-    NEW.order_id,
-    NEW.store_product_service_id,
-    'INSERT',
-    COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('order_id', NEW.order_id, 'store_product_service_id', NEW.store_product_service_id, 'product_service_quantity', NEW.product_service_quantity)
-  );
-END$$
 
-CREATE TRIGGER trg_order_details_filling_before_update
-BEFORE UPDATE ON order_details_filling
-FOR EACH ROW
-BEGIN
-  INSERT INTO order_details_filling_history (order_id, store_product_service_id, op_type, changed_by, data_before, data_after)
-  VALUES (
-    OLD.order_id,
-    OLD.store_product_service_id,
-    'UPDATE',
-    COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('order_id', OLD.order_id, 'store_product_service_id', OLD.store_product_service_id, 'product_service_quantity', OLD.product_service_quantity),
-    JSON_OBJECT('order_id', NEW.order_id, 'store_product_service_id', NEW.store_product_service_id, 'product_service_quantity', NEW.product_service_quantity)
-  );
-END$$
-
-CREATE TRIGGER trg_order_details_filling_before_delete
-BEFORE DELETE ON order_details_filling
-FOR EACH ROW
-BEGIN
-  INSERT INTO order_details_filling_history (order_id, store_product_service_id, op_type, changed_by, data_before)
-  VALUES (
-    OLD.order_id,
-    OLD.store_product_service_id,
-    'DELETE',
-    COALESCE(@audit_user, 'system'),
-    JSON_OBJECT('order_id', OLD.order_id, 'store_product_service_id', OLD.store_product_service_id, 'product_service_quantity', OLD.product_service_quantity)
-  );
-END$$
-
+-- Reset delimiter back to default ';'
 DELIMITER ;
+
+-- End of init.sql
