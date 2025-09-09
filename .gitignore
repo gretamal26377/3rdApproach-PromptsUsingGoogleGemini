@@ -1,7 +1,6 @@
 # IDE
 .vscode/
 
-/.venv
 # Node.js dependencies
 # This line tells Git to ignore any folder named node_modules anywhere in your repository,
 # at any depth
@@ -18,8 +17,9 @@ out/
 *storybook.log
 storybook-static
 
-# Python env
+# Python envs
 venv/
+.venv*/
 __pycache__/
 *.pyc
 
