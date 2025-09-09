@@ -123,7 +123,7 @@ services:
     ports:
       - "3306:3306"
     secrets:
-      - mysql_root_password
+      # - mysql_root_password -- Uncomment if root password is needed available inside container
       - mysql_db_user_password
     volumes:
       # Changing default MySQL data path implies changing default

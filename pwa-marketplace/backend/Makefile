@@ -1,4 +1,5 @@
 # Backend-scoped Makefile to generate SQLAlchemy models from the running DB service
+# using sqlacodegen package.
 # Usage (from repository root or from backend/):
 #   (from repo root) make -C backend generate-models
 #   (from backend/) make generate-models

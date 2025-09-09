@@ -168,7 +168,6 @@ CREATE TABLE IF NOT EXISTS order_details (
 );
 
 
-
 /* It's possible to create dummy data for testing purposes using the following SQL commands.
 INSERT INTO... */
 
