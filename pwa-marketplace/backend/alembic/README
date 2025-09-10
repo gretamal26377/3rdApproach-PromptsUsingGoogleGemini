@@ -1,1 +1,51 @@
-Generic single-database configuration
+Project Alembic usage (project-specific wrappers and examples)
+
+This folder contains Alembic configuration used by the backend service.
+The Alembic env.py has been adapted to read the database URL from environment
+variables (DATABASE_URL, SQLALCHEMY_DATABASE_URI, DATABASE_URI) and to import
+project metadata from `app.shared.models.Base` for autogenerate support
+
+
+Quick local (PowerShell) examples
+
+# Set the DB URL in your current PowerShell session (use correct user/password)
+$env:DATABASE_URL = 'mysql+pymysql://dbuser:dbpass@localhost:3306/marketplace_db'
+
+# Create an autogenerate revision (inspect the generated file before applying)
+python -m alembic -c pwa-marketplace/backend/alembic.ini revision --autogenerate -m "Add changes"
+
+# Apply all migrations
+python -m alembic -c pwa-marketplace/backend/alembic.ini upgrade head
+
+# Generate SQL for a revision without applying (offline SQL)
+python -m alembic -c pwa-marketplace/backend/alembic.ini revision --autogenerate -m "msg" --sql
+
+Docker Compose examples (run from repository root)
+
+# Run a revision command inside the backend container (uses sh inside container)
+docker compose -f pwa-marketplace/docker-compose.yml exec backend-admin sh -lc 'alembic -c backend/alembic.ini revision --autogenerate -m "autogen"'
+
+# Apply migrations from inside the container
+docker compose -f pwa-marketplace/docker-compose.yml exec backend-admin sh -lc 'alembic -c backend/alembic.ini upgrade head'
+
+
+Notes & troubleshooting
+
+- If autogenerate produces no changes, confirm `app.shared.models` exports `Base` and that
+  model definitions reflect your intended schema. If your models file has a different
+  name (for example `models_sql2orm.py`), update `backend/alembic/env.py` to import it
+
+- Ensure Alembic runs under the same Python environment that has SQLAlchemy and the
+  DB driver (eg: pymysql) installed
+
+- The env.py will accept DATABASE_URL / SQLALCHEMY_DATABASE_URI / DATABASE_URI. When
+  running in Docker Compose, prefer setting the env var in the service environment in
+  the Compose file or passing it at runtime
+
+- Always review generated migration files before applying them to production
+
+
+Optional
+
+- Add a Makefile target or small wrapper script that sets the required env var and
+  invokes alembic with the project alembic.ini to reduce typing and avoid mistakes
