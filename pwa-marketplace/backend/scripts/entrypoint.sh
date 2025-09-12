@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Above line:
 # For production use: #!/bin/sh
 # For debugging (with bashdb): #!/usr/bin/env bash

@@ -20,6 +20,7 @@ python -m alembic -c pwa-marketplace/backend/alembic.ini upgrade head
 # Generate SQL for a revision without applying (offline SQL)
 python -m alembic -c pwa-marketplace/backend/alembic.ini revision --autogenerate -m "msg" --sql
 
+
 Docker Compose examples (run from repository root)
 
 # Run a revision command inside the backend container (uses sh inside container)
