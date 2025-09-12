@@ -1,4 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# Above line:
+# For production use: #!/bin/sh
+# For debugging (with bashdb): #!/usr/bin/env bash
+ 
 # Entrypoint: assemble runtime environment and then exec the provided CMD
 # Priority:
 #  1) If DATABASE_URL is already set, leave it untouched
@@ -42,6 +46,9 @@ if [ -z "${DATABASE_URL:-}" ]; then
     export DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${PASSWORD}@${MYSQL_HOST}:3306/${MYSQL_DATABASE}"
   fi
 fi
+
+# Added just for Dev purposes: show DATABASE_URL at log
+# echo "DATABASE_URL=$DATABASE_URL" 1>&2
 
 # Exec the passed command (gunicorn or any other)
 exec "$@"
