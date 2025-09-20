@@ -12,7 +12,7 @@ Quick local (PowerShell) examples
 $env:DATABASE_URL = 'mysql+pymysql://dbuser:dbpass@localhost:3306/marketplace_db'
 
 # Create an autogenerate revision (inspect the generated file before applying)
-python -m alembic -c pwa-marketplace/backend/alembic.ini revision --autogenerate -m "Add changes"
+python -m alembic -c pwa-marketplace/backend/alembic.ini revision --autogenerate -m "Add Changes"
 
 # Apply all migrations
 python -m alembic -c pwa-marketplace/backend/alembic.ini upgrade head

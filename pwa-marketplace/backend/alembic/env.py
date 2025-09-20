@@ -36,8 +36,7 @@ if here not in sys.path:
     sys.path.insert(0, here)
 
 # If a database URL is set in the environment (Docker Compose friendly),
-# prefer that over the value in alembic.ini. Project's env vars used are
-# DATABASE_URL and SQLALCHEMY_DATABASE_URI
+# prefer that over the value in alembic.ini
 db_url = (
     os.environ.get('DATABASE_URL')
     or os.environ.get('SQLALCHEMY_DATABASE_URI')
@@ -47,16 +46,16 @@ if db_url:
     # Override the sqlalchemy.url setting in the .ini file with
     # db_url value
     config.set_main_option('sqlalchemy.url', db_url)
-# else: sqlalchemy.url from alembic.ini will be used
+# if db_url is not set, then sqlalchemy.url from alembic.ini will be used
 
 # Add your model's MetaData object here for 'autogenerate' support
 # Try to import the project's Base object (app.shared.models.Base)
 try:
     # importlib used to avoid hard fail during some CI environments
     proj = importlib.import_module('app.shared.models')
-    Base = getattr(proj, 'Base')
     # getattr reads 'Base' attribute named metadata, if it doesn't
     # exist, return None instead of raising an exception
+    Base = getattr(proj, 'Base')
     target_metadata = getattr(Base, 'metadata', None)
 except Exception:
     target_metadata = None
@@ -76,7 +75,7 @@ def run_migrations_offline() -> None:
     we don't even need a DBAPI to be available.
 
     Calls to context.execute() here emit the given string to the
-    script output
+    script output (stdout by default)
 
     """
     url = config.get_main_option("sqlalchemy.url")
@@ -92,6 +91,9 @@ def run_migrations_offline() -> None:
     # with: Introduces a context manager
     # context manager: An object that defines the runtime context 
     #                  to be established
+    # begin_transaction(): Start a new transaction block
+    # run_migrations() in offline: Run migrations in 'offline' mode. That is,
+    #                             generate SQL statements without executing them
     with context.begin_transaction():
         context.run_migrations()
 
@@ -120,7 +122,13 @@ def run_migrations_online() -> None:
         with context.begin_transaction():
             context.run_migrations()
 
-
+# is_offline_mode() is true when --sql flag is passed to alembic command.
+# See alembic/README file for details.
+# Offline Mode: Generates the SQL statements for the migration without
+#               applying them to the database. The SQL is printed to the standard output
+#               or can be redirected to a file. This mode is useful for reviewing the SQL
+#               statements before applying them
+# Online Mode:  Applies the migration directly to the database specified
 if context.is_offline_mode():
     run_migrations_offline()
 else:
