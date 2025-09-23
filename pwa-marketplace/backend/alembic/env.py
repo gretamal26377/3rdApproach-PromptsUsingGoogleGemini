@@ -7,6 +7,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from pathlib import Path
 
 # This is the Alembic Config object, which provides
 # access to the values within the .ini file in use
@@ -35,12 +36,26 @@ if here not in sys.path:
     # This change is in effect only for the duration of this script
     sys.path.insert(0, here)
 
+# Read DB password from secret file and set sqlalchemy.url
+here_path = Path(__file__).resolve().parent
+secret_path = here_path.parent.joinpath("database", "secrets", "mysql_db_user_password.txt")
+
+if secret_path.exists():
+    password = secret_path.read_text().strip()
+    mysql_user = os.environ.get("MYSQL_USER", "db_user")
+    mysql_host = os.environ.get("MYSQL_HOST", "db")
+    mysql_db = os.environ.get("MYSQL_DATABASE", "marketplace_db")
+    tmp_db_url = f"mysql+pymysql://{mysql_user}:{password}@{mysql_host}:3306/{mysql_db}"
+    # Make Alembic and other code see it
+    # config.set_main_option("sqlalchemy.url", url)
+    os.environ.setdefault("DATABASE_URL", tmp_db_url)
+
 # If a database URL is set in the environment (Docker Compose friendly),
 # prefer that over the value in alembic.ini
 db_url = (
-    os.environ.get('DATABASE_URL')
-    or os.environ.get('SQLALCHEMY_DATABASE_URI')
-    or os.environ.get('DATABASE_URI')
+   os.environ.get('DATABASE_URL')
+   or os.environ.get('SQLALCHEMY_DATABASE_URI')
+   or os.environ.get('DATABASE_URI')
 )
 if db_url:
     # Override the sqlalchemy.url setting in the .ini file with

@@ -17,7 +17,7 @@ class Config:
         )
 
         # Try to read password from env var, if not set fallback to an empty string
-        password = os.environ.get('MYSQL_DB_USER_PASSWORD', 'pharmaFacilDBrootPW')
+        password = os.environ.get('MYSQL_DB_USER_PASSWORD', '')
         try:
             # If path exists, read the password from the file
             if os.path.exists(pw_file):
