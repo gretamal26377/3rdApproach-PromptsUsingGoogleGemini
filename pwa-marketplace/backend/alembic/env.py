@@ -37,7 +37,7 @@ if here not in sys.path:
     sys.path.insert(0, here)
 
 # Read DB password from secret file and set sqlalchemy.url
-here_path = Path(__file__).resolve().parent
+here_path = Path(__file__).resolve().parent.parent
 secret_path = here_path.parent.joinpath("database", "secrets", "mysql_db_user_password.txt")
 
 if secret_path.exists():
@@ -103,12 +103,18 @@ def run_migrations_offline() -> None:
         compare_server_default=True,
     )
 
-    # with: Introduces a context manager
-    # context manager: An object that defines the runtime context 
-    #                  to be established
-    # begin_transaction(): Start a new transaction block
-    # run_migrations() in offline: Run migrations in 'offline' mode. That is,
-    #                             generate SQL statements without executing them
+    """
+     The "with" statement works with objects that support context manager protocol, which means
+     they have __enter__() and __exit__() methods.
+      __enter__(): Called when execution flow enters the context of the "with" statement
+       __exit__(): Called when execution leaves the context of the "with" statement
+     This particular case:   
+        with: Introduces a context manager
+        context manager: An object that defines the runtime context to be established
+        begin_transaction(): Start a new transaction block
+        run_migrations() in offline: Run migrations in 'offline' mode. That is,
+                                     generate SQL statements without executing them
+    """
     with context.begin_transaction():
         context.run_migrations()
 
@@ -133,9 +139,10 @@ def run_migrations_online() -> None:
             compare_type=True,
             compare_server_default=True,
         )
-
+        # This with indentation is right, it's acting on previous with context, that is, using same connection
         with context.begin_transaction():
             context.run_migrations()
+
 
 # is_offline_mode() is true when --sql flag is passed to alembic command.
 # See alembic/README file for details.

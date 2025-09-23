@@ -14,7 +14,7 @@ python -m alembic -c pwa-marketplace/backend/alembic.ini revision --autogenerate
 # Apply all migrations
 python -m alembic -c pwa-marketplace/backend/alembic.ini upgrade head
 
-# Generate SQL for a revision without applying (offline SQL)
+# Generate SQL for a revision without applying (offline SQL) (Issue: This command is wrong and needs fixing)
 python -m alembic -c pwa-marketplace/backend/alembic.ini revision --autogenerate -m "msg" --sql
 
 
