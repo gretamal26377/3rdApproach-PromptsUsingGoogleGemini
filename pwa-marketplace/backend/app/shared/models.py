@@ -1,4 +1,5 @@
 from .database import db
+from sqlalchemy.orm import DeclarativeBase
 
 # vsCode Copilot explanation after research: The red cross in PROBLEMS windows means Linter treats it as an error,
 # but it isn't a Python runtime error. Your Flask app should work as expected if you run it normally.
@@ -6,6 +7,9 @@ from .database import db
 
 # Static models generated to match init SQL schema. These inherit from the
 # Flask-SQLAlchemy `db.Model` so they work with Flask-Migrate and the app
+
+class Base(DeclarativeBase):
+    pass
 
 class EntityStatus(db.Model):
     __tablename__ = 'entity_statuses'
