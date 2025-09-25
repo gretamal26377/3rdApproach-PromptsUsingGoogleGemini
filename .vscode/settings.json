@@ -2,5 +2,7 @@
     "cSpell.words": [
         "dotenv"
     ],
-    "sqlfluff.dialect": "mysql"
+    "sqlfluff.dialect": "mysql",
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": []
 }

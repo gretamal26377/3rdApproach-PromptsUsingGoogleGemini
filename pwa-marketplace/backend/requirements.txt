@@ -6,6 +6,7 @@ PyMySQL
 PyJWT
 cryptography
 python-dotenv
+sqlalchemy
 sqlacodegen
 alembic
 gunicorn
