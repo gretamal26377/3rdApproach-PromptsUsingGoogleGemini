@@ -43,7 +43,7 @@ secret_path = here_path.parent.joinpath("database", "secrets", "mysql_db_user_pa
 if secret_path.exists():
     password = secret_path.read_text().strip()
     mysql_user = os.environ.get("MYSQL_USER", "db_user")
-    mysql_host = os.environ.get("MYSQL_HOST", "db")
+    mysql_host = os.environ.get("MYSQL_HOST", "localhost")
     mysql_db = os.environ.get("MYSQL_DATABASE", "marketplace_db")
     tmp_db_url = f"mysql+pymysql://{mysql_user}:{password}@{mysql_host}:3306/{mysql_db}"
     # Make Alembic and other code see it
