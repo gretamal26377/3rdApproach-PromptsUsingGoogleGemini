@@ -1,7 +1,7 @@
 from logging.config import fileConfig
 import os
 import sys
-import importlib
+# import importlib
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -20,12 +20,6 @@ if config.config_file_name is not None:
     # Set up logger from the config file (.ini file)
     fileConfig(config.config_file_name)
 
-# Add your model's MetaData object here
-# for 'autogenerate' support
-# eg:
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-
 # Ensure the backend package (project) is on sys.path so imports work
 # Alembic env.py lives in backend/alembic; add backend/ to path
 # __file__: Path to the current file (env.py)
@@ -36,42 +30,41 @@ if here not in sys.path:
     # This change is in effect only for the duration of this script
     sys.path.insert(0, here)
 
-# Read DB password from secret file and set sqlalchemy.url
-here_path = Path(__file__).resolve().parent.parent
-secret_path = here_path.parent.joinpath("database", "secrets", "mysql_db_user_password.txt")
+if config.get_main_option("sqlalchemy.url") != 'sqlite:///:memory:':
+    # If a database URL is set in the environment (Docker Compose friendly),
+    # prefer that over the value in alembic.ini
+    db_url = (
+        os.environ.get('DATABASE_URL')
+        or os.environ.get('SQLALCHEMY_DATABASE_URI')
+        or os.environ.get('DATABASE_URI')
+    )
 
-if secret_path.exists():
-    password = secret_path.read_text().strip()
-    mysql_user = os.environ.get("MYSQL_USER", "db_user")
-    mysql_host = os.environ.get("MYSQL_HOST", "localhost")
-    mysql_db = os.environ.get("MYSQL_DATABASE", "marketplace_db")
-    tmp_db_url = f"mysql+pymysql://{mysql_user}:{password}@{mysql_host}:3306/{mysql_db}"
-    # Make Alembic and other code see it
-    # config.set_main_option("sqlalchemy.url", url)
-    os.environ.setdefault("DATABASE_URL", tmp_db_url)
+    if db_url:
+        # Override the sqlalchemy.url setting in the .ini file with
+        # db_url value
+        config.set_main_option('sqlalchemy.url', db_url)
+    else:
+        # Try to build db_url from environment variables and secret file
+        here_path = Path(__file__).resolve().parent.parent
+        secret_path = here_path.parent.joinpath("database", "secrets", "mysql_db_user_password.txt")
+        if secret_path.exists():
+            password = secret_path.read_text().strip()
+            mysql_user = os.environ.get("MYSQL_USER", "db_user")
+            mysql_host = os.environ.get("MYSQL_HOST", "localhost")
+            mysql_db = os.environ.get("MYSQL_DATABASE", "marketplace_db")
+            tmp_db_url = f"mysql+pymysql://{mysql_user}:{password}@{mysql_host}:3306/{mysql_db}"
+            config.set_main_option('sqlalchemy.url', tmp_db_url)
 
-# If a database URL is set in the environment (Docker Compose friendly),
-# prefer that over the value in alembic.ini
-db_url = (
-   os.environ.get('DATABASE_URL')
-   or os.environ.get('SQLALCHEMY_DATABASE_URI')
-   or os.environ.get('DATABASE_URI')
-)
-if db_url:
-    # Override the sqlalchemy.url setting in the .ini file with
-    # db_url value
-    config.set_main_option('sqlalchemy.url', db_url)
-# if db_url is not set, then sqlalchemy.url from alembic.ini will be used
+# if sqlalchemy.url is not set, then sqlalchemy.url from alembic.ini will be used
 
 # Add your model's MetaData object here for 'autogenerate' support
-# Try to import the project's Base object (app.shared.models.Base)
+# Prefer Flask-SQLAlchemy metadata (db.metadata) since this project uses Flask-SQLAlchemy
 try:
-    # importlib used to avoid hard fail during some CI environments
-    proj = importlib.import_module('app.shared.models')
-    # getattr reads 'Base' attribute named metadata, if it doesn't
-    # exist, return None instead of raising an exception
-    Base = getattr(proj, 'Base')
-    target_metadata = getattr(Base, 'metadata', None)
+    # Import the Flask-SQLAlchemy `db` instance and ensure models are imported
+    # so db.metadata is populated with table objects.
+    from app.shared.database import db
+    import app.shared.models  # noqa: F401  (side-effect: registers models on db.metadata)
+    target_metadata = getattr(db, "metadata", None)
 except Exception:
     target_metadata = None
 
@@ -98,9 +91,11 @@ def run_migrations_offline() -> None:
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-        compare_type=True,
-        compare_server_default=True,
+        # dialect_opts={"paramstyle": "named"},
+        # compare_type=True,
+        # compare_server_default=True,
+        dialect_name='mysql',
+        as_sql=True,
     )
 
     """

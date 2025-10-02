@@ -1,5 +1,6 @@
-# Backend-scoped Makefile to generate SQLAlchemy models from the running DB service
-# using sqlacodegen package.
+# Backend-scoped Makefile to generate plain SQLAlchemy models from the running DB service
+# using sqlacodegen package. Which is a little different from Flask-SQLAlchemy models
+# that the project is using, so some changes are needed after generation
 # Usage (from repository root or from backend/):
 #   (from repo root) make -C backend generate-models
 #   (from backend/) make generate-models
@@ -9,7 +10,7 @@
 #   COMPOSE_FILE - location of docker-compose.yml relative to this Makefile (default: ../docker-compose.yml)
 
 SERVICE ?= backend-admin
-OUT ?= app/shared/models_sql2orm.py
+OUT ?= app/shared/models_sql2orm_plainsqlalchemy2.py
 COMPOSE_FILE ?= ../docker-compose.yml
 
 # .PHONY: is a special built-in target that tells Makefile 
