@@ -5,7 +5,7 @@ from typing import Optional
 import datetime
 import decimal
 
-from sqlalchemy import BigInteger, DECIMAL, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
+from sqlalchemy import db.BigInteger, db.DECIMAL, Enum, ForeignKeyConstraint, Index, db.Integer, db.JSON, db.String, db.TIMESTAMP, db.Text, text
 class CategoriesHistory(db.Model):
     __tablename__ = 'categories_history'
     __table_args__ = (
@@ -15,16 +15,9 @@ class CategoriesHistory(db.Model):
 
     hist_id = db.Column(db.db.BigInteger, primary_key=True)
     op_type = db.Column(db.Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
-    category_id = db.Column(db.db.Integer|Optional[int])
-    changed_by: Mapped[Optional[str]] = db.Column(db.String(100))
-
-    category_id: Mapped[Optional[int]] = db.Column(db.db.Integer)
-    changed_by: Mapped[Optional[str]] = db.Column(db.String(100))
+    category_id: Mapped[Optional[int]] = db.Column(db.db.Integer)changed_by: Mapped[Optional[str]] = db.Column(db.String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = db.Column(db.db.TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
-    data_before: Mapped[Optional[dict]] = db.Column(db.db.JSON)
-    data_after: Mapped[Optional[dict]] = db.Column(db.db.JSON)
-
-class CitiesHistory(db.Model):
+    data_before: Mapped[Optional[dict]] = db.Column(db.db.JSON)data_after: Mapped[Optional[dict]] = db.Column(db.db.JSON)class CitiesHistory(db.Model):
     __tablename__ = 'cities_history'
     __table_args__ = (
         Index('changed_at', 'changed_at'),

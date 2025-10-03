@@ -39,8 +39,6 @@ def transform_mapped_column_args(inner: str) -> str:
     pos = 0
     depth = 0
     found_first = False
-    # enumerate(s): Builds an iterable that yields pairs of (i: index, ch: character)
-    # for each character in string s
     for i, ch in enumerate(s):
         if ch == '(':
             depth += 1
@@ -51,7 +49,6 @@ def transform_mapped_column_args(inner: str) -> str:
             found_first = True
             break
     if found_first:
-        # s[:pos]: Extract substring from start to pos (not including pos)
         first = s[:pos].strip()
         rest = s[pos+1:].strip()
     else:
@@ -86,12 +83,10 @@ def convert_file(src: Path, dst: Path) -> None:
     # remove explicit DeclarativeBase class if present
     text = re.sub(r"class\s+Base\s*\(DeclarativeBase\):\s*\n\s*pass\s*\n\n", '', text)
 
-    # add Flask-SQLAlchemy db import
-    header = "from .database import db\n"
-
+    # add Flask-SQLAlchemy db import + keep sqlalchemy.text for server_default and Index/ForeignKeyConstraint
+    header = "from .database import db\nfrom sqlalchemy import text, Index, ForeignKeyConstraint\n\n"
     # if file already has a module docstring or top imports, try to insert after them
     # simple approach: replace first occurrence of 'class ' with header before it
-    # Issue?: It's not doing that, just prepending header at top
     if 'from .database import db' not in text:
         # place header at top
         text = header + text
@@ -106,9 +101,6 @@ def convert_file(src: Path, dst: Path) -> None:
     # pattern: name: Mapped[...]= mapped_column(...)
     # .compile(): precompiles the regex for efficiency, this is useful if the regex is used multiple times
     # (): Capturing groups to extract parts of the match
-    # \[[^\]]+\]: Matches an opening bracket [, followed by one or more characters that are not a
-    # closing bracket (using [^]]+), and then a closing bracket ]
-    # .*?: Matches any character (.), zero or more times (*), but as few times as possible (?)
     pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[[^\]]+\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE | re.DOTALL)
     
     def repl_mapped(match):
