@@ -7,7 +7,8 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # initialize shared db/migrate via helper
+    # Initialize shared db/migrate via helper and connect to the DB
+    # through SQLALCHEMY_DATABASE_URI setting in config
     init_extensions(app)
 
     # Register only the admin blueprint

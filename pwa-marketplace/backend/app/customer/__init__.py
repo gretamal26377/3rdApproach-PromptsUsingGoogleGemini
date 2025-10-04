@@ -8,8 +8,9 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     # Initialize DB and other extensions. This way other modules can import
-    # from shared.database import db, migrate and use them directly without
-    # needing to initialize them again
+    # "from shared.database import db, migrate" and use them directly without
+    # needing to initialize them again.
+    # It also connects the DB through SQLALCHEMY_DATABASE_URI setting in config
     init_extensions(app)
 
     # Register only the customer blueprint

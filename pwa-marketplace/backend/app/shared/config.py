@@ -31,7 +31,8 @@ class Config:
         user = os.environ.get('MYSQL_DB_USER', 'root')
         host = os.environ.get('MYSQL_HOST', 'localhost')
         dbname = os.environ.get('MYSQL_DATABASE', 'marketplace_db')
-
+        # This var is reserved and used by SQLAlchemy internally (do not change it)
+        # to connect the DB with db setting in database.py when init_extensions(app) is called
         SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{user}:{password}@{host}:3306/{dbname}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False

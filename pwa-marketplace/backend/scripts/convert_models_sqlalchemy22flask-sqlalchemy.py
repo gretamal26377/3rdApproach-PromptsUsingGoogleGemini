@@ -106,8 +106,9 @@ def convert_file(src: Path, dst: Path) -> None:
     # pattern: name: Mapped[...]= mapped_column(...)
     # .compile(): precompiles the regex for efficiency, this is useful if the regex is used multiple times
     # (): Capturing groups to extract parts of the match
-    # \[[^\]]+\]: Matches an opening bracket [, followed by one or more characters that are not a
-    # closing bracket (using [^]]+), and then a closing bracket ]
+    # \[[^\]]+\]: Matches an opening bracket with \[, followed by one or more characters that are not a
+    # closing bracket (using [^\]]+ this is called a negated character class), and then a closing
+    # bracket with \]
     # .*?: Matches any character (.), zero or more times (*), but as few times as possible (?)
     pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[[^\]]+\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE | re.DOTALL)
     
@@ -118,8 +119,11 @@ def convert_file(src: Path, dst: Path) -> None:
         col = transform_mapped_column_args(inner)
         return f"{indent}{name} = {col}"
 
-    # Here repl_mapped is called for each match found by pattern.sub. Each match is received in the function's
+    # Here repl_mapped is called for each match found by pattern.sub in text. Each match is received in the function's
     # 'match' argument
+    # pattern.sub(repl_mapped, text): Applies the regex pattern to the text and replaces matches
+    # using repl_mapped function. This usage is a little different from the earlier re.sub usage
+    # because pattern is already a compiled regex object
     text = pattern.sub(repl_mapped, text)
 
     # Handle cases where mapped_column is on multiple lines (simplistic): collapse mapped_column( ... ) to single line
