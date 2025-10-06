@@ -96,16 +96,6 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
     lines.append('# Auto-generated models file — review before committing')
     lines.append('')
 
-    # Precompute FK maps so we can emit back_populates on both sides
-    fk_map = {}  # child_table -> list of (local_col_name, referred_table)
-    parent_map = {}  # parent_table -> list of (child_table, local_col_name)
-    for table_name, table in meta.tables.items():
-        for col in table.columns:
-            for fk in col.foreign_keys:
-                parent = fk.column.table.name
-                fk_map.setdefault(table_name, []).append((col.name, parent))
-                parent_map.setdefault(parent, []).append((table_name, col.name))
-
     for table_name, table in meta.tables.items():
         cls_name = snake_to_camel(table_name)
         lines.append(f'class {cls_name}(db.Model):')
@@ -121,8 +111,7 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
         # ForeignKeyConstraint objects
         fkcs = [c for c in table.constraints if c.__class__.__name__ == 'ForeignKeyConstraint']
         for fk in fkcs:
-            # use elements rather than .columns to avoid typing issues
-            cols = ', '.join([f"'{elem.parent.name}'" for elem in fk.elements])
+            cols = ', '.join([f"'{c.name}'" for c in fk.columns])
             refs = ', '.join([f"'{elem.column.table.name}.{elem.column.name}'" for elem in fk.elements])
             targs.append(f"ForeignKeyConstraint([{cols}], [{refs}])")
 
@@ -134,65 +123,10 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
 
         lines.append('')
 
-        # Columns
         for col in table.columns:
-            # Enhanced enum detection: many DB enums show as Enum with .enums attr
-            typ = None
-            try:
-                ctname = col.type.__class__.__name__.upper()
-            except Exception:
-                ctname = str(col.type).upper()
-
-            if hasattr(col.type, 'enums') and getattr(col.type, 'enums'):
-                # render as db.Enum('a','b', name='optional_name')
-                enum_vals = ', '.join(repr(e) for e in col.type.enums)
-                typ = f"db.Enum({enum_vals})"
-            else:
-                typ = coltype_to_string(col.type)
-
-            flags = []
-            if col.primary_key:
-                flags.append('primary_key=True')
-            if not col.nullable and not col.primary_key:
-                flags.append('nullable=False')
-            if getattr(col, 'unique', False):
-                flags.append('unique=True')
-            if col.foreign_keys:
-                fk = list(col.foreign_keys)[0]
-                flags.append(f"db.ForeignKey('{fk.target_fullname}')")
-
-            if flags:
-                lines.append(f"    {col.name} = db.Column({typ}, {', '.join(flags)})")
-            else:
-                lines.append(f"    {col.name} = db.Column({typ})")
-
+            lines.append(render_column(col))
         lines.append('')
 
-        # Relationships: child side (this table has FKs to parents)
-        for local_col, parent in fk_map.get(table_name, []):
-            parent_class = snake_to_camel(parent)
-            # derive attribute name on child from column name (drop trailing _id)
-            if local_col.endswith('_id'):
-                child_attr = local_col[:-3]
-            else:
-                child_attr = local_col
-            # parent side collection name (use child table name, plural-ish)
-            parent_collection = table_name if table_name.endswith('s') else table_name + 's'
-            lines.append(f"    {child_attr} = db.relationship('{parent_class}', back_populates='{parent_collection}')")
-
-        # Relationships: parent side (collections of children)
-        for child_table, child_col in parent_map.get(table_name, []):
-            child_class = snake_to_camel(child_table)
-            # collection attribute name: use child_table plural (keep as-is)
-            collection_attr = child_table if child_table.endswith('s') else child_table + 's'
-            # derive child's attribute name used via back_populates
-            if child_col.endswith('_id'):
-                child_attr = child_col[:-3]
-            else:
-                child_attr = child_col
-            lines.append(f"    {collection_attr} = db.relationship('{child_class}', back_populates='{child_attr}')")
-
-""""
         # safe __repr__ using primary keys
         pk_cols = [c.name for c in table.primary_key.columns] if table.primary_key.columns else [list(table.columns)[0].name]
         lines.append('    def __repr__(self):')
@@ -201,8 +135,6 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
         else:
             inner = ', '.join([f"{c}={{{{self.{c}}}}}" for c in pk_cols])
             lines.append(f"        return f'<{cls_name} {inner}>'")
-"""
-
         lines.append('')
         lines.append('')
 
