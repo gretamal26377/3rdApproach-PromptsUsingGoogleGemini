@@ -44,7 +44,7 @@ TYPE_MAP = {
     'TIME': 'db.Time',
 }
 
-
+# Convert SQLAlchemy column type to string representation for db.Column
 def coltype_to_string(col_type):
     try:
         clsname = col_type.__class__.__name__.upper()
@@ -60,12 +60,12 @@ def coltype_to_string(col_type):
 
     return 'db.String'
 
-
+# Convert snake_case to CamelCase
 def snake_to_camel(name: str) -> str:
     parts = name.split('_')
     return ''.join(p.capitalize() for p in parts)
 
-
+# Render a single column
 def render_column(col):
     name = col.name
     typ = coltype_to_string(col.type)
@@ -88,15 +88,18 @@ def render_column(col):
 
 
 def generate_models(engine, out_path):
+    # Reflect the database schema   
     meta = MetaData()
     meta.reflect(bind=engine)
 
+    # Generate model classes for each table
     lines = []
     lines.append('from .database import db')
     lines.append('')
     lines.append('# Auto-generated models file — review before committing')
     lines.append('')
 
+    # meta.tables.items(): Returns a dictionary of table names and Table objects
     for table_name, table in meta.tables.items():
         cls_name = snake_to_camel(table_name)
         lines.append(f"class {cls_name}(db.Model):")
@@ -125,7 +128,7 @@ def generate_models(engine, out_path):
     with open(out_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
 
-    print(f'Wrote {out_path} with {len(meta.tables)} tables.')
+    print(f'Wrote {out_path} with {len(meta.tables)} tables')
 
 
 def main():
@@ -133,6 +136,7 @@ def main():
     parser.add_argument('--url', help='Database URL (overrides project config)')
     parser.add_argument('--out', default=os.path.join('app', 'shared', 'models_sql2orm_flask-sqlalchemy.py'), help='Output models.py path relative to backend dir')
     parser.add_argument('--force', action='store_true', help='Overwrite without prompt')
+    # parse_args: Parses the command-line arguments
     args = parser.parse_args()
 
     db_url = args.url
@@ -159,7 +163,7 @@ def main():
         if reply.lower() != 'y':
             print('Aborted')
             return
-
+    # Create SQLAlchemy engine that will be used to reflect the database schema
     engine = create_engine(db_url)
     generate_models(engine, out_path)
 

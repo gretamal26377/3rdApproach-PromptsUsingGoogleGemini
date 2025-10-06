@@ -12,7 +12,7 @@ class Config:
     else:
         # Determine path to the password file (compose provides this via secrets)
         pw_file = (
-            os.environ.get('MYSQL_DB_USER_PASSWORD_FILE')
+            os.environ.get('MYSQL_PASSWORD_FILE')
             or '/run/secrets/mysql_db_user_password'
         )
 
@@ -28,7 +28,7 @@ class Config:
             pass # This command does nothing, it's Python syntax, it's used as a placeholder
                  # to indicate that we are intentionally ignoring exceptions here
 
-        user = os.environ.get('MYSQL_DB_USER', 'root')
+        user = os.environ.get('MYSQL_USER', 'db_user')
         host = os.environ.get('MYSQL_HOST', 'localhost')
         dbname = os.environ.get('MYSQL_DATABASE', 'marketplace_db')
         # This var is reserved and used by SQLAlchemy internally (do not change it)
