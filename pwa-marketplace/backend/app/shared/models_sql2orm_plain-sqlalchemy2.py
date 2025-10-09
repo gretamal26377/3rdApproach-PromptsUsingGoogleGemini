@@ -1,9 +1,9 @@
-from typing import Optional
-import datetime
-import decimal
+from typing import List, Optional
 
 from sqlalchemy import BigInteger, DECIMAL, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+import datetime
+import decimal
 
 class Base(DeclarativeBase):
     pass
@@ -17,7 +17,7 @@ class CategoriesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     category_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -33,7 +33,7 @@ class CitiesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     city_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -49,7 +49,7 @@ class CountriesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     country_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -66,7 +66,7 @@ class CustomerAddressesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     address_id: Mapped[Optional[int]] = mapped_column(Integer)
     customer_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
@@ -83,7 +83,7 @@ class CustomersHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     customer_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -98,20 +98,20 @@ class EntityStatuses(Base):
     )
 
     status_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    status_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    status_code: Mapped[str] = mapped_column(String(50))
     status_description: Mapped[Optional[str]] = mapped_column(Text)
 
-    categories: Mapped[list['Categories']] = relationship('Categories', back_populates='category_status')
-    countries: Mapped[list['Countries']] = relationship('Countries', back_populates='country_status')
-    customers: Mapped[list['Customers']] = relationship('Customers', back_populates='customer_status')
-    stores: Mapped[list['Stores']] = relationship('Stores', back_populates='store_status')
-    users: Mapped[list['Users']] = relationship('Users', back_populates='user_status')
-    products_services: Mapped[list['ProductsServices']] = relationship('ProductsServices', back_populates='product_service_status')
-    states_regions: Mapped[list['StatesRegions']] = relationship('StatesRegions', back_populates='state_region_status')
-    store_user_role: Mapped[list['StoreUserRole']] = relationship('StoreUserRole', back_populates='status')
-    cities: Mapped[list['Cities']] = relationship('Cities', back_populates='city_status')
-    store_products_services: Mapped[list['StoreProductsServices']] = relationship('StoreProductsServices', back_populates='status')
-    customer_addresses: Mapped[list['CustomerAddresses']] = relationship('CustomerAddresses', back_populates='address_status')
+    categories: Mapped[List['Categories']] = relationship('Categories', back_populates='category_status')
+    countries: Mapped[List['Countries']] = relationship('Countries', back_populates='country_status')
+    customers: Mapped[List['Customers']] = relationship('Customers', back_populates='customer_status')
+    stores: Mapped[List['Stores']] = relationship('Stores', back_populates='store_status')
+    users: Mapped[List['Users']] = relationship('Users', back_populates='user_status')
+    products_services: Mapped[List['ProductsServices']] = relationship('ProductsServices', back_populates='product_service_status')
+    states_regions: Mapped[List['StatesRegions']] = relationship('StatesRegions', back_populates='state_region_status')
+    store_user_role: Mapped[List['StoreUserRole']] = relationship('StoreUserRole', back_populates='status')
+    cities: Mapped[List['Cities']] = relationship('Cities', back_populates='city_status')
+    store_products_services: Mapped[List['StoreProductsServices']] = relationship('StoreProductsServices', back_populates='status')
+    customer_addresses: Mapped[List['CustomerAddresses']] = relationship('CustomerAddresses', back_populates='address_status')
 
 
 class EntityStatusesHistory(Base):
@@ -122,7 +122,7 @@ class EntityStatusesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     status_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -139,7 +139,7 @@ class OrderDetailsHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     order_id: Mapped[Optional[int]] = mapped_column(Integer)
     store_product_service_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
@@ -155,11 +155,11 @@ class OrderStatuses(Base):
     )
 
     status_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    status_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    status_code: Mapped[str] = mapped_column(String(50))
     status_description: Mapped[Optional[str]] = mapped_column(Text)
 
-    orders: Mapped[list['Orders']] = relationship('Orders', back_populates='order_status')
-    order_details: Mapped[list['OrderDetails']] = relationship('OrderDetails', back_populates='product_service_status')
+    orders: Mapped[List['Orders']] = relationship('Orders', back_populates='order_status')
+    order_details: Mapped[List['OrderDetails']] = relationship('OrderDetails', back_populates='product_service_status')
 
 
 class OrderStatusesHistory(Base):
@@ -170,7 +170,7 @@ class OrderStatusesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     status_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -186,7 +186,7 @@ class OrdersHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     order_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -202,7 +202,7 @@ class ProductsServicesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     product_service_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -217,10 +217,10 @@ class Roles(Base):
     )
 
     role_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    role_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    role_code: Mapped[str] = mapped_column(String(50))
     role_description: Mapped[Optional[str]] = mapped_column(Text)
 
-    store_user_role: Mapped[list['StoreUserRole']] = relationship('StoreUserRole', back_populates='role')
+    store_user_role: Mapped[List['StoreUserRole']] = relationship('StoreUserRole', back_populates='role')
 
 
 class RolesHistory(Base):
@@ -231,7 +231,7 @@ class RolesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     role_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -247,7 +247,7 @@ class StatesRegionsHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     state_region_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -265,7 +265,7 @@ class StoreProductsServicesHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     id: Mapped[Optional[int]] = mapped_column(Integer)
     store_id: Mapped[Optional[int]] = mapped_column(Integer)
     product_service_id: Mapped[Optional[int]] = mapped_column(Integer)
@@ -284,7 +284,7 @@ class StoreUserRoleHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     store_id: Mapped[Optional[int]] = mapped_column(Integer)
     user_id: Mapped[Optional[int]] = mapped_column(Integer)
     role_id: Mapped[Optional[int]] = mapped_column(Integer)
@@ -302,7 +302,7 @@ class StoresHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     store_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -318,7 +318,7 @@ class UsersHistory(Base):
     )
 
     hist_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    op_type: Mapped[str] = mapped_column(Enum('INSERT', 'UPDATE', 'DELETE'))
     user_id: Mapped[Optional[int]] = mapped_column(Integer)
     changed_by: Mapped[Optional[str]] = mapped_column(String(100))
     changed_at: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
@@ -335,13 +335,13 @@ class Categories(Base):
     )
 
     category_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    category_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    category_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    category_name: Mapped[str] = mapped_column(String(100))
+    category_status_id: Mapped[int] = mapped_column(Integer)
     category_description: Mapped[Optional[str]] = mapped_column(Text)
     category_pic_path: Mapped[Optional[str]] = mapped_column(String(255))
 
     category_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='categories')
-    products_services: Mapped[list['ProductsServices']] = relationship('ProductsServices', back_populates='product_service_category')
+    products_services: Mapped[List['ProductsServices']] = relationship('ProductsServices', back_populates='product_service_category')
 
 
 class Countries(Base):
@@ -353,12 +353,12 @@ class Countries(Base):
     )
 
     country_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    country_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    country_code: Mapped[str] = mapped_column(String(10), nullable=False)
-    country_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    country_name: Mapped[str] = mapped_column(String(100))
+    country_code: Mapped[str] = mapped_column(String(10))
+    country_status_id: Mapped[int] = mapped_column(Integer)
 
     country_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='countries')
-    states_regions: Mapped[list['StatesRegions']] = relationship('StatesRegions', back_populates='country')
+    states_regions: Mapped[List['StatesRegions']] = relationship('StatesRegions', back_populates='country')
 
 
 class Customers(Base):
@@ -370,15 +370,15 @@ class Customers(Base):
     )
 
     customer_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    customer_email: Mapped[str] = mapped_column(String(100), nullable=False)
-    customer_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    customer_password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    customer_phone: Mapped[str] = mapped_column(String(20), nullable=False)
-    customer_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    customer_email: Mapped[str] = mapped_column(String(100))
+    customer_name: Mapped[str] = mapped_column(String(100))
+    customer_password_hash: Mapped[str] = mapped_column(String(255))
+    customer_phone: Mapped[str] = mapped_column(String(20))
+    customer_status_id: Mapped[int] = mapped_column(Integer)
 
     customer_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='customers')
-    orders: Mapped[list['Orders']] = relationship('Orders', back_populates='customer')
-    customer_addresses: Mapped[list['CustomerAddresses']] = relationship('CustomerAddresses', back_populates='customer')
+    orders: Mapped[List['Orders']] = relationship('Orders', back_populates='customer')
+    customer_addresses: Mapped[List['CustomerAddresses']] = relationship('CustomerAddresses', back_populates='customer')
 
 
 class Stores(Base):
@@ -390,16 +390,16 @@ class Stores(Base):
     )
 
     store_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    store_email: Mapped[str] = mapped_column(String(100), nullable=False)
-    store_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    store_address: Mapped[str] = mapped_column(Text, nullable=False)
-    store_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    store_email: Mapped[str] = mapped_column(String(100))
+    store_name: Mapped[str] = mapped_column(String(100))
+    store_address: Mapped[str] = mapped_column(Text)
+    store_status_id: Mapped[int] = mapped_column(Integer)
     store_description: Mapped[Optional[str]] = mapped_column(Text)
     store_phone: Mapped[Optional[str]] = mapped_column(String(20))
 
     store_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='stores')
-    store_user_role: Mapped[list['StoreUserRole']] = relationship('StoreUserRole', back_populates='store')
-    store_products_services: Mapped[list['StoreProductsServices']] = relationship('StoreProductsServices', back_populates='store')
+    store_user_role: Mapped[List['StoreUserRole']] = relationship('StoreUserRole', back_populates='store')
+    store_products_services: Mapped[List['StoreProductsServices']] = relationship('StoreProductsServices', back_populates='store')
 
 
 class Users(Base):
@@ -411,14 +411,14 @@ class Users(Base):
     )
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_email: Mapped[str] = mapped_column(String(100), nullable=False)
-    user_name: Mapped[str] = mapped_column(String(50), nullable=False)
-    user_password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    user_phone: Mapped[str] = mapped_column(String(20), nullable=False)
-    user_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_email: Mapped[str] = mapped_column(String(100))
+    user_name: Mapped[str] = mapped_column(String(50))
+    user_password_hash: Mapped[str] = mapped_column(String(255))
+    user_phone: Mapped[str] = mapped_column(String(20))
+    user_status_id: Mapped[int] = mapped_column(Integer)
 
     user_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='users')
-    store_user_role: Mapped[list['StoreUserRole']] = relationship('StoreUserRole', back_populates='user')
+    store_user_role: Mapped[List['StoreUserRole']] = relationship('StoreUserRole', back_populates='user')
 
 
 class Orders(Base):
@@ -431,14 +431,14 @@ class Orders(Base):
     )
 
     order_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    order_tot_quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    order_tot_price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
-    customer_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    order_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    order_tot_quantity: Mapped[int] = mapped_column(Integer)
+    order_tot_price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2))
+    customer_id: Mapped[int] = mapped_column(Integer)
+    order_status_id: Mapped[int] = mapped_column(Integer)
 
     customer: Mapped['Customers'] = relationship('Customers', back_populates='orders')
     order_status: Mapped['OrderStatuses'] = relationship('OrderStatuses', back_populates='orders')
-    order_details: Mapped[list['OrderDetails']] = relationship('OrderDetails', back_populates='order')
+    order_details: Mapped[List['OrderDetails']] = relationship('OrderDetails', back_populates='order')
 
 
 class ProductsServices(Base):
@@ -452,15 +452,15 @@ class ProductsServices(Base):
     )
 
     product_service_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    product_service_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    product_service_category_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    product_service_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    product_service_name: Mapped[str] = mapped_column(String(100))
+    product_service_category_id: Mapped[int] = mapped_column(Integer)
+    product_service_status_id: Mapped[int] = mapped_column(Integer)
     product_service_description: Mapped[Optional[str]] = mapped_column(Text)
     product_service_pic_path: Mapped[Optional[str]] = mapped_column(String(255))
 
     product_service_category: Mapped['Categories'] = relationship('Categories', back_populates='products_services')
     product_service_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='products_services')
-    store_products_services: Mapped[list['StoreProductsServices']] = relationship('StoreProductsServices', back_populates='product_service')
+    store_products_services: Mapped[List['StoreProductsServices']] = relationship('StoreProductsServices', back_populates='product_service')
 
 
 class StatesRegions(Base):
@@ -474,14 +474,14 @@ class StatesRegions(Base):
     )
 
     state_region_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    state_region_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    state_region_code: Mapped[str] = mapped_column(String(10), nullable=False)
-    country_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    state_region_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    state_region_name: Mapped[str] = mapped_column(String(100))
+    state_region_code: Mapped[str] = mapped_column(String(10))
+    country_id: Mapped[int] = mapped_column(Integer)
+    state_region_status_id: Mapped[int] = mapped_column(Integer)
 
     country: Mapped['Countries'] = relationship('Countries', back_populates='states_regions')
     state_region_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='states_regions')
-    cities: Mapped[list['Cities']] = relationship('Cities', back_populates='state_region')
+    cities: Mapped[List['Cities']] = relationship('Cities', back_populates='state_region')
 
 
 class StoreUserRole(Base):
@@ -498,8 +498,8 @@ class StoreUserRole(Base):
 
     store_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    role_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    role_id: Mapped[int] = mapped_column(Integer)
+    status_id: Mapped[int] = mapped_column(Integer)
 
     role: Mapped['Roles'] = relationship('Roles', back_populates='store_user_role')
     status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='store_user_role')
@@ -517,13 +517,13 @@ class Cities(Base):
     )
 
     city_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    city_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    state_region_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    city_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    city_name: Mapped[str] = mapped_column(String(100))
+    state_region_id: Mapped[int] = mapped_column(Integer)
+    city_status_id: Mapped[int] = mapped_column(Integer)
 
     city_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='cities')
     state_region: Mapped['StatesRegions'] = relationship('StatesRegions', back_populates='cities')
-    customer_addresses: Mapped[list['CustomerAddresses']] = relationship('CustomerAddresses', back_populates='city')
+    customer_addresses: Mapped[List['CustomerAddresses']] = relationship('CustomerAddresses', back_populates='city')
 
 
 class StoreProductsServices(Base):
@@ -539,16 +539,16 @@ class StoreProductsServices(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    store_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    product_service_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
-    stock: Mapped[int] = mapped_column(Integer, nullable=False)
-    status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    store_id: Mapped[int] = mapped_column(Integer)
+    product_service_id: Mapped[int] = mapped_column(Integer)
+    price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2))
+    stock: Mapped[int] = mapped_column(Integer)
+    status_id: Mapped[int] = mapped_column(Integer)
 
     product_service: Mapped['ProductsServices'] = relationship('ProductsServices', back_populates='store_products_services')
     status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='store_products_services')
     store: Mapped['Stores'] = relationship('Stores', back_populates='store_products_services')
-    order_details: Mapped[list['OrderDetails']] = relationship('OrderDetails', back_populates='store_product_service')
+    order_details: Mapped[List['OrderDetails']] = relationship('OrderDetails', back_populates='store_product_service')
 
 
 class CustomerAddresses(Base):
@@ -563,12 +563,12 @@ class CustomerAddresses(Base):
     )
 
     address_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    customer_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    address_line1: Mapped[str] = mapped_column(String(255), nullable=False)
-    city_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    google_maps_url: Mapped[str] = mapped_column(String(255), nullable=False)
-    address_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    postal_code: Mapped[str] = mapped_column(String(20), nullable=False)
+    customer_id: Mapped[int] = mapped_column(Integer)
+    address_line1: Mapped[str] = mapped_column(String(255))
+    city_id: Mapped[int] = mapped_column(Integer)
+    google_maps_url: Mapped[str] = mapped_column(String(255))
+    address_status_id: Mapped[int] = mapped_column(Integer)
+    postal_code: Mapped[str] = mapped_column(String(20))
     address_line2: Mapped[Optional[str]] = mapped_column(String(255))
 
     address_status: Mapped['EntityStatuses'] = relationship('EntityStatuses', back_populates='customer_addresses')
@@ -588,12 +588,12 @@ class OrderDetails(Base):
 
     order_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     store_product_service_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    product_service_quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    product_service_price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
-    product_service_tot_price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
-    product_service_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    product_service_filled_quantity: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("'0'"))
-    product_service_filled_tot_price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2), nullable=False, server_default=text("'0.00'"))
+    product_service_quantity: Mapped[int] = mapped_column(Integer)
+    product_service_price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2))
+    product_service_tot_price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2))
+    product_service_status_id: Mapped[int] = mapped_column(Integer)
+    product_service_filled_quantity: Mapped[int] = mapped_column(Integer, server_default=text("'0'"))
+    product_service_filled_tot_price: Mapped[decimal.Decimal] = mapped_column(DECIMAL(10, 2), server_default=text("'0.00'"))
 
     order: Mapped['Orders'] = relationship('Orders', back_populates='order_details')
     product_service_status: Mapped['OrderStatuses'] = relationship('OrderStatuses', back_populates='order_details')
