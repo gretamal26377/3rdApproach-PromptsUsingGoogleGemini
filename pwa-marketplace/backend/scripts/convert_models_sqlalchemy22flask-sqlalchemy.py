@@ -146,7 +146,10 @@ def convert_file(src: Path, dst: Path) -> None:
     # This is best-effort: prefix common SQLAlchemy type names with db. when they appear as standalone identifiers
     types = ['Integer','BigInteger','String','Text','JSON','DECIMAL','Date','DateTime','TIMESTAMP','Float','Numeric','Boolean']
     for t in types:
-        text = re.sub(rf"\b{t}\b", f"db.{t}", text)
+        # Only match the bare identifier when it's NOT already prefixed with db., sa., or sqlalchemy.
+        # Use multiple fixed-width negative lookbehinds (eg: (?<!db\.)(?<!sa\.)(?<!sqlalchemy\.))
+        pattern = rf"(?<!db\.)(?<!sa\.)(?<!sqlalchemy\.)\b{t}\b"
+        text = re.sub(pattern, f"db.{t}", text)
 
     # Replace mapped_column markers if any left
     text = text.replace('mapped_column', 'db.Column')
