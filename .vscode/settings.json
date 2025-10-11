@@ -4,5 +4,14 @@
     ],
     "sqlfluff.dialect": "mysql",
     "python-envs.defaultEnvManager": "ms-python.python:system",
-    "python-envs.pythonProjects": []
+    "python-envs.pythonProjects": [],
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./pwa-marketplace",
+        "-p",
+        "*_test.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
 }

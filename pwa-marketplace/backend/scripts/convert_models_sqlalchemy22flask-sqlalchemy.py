@@ -111,15 +111,24 @@ def convert_file(src: Path, dst: Path) -> None:
     # \[[^\]]+\]: Matches an opening bracket with \[, followed by one or more characters that are not a
     # closing bracket (using [^\]]+ this is called a negated character class), and then a closing
     # bracket with \]
-    # .*?: Matches any character (.), zero or more times (*), but as few times as possible (?)
+    # [^\]]+ called negated character: "[" begin char class, "^" after "[" negates the class, except
+    # listed chars, in this case "]" with "\]" (escaped), then "]" to close char class
+    # .*?: Matches any character (.), zero or more times (*), but as few times as possible (?),
+    # until first ")", represented by "\)"
     # re.MULTILINE: Allows ^ and $ to match the start and end of each line
-    # re.DOTALL: Makes the dot (.) match newline characters as well, so it can span multiple lines
-    pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[[^\]]+\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE | re.DOTALL)
+    # re.DOTALL: Makes the dot (.) match newline characters as well, so it can span multiple lines.
+    # Using a more tolerant capture for the Mapped[...] part so it can span
+    # multiple lines and include nested generics. DOTALL lets '.' match newlines
+    # and the non-greedy (.*?) stops at the first closing ']'. This is best-effort
+    # and more permissive than the previous [^\]]+ which failed on nested brackets
+    pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE | re.DOTALL)
     
     def repl_mapped(match):
         indent = match.group(1)
         name = match.group(2)
-        inner = match.group(3)
+        # After changing the Mapped[...] part to a separate non-greedy capture,
+        # groups are now: 1=indent, 2=name, 3=Mapped[...] content, 4=mapped_column inner args
+        inner = match.group(4)
         col = transform_mapped_column_args(inner)
         return f"{indent}{name} = {col}"
 
@@ -133,7 +142,10 @@ def convert_file(src: Path, dst: Path) -> None:
     # Handle cases where mapped_column is on multiple lines (simplistic): collapse mapped_column( ... ) to single line
     # lambda m: Corresponds to an anonymous inline small function in Python that takes a match object m and
     # returns a transformed string
-    text = re.sub(r"mapped_column\((\s*[^)]*?)\)(\s*)", lambda m: f"mapped_column({m.group(1).replace('\n',' ').strip()})", text)
+    # Collapse multiline mapped_column(...) into a single-line call, safely.
+    text = re.sub(r"mapped_column\((\s*[^)]*?)\)(\s*)",
+                  lambda m: "mapped_column({})".format(m.group(1).replace('\n', ' ').strip()),
+                  text)
 
     # Replace remaining occurrences of mapped_column(...) that were created above or missed
     text = re.sub(r"mapped_column\((.*?)\)", lambda m: transform_mapped_column_args(m.group(1)), text, flags=re.DOTALL)
@@ -148,8 +160,8 @@ def convert_file(src: Path, dst: Path) -> None:
     for t in types:
         # Only match the bare identifier when it's NOT already prefixed with db., sa., or sqlalchemy.
         # Use multiple fixed-width negative lookbehinds (eg: (?<!db\.)(?<!sa\.)(?<!sqlalchemy\.))
-        pattern = rf"(?<!db\.)(?<!sa\.)(?<!sqlalchemy\.)\b{t}\b"
-        text = re.sub(pattern, f"db.{t}", text)
+        type_pattern = rf"(?<!db\.)(?<!sa\.)(?<!sqlalchemy\.)\b{t}\b"
+        text = re.sub(type_pattern, f"db.{t}", text)
 
     # Replace mapped_column markers if any left
     text = text.replace('mapped_column', 'db.Column')
