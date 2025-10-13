@@ -159,7 +159,7 @@ def load_config_db_url() -> str | None:
 def main() -> None:
     parser = argparse.ArgumentParser(description='Generate Flask-SQLAlchemy models from DB schema (reflection/automap approach)')
     parser.add_argument('--url', help='Database URL (overrides project config)')
-    parser.add_argument('--out', default=os.path.join('app', 'shared', 'models_sql2orm_flask-sqlalchemy.py'), help='Output models_sql2orm_flask-sqlalchemy.py path relative to backend dir')
+    parser.add_argument('--out', default=os.path.join('app', 'shared', 'models_sql2orm_flask_sqlalchemy.py'), help='Output models_sql2orm_flask-sqlalchemy.py path relative to backend dir')
     parser.add_argument('--force', action='store_true', help='Overwrite without prompt')
     args = parser.parse_args()
 

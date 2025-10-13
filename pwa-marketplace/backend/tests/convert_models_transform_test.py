@@ -7,14 +7,16 @@ import sys
 
 
 def load_converter_module():
-    """Dynamically load the converter script despite hyphens in filename."""
+    """Dynamically load the converter script despite hyphens in filename"""
     repo_root = Path(__file__).resolve().parents[2]  # .../3rdApproach-PromptsUsingVSCodeCopilot-
-    script_path = repo_root / "pwa-marketplace" / "backend" / "scripts" / "convert_models_sqlalchemy22flask-sqlalchemy.py"
+    script_path = repo_root / "pwa-marketplace" / "backend" / "scripts" / "convert_models_sqlalchemy22flask_sqlalchemy.py"
     spec = importlib.util.spec_from_file_location("converter_module", script_path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load converter at {script_path}")
     module = importlib.util.module_from_spec(spec)
+    # Initialize the module
     sys.modules[spec.name] = module
+    # Execute the module to populate it
     spec.loader.exec_module(module)
     return module
 
