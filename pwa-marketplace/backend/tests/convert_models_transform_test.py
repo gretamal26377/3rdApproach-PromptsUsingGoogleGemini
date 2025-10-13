@@ -2,12 +2,16 @@ import unittest
 from pathlib import Path
 import tempfile
 import textwrap
-import importlib.util
-import sys
 
+# import importlib.util
+# import sys
 
+# Direct import using package (__init__.py added to backend/scripts)
+from backend.scripts import convert_models_sqlalchemy22flask_sqlalchemy as converter
+
+"""
 def load_converter_module():
-    """Dynamically load the converter script despite hyphens in filename"""
+    # Dynamically load the converter script (underscore filename)
     repo_root = Path(__file__).resolve().parents[2]  # .../3rdApproach-PromptsUsingVSCodeCopilot-
     script_path = repo_root / "pwa-marketplace" / "backend" / "scripts" / "convert_models_sqlalchemy22flask_sqlalchemy.py"
     spec = importlib.util.spec_from_file_location("converter_module", script_path)
@@ -19,21 +23,29 @@ def load_converter_module():
     # Execute the module to populate it
     spec.loader.exec_module(module)
     return module
-
+"""
 
 class ConvertModelsTransformTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.converter = load_converter_module()
+    # @classmethod
+    # def setUpClass(cls):
+    #     cls.converter = load_converter_module()
 
     def _convert_text(self, src_text: str) -> str:
+        # Normalize indentation and leading newlines
         src_text = textwrap.dedent(src_text).lstrip("\n")
+
+        # Use a temporary directory to hold input/output files
+        # with most common use case: Ensuring a file/DB closure after its inside code block
+        # is executed
         with tempfile.TemporaryDirectory() as td:
             td_path = Path(td)
             src = td_path / "in_models.py"
             dst = td_path / "out_models.py"
             src.write_text(src_text, encoding="utf-8")
-            self.converter.convert_file(src, dst)
+
+            # self.converter.convert_file(src, dst)
+            converter.convert_file(src, dst)
+
             out = dst.read_text(encoding="utf-8")
             return out.replace("\r\n", "\n")
 
@@ -53,7 +65,11 @@ class ConvertModelsTransformTests(unittest.TestCase):
             ))
             user: Mapped['User'] = relationship(back_populates="xs")
         """
+
+        # Convert model text using converter.convert_file() from convert_models_sqlalchemy22flask_sqlalchemy.py
         out = self._convert_text(src)
+
+        # Different Checks:
         # Header inserted
         self.assertTrue(out.startswith("from .database import db\n"))
         # Base -> db.Model

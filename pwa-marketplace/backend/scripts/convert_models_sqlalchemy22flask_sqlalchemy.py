@@ -7,7 +7,9 @@ Usage:
     --in app/shared/models_sql2orm_plain_sqlalchemy2.py \
     --out app/shared/models_plain_sqlalchemy22flask_sqlalchemy.py
 
-Both args are optional, defaults to above paths.
+Both args are optional, defaults to above paths. Standard of Python
+files is to use underscores "_" not hyphens "-", in order to be able
+to import them directly without using importlib and other libs. 
 This is a best-effort text transformation. Review the output and adjust
 relationship/back_populates/uselist/foreign_keys or imports as needed.
 
