@@ -2,12 +2,19 @@ import unittest
 from pathlib import Path
 import tempfile
 import textwrap
-
 # import importlib.util
-# import sys
+import sys
 
-# Direct import using package (__init__.py added to backend/scripts)
-from backend.scripts import convert_models_sqlalchemy22flask_sqlalchemy as converter
+# Add pwa-marketplace to sys.path so 'backend' is importable.
+# We must do it this way because pwa-marketplace is hyphenated,
+# which is not a valid standard Python identifier, and it must be placed
+# before below import because converter module depends on it
+pwa_marketplace_path = Path(__file__).resolve().parents[3] / "pwa-marketplace"
+if str(pwa_marketplace_path) not in sys.path:
+    sys.path.insert(0, str(pwa_marketplace_path))
+
+# Direct import as package (__init__.py added to backend/scripts in order to allow this)
+from backend.scripts import convert_models_sqlalchemy22flask_sqlalchemy as converter  # noqa: E402
 
 """
 def load_converter_module():
