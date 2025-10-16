@@ -3,6 +3,9 @@
 # settings.json, extensions.json or launch.json. If you want to ignore all VSCode settings, uncomment the line below
 #.vscode/
 
+# Visual Studio
+.vs/
+
 # Node.js dependencies
 # This line tells Git to ignore any folder named node_modules anywhere in your repository,
 # at any depth

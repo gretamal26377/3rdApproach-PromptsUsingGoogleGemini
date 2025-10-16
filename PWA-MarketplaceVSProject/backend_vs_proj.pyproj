@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5f7c64ac-fb25-4cf9-8725-6d32aef40294}</ProjectGuid>
+    <ProjectHome>..\pwa-marketplace\backend\</ProjectHome>
+    <StartupFile>
+    </StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId>MSBuild|.venv-win|$(MSBuildProjectFullPath)</InterpreterId>
+    <TestFramework>unittest</TestFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Workspace|Workspace|.venv-win" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include=".venv-win\">
+      <Id>.venv-win</Id>
+      <Description>.venv-win (Python 3.11)</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <Version>3.11</Version>
+      <Architecture>X64</Architecture>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+    </Interpreter>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="alembic\" />
+    <Folder Include="alembic\versions\" />
+    <Folder Include="app\" />
+    <Folder Include="app\admin\" />
+    <Folder Include="app\customer\" />
+    <Folder Include="app\shared\" />
+    <Folder Include="database\" />
+    <Folder Include="database\docker-entrypoint-initdb.d\" />
+    <Folder Include="scripts\" />
+    <Folder Include="tests\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="alembic\env.py" />
+    <Compile Include="alembic\versions\85cd3b1ae04c_1st_alembic_models2sql_attempt.py" />
+    <Compile Include="app\admin\admin_management.py" />
+    <Compile Include="app\admin\admin_routes.py" />
+    <Compile Include="app\admin\wsgi.py" />
+    <Compile Include="app\admin\__init__.py" />
+    <Compile Include="app\customer\customer_management.py" />
+    <Compile Include="app\customer\customer_routes.py" />
+    <Compile Include="app\customer\wsgi.py" />
+    <Compile Include="app\customer\__init__.py" />
+    <Compile Include="app\shared\auth.py" />
+    <Compile Include="app\shared\config.py" />
+    <Compile Include="app\shared\database.py" />
+    <Compile Include="app\shared\models.py" />
+    <Compile Include="app\shared\models_plain_sqlalchemy22flask_sqlalchemy.py" />
+    <Compile Include="app\shared\models_plain_sqlalchemy22flask_sqlalchemybak.py" />
+    <Compile Include="app\shared\models_sql2orm_flask_sqlalchemy.py" />
+    <Compile Include="app\shared\models_sql2orm_plain_sqlalchemy2.py" />
+    <Compile Include="app\shared\models_sql2orm_plain_sqlalchemy2_bak.py" />
+    <Compile Include="app\shared\utils.py" />
+    <Compile Include="app\shared\__init__.py" />
+    <Compile Include="app\__init__.py" />
+    <Compile Include="scripts\convert_models_sqlalchemy22flask_sqlalchemy.py" />
+    <Compile Include="scripts\convert_models_sqlalchemy22flask_sqlalchemybak.py" />
+    <Compile Include="scripts\generate_models_automap.py" />
+    <Compile Include="scripts\generate_models_automap_old2.py" />
+    <Compile Include="scripts\generate_models_old.py" />
+    <Compile Include="scripts\__init__.py" />
+    <Compile Include="tests\convert_models_transform_test.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="alembic\README" />
+    <Content Include="alembic\script.py.mako" />
+    <Content Include="app\shared\models.py.old" />
+    <Content Include="database\docker-entrypoint-initdb.d\init.sql" />
+    <Content Include="database\docker-entrypoint-initdb.d\init.sql.bak" />
+    <Content Include="database\docker-entrypoint-initdb.d\models2SQL.sql.bak" />
+    <Content Include="database\Dockerfile" />
+    <Content Include="scripts\entrypoint.sh" />
+    <Content Include="scripts\Makefile" />
+    <Content Include="scripts\wait-for-it.sh" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>

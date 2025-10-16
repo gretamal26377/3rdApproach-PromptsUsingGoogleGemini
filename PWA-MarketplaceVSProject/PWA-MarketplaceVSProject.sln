@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36518.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "backend_vs_proj", "backend_vs_proj.pyproj", "{5F7C64AC-FB25-4CF9-8725-6D32AEF40294}"
+EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend_vs_proj", "frontend_vs_proj\frontend_vs_proj.esproj", "{38E5B302-58B8-34F4-7495-9735E69689B9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		..\pwa-marketplace\.coverage = ..\pwa-marketplace\.coverage
+		..\pwa-marketplace\.sqlfluff = ..\pwa-marketplace\.sqlfluff
+		..\pwa-marketplace\coverage.xml = ..\pwa-marketplace\coverage.xml
+		..\pwa-marketplace\docker-compose.override.yml.old = ..\pwa-marketplace\docker-compose.override.yml.old
+		..\pwa-marketplace\docker-compose.yml = ..\pwa-marketplace\docker-compose.yml
+		..\pwa-marketplace\README.md = ..\pwa-marketplace\README.md
+		..\pwa-marketplace\STYLEGUIDE.md = ..\pwa-marketplace\STYLEGUIDE.md
+		..\pwa-marketplace\tmp-db-stack.yml = ..\pwa-marketplace\tmp-db-stack.yml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5F7C64AC-FB25-4CF9-8725-6D32AEF40294}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F7C64AC-FB25-4CF9-8725-6D32AEF40294}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38E5B302-58B8-34F4-7495-9735E69689B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38E5B302-58B8-34F4-7495-9735E69689B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38E5B302-58B8-34F4-7495-9735E69689B9}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{38E5B302-58B8-34F4-7495-9735E69689B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38E5B302-58B8-34F4-7495-9735E69689B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38E5B302-58B8-34F4-7495-9735E69689B9}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B491B27D-C6CA-4D29-B8EF-52F0BB247523}
+	EndGlobalSection
+EndGlobal

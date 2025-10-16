@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.2752196">
+  <!--
+    Link all files and folders from the external frontend folder into this JS project.
+    The Include path is relative to the project file location (this .esproj is in
+    frontend_vs_proj\). From here we go up two levels to reach the workspace root
+    and then into the pwa-marketplace\frontend folder.
+
+    Files will appear under a virtual folder named "frontend" in Solution Explorer
+    while remaining on disk in the external location.
+  -->
+  <ItemGroup>
+    <None Include="..\..\pwa-marketplace\frontend\**\*">
+      <Link>frontend\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+</Project>
