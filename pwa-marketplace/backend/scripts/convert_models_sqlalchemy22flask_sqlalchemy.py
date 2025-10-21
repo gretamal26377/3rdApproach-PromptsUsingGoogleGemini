@@ -28,6 +28,17 @@ import re
 from pathlib import Path
 
 
+import debugpy, os, sys
+print("PID:", os.getpid(), file=sys.stderr, flush=True)
+print("sys.executable:", sys.executable, file=sys.stderr, flush=True)
+print("__file__:", __file__, file=sys.stderr, flush=True)
+debugpy.listen(("0.0.0.0", 5678))
+print("Waiting for debugger on 5678...",file=sys.stderr, flush=True)
+debugpy.wait_for_client()
+print("Debugger attached", file=sys.stderr, flush=True)
+debugpy.breakpoint()
+
+
 def transform_mapped_column_args(inner: str) -> str:
     """Convert the inner of mapped_column(...) into db.Column(...) string.
     Example: "Integer, primary_key=True" -> "db.Column(db.Integer, primary_key=True)"
@@ -131,6 +142,8 @@ def convert_file(src: Path, dst: Path) -> None:
         # After changing the Mapped[...] part to a separate non-greedy capture,
         # groups are now: 1=indent, 2=name, 3=Mapped[...] content, 4=mapped_column inner args
         inner = match.group(4)
+        print("match:", match, file=sys.stderr, flush=True)
+        print("match.group(4):", match.group(4), file=sys.stderr, flush=True)
         col = transform_mapped_column_args(inner)
         return f"{indent}{name} = {col}"
 
