@@ -27,24 +27,34 @@ import argparse
 import re
 from pathlib import Path
 
+# Debugging setup with debugpy programmatically. Comment out if not needed
+# import debugpy, os, sys
+# print("PID:", os.getpid(), file=sys.stderr, flush=True)
+# print("sys.executable:", sys.executable, file=sys.stderr, flush=True)
+# print("__file__:", __file__, file=sys.stderr, flush=True)
+# debugpy.listen(("0.0.0.0", 5678))
+# print("Waiting for debugger on 5678...",file=sys.stderr, flush=True)
+# debugpy.wait_for_client()
+# print("Debugger attached", file=sys.stderr, flush=True)
+# debugpy.breakpoint()
 
-import debugpy, os, sys
-print("PID:", os.getpid(), file=sys.stderr, flush=True)
-print("sys.executable:", sys.executable, file=sys.stderr, flush=True)
-print("__file__:", __file__, file=sys.stderr, flush=True)
-debugpy.listen(("0.0.0.0", 5678))
-print("Waiting for debugger on 5678...",file=sys.stderr, flush=True)
-debugpy.wait_for_client()
-print("Debugger attached", file=sys.stderr, flush=True)
-debugpy.breakpoint()
 
-
-def transform_mapped_column_args(inner: str) -> str:
+def transform_mapped_column_args(inner: str, mapped_type_str: str) -> str:
     """Convert the inner of mapped_column(...) into db.Column(...) string.
     Example: "Integer, primary_key=True" -> "db.Column(db.Integer, primary_key=True)"
     If no type provided (starts with identifier like primary_key=) produce db.Column(...)
     """
     s = inner.strip()
+
+    # Logic to add nullable=False if the Mapped type is not Optional
+    is_optional = "Optional" in mapped_type_str
+    has_nullable = 'nullable' in s
+    
+    if not is_optional and not has_nullable and mapped_type_str:
+        if s and not s.endswith(','):
+            s += ', '
+        s += 'nullable=False'
+
     if not s:
         return "db.Column()"
 
@@ -100,6 +110,9 @@ def convert_file(src: Path, dst: Path) -> None:
     text = re.sub(r"from\s+sqlalchemy\.orm\s+import\s+DeclarativeBase,?\s*Mapped,?\s*mapped_column,?\s*relationship\s*\n", '', text)
     # remove explicit DeclarativeBase class if present
     text = re.sub(r"class\s+Base\s*\(DeclarativeBase\):\s*\n\s*pass\s*\n\n", '', text)
+    # remove "from typing import List, Optional" if present
+    text = re.sub(r"from\s+typing\s+import\s+List,?\s*Optional\s*\n", '', text)
+
 
     # add Flask-SQLAlchemy db import
     header = "from .database import db\n"
@@ -129,22 +142,25 @@ def convert_file(src: Path, dst: Path) -> None:
     # .*?: Matches any character (.), zero or more times (*), but as few times as possible (?),
     # until first ")", represented by "\)"
     # re.MULTILINE: Allows ^ and $ to match the start and end of each line
-    # re.DOTALL: Makes the dot (.) match newline characters as well, so it can span multiple lines.
+    # re.DOTALL: Makes the dot (.) from .*? matching newline characters as well, so it can span multiple lines.
     # Using a more tolerant capture for the Mapped[...] part so it can span
     # multiple lines and include nested generics. DOTALL lets '.' match newlines
     # and the non-greedy (.*?) stops at the first closing ']'. This is best-effort
     # and more permissive than the previous [^\]]+ which failed on nested brackets
-    pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE | re.DOTALL)
-    
+    # pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE | re.DOTALL)
+
+    # This is the fix. By removing re.DOTALL, the `.` will not cross newlines, the whole pattern must be on a single line,
+    # unless you explicitly tell/change it to with an inline flag like (?s).
+    pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE)
+        
     def repl_mapped(match):
         indent = match.group(1)
         name = match.group(2)
+        mapped_type_str = match.group(3)
         # After changing the Mapped[...] part to a separate non-greedy capture,
         # groups are now: 1=indent, 2=name, 3=Mapped[...] content, 4=mapped_column inner args
         inner = match.group(4)
-        print("match:", match, file=sys.stderr, flush=True)
-        print("match.group(4):", match.group(4), file=sys.stderr, flush=True)
-        col = transform_mapped_column_args(inner)
+        col = transform_mapped_column_args(inner, mapped_type_str)
         return f"{indent}{name} = {col}"
 
     # Here repl_mapped is called for each match found by pattern.sub in text. Each match is received in the function's
@@ -163,7 +179,7 @@ def convert_file(src: Path, dst: Path) -> None:
                   text)
 
     # Replace remaining occurrences of mapped_column(...) that were created above or missed
-    text = re.sub(r"mapped_column\((.*?)\)", lambda m: transform_mapped_column_args(m.group(1)), text, flags=re.DOTALL)
+    text = re.sub(r"mapped_column\((.*?)\)", lambda m: transform_mapped_column_args(m.group(1), ""), text, flags=re.DOTALL)
 
     # Replace relationship(...) -> db.relationship(...)
     # \b: Asserts a word boundary, ensuring we match 'relationship' as a whole word
@@ -171,20 +187,43 @@ def convert_file(src: Path, dst: Path) -> None:
 
     # Replace type references like Integer -> db.Integer inside any remaining mapped_column args or Column defs
     # This is best-effort: prefix common SQLAlchemy type names with db. when they appear as standalone identifiers
-    types = ['Integer','BigInteger','String','Text','JSON','DECIMAL','Date','DateTime','TIMESTAMP','Float','Numeric','Boolean']
-    for t in types:
-        # Only match the bare identifier when it's NOT already prefixed with db., sa., or sqlalchemy.
-        # Use multiple fixed-width negative lookbehinds (eg: (?<!db\.)(?<!sa\.)(?<!sqlalchemy\.))
-        type_pattern = rf"(?<!db\.)(?<!sa\.)(?<!sqlalchemy\.)\b{t}\b"
-        text = re.sub(type_pattern, f"db.{t}", text)
+    # Text and text are different: Text is a type, text() is a function used to inyect literal SQL text
+    # DECIMAL and Numeric are practically the same, they have different origins (DECIMAL from SQL standard, Numeric from Python)
+    # types = ['Integer','BigInteger','String','Text','JSON','DECIMAL','Date','DateTime','TIMESTAMP','Float','Numeric','Boolean']
 
+    # Refactored to avoid altering import statements.
+    # It works by splitting the text into lines and processing each line individually,
+    # skipping any lines that start with 'from' or 'import'
+    """
+    processed_lines = []
+    for line in text.splitlines():
+        if line.strip().startswith(('from', 'import')):
+            processed_lines.append(line)
+            continue
+
+        for t in types:
+            # Only match the bare identifier when it's NOT already prefixed with db., sa., or sqlalchemy.
+            # A simple negative lookbehind for a dot (.) is enough here since we are already inside a non-import line
+            # (?<!\.): (? special operation like lookahead/lookbehind, < specifies it's a lookbehind,
+            # ! indicates negative (not found), \. matches a literal dot character. So the whole construct
+            # ensures that the type name is not preceded by a dot (.)
+            type_pattern = rf"(?<!\.)\b{t}\b"
+
+            # Use multiple fixed-width negative lookbehinds (eg: (?<!db\.)(?<!sa\.)(?<!sqlalchemy\.))
+            #type_pattern = rf"(?<!db\.)(?<!sa\.)(?<!sqlalchemy\.)\b{t}\b"
+
+            line = re.sub(type_pattern, f"db.{t}", line)
+        processed_lines.append(line)
+    text = "\n".join(processed_lines)
+    """
     # Replace mapped_column markers if any left
     text = text.replace('mapped_column', 'db.Column')
 
     # Replace typing annotations for relationships like: var: Mapped[list['X']] = relationship(...) -> var = db.relationship(...)
-    rel_pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[[^\]]+\]\s*=\s*db\.relationship\((.*?)\)\s*$", re.MULTILINE | re.DOTALL)
+    rel_pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*db\.relationship\((.*?)\)\s*$", re.MULTILINE)
+
     def repl_rel(m):
-        indent, name, inner = m.group(1), m.group(2), m.group(3)
+        indent, name, inner = m.group(1), m.group(2), m.group(4)
         return f"{indent}{name} = db.relationship({inner})"
     text = rel_pattern.sub(repl_rel, text)
 

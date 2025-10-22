@@ -1,5 +1,5 @@
 from .database import db
-from sqlalchemy import BigInteger, DECIMAL, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
+from sqlalchemy import db.BigInteger, db.DECIMAL, Enum, ForeignKeyConstraint, Index, db.Integer, db.JSON, db.String, db.TIMESTAMP, db.Text, text
 import datetime
 import decimal
 
@@ -84,17 +84,18 @@ class EntityStatuses(db.Model):
     status_id = db.Column(db.Integer, primary_key=True, nullable=False)
     status_code = db.Column(db.String(50), nullable=False)
     status_description = db.Column(db.Text)
-    categories = db.relationship('Categories', back_populates='category_status')
-    countries = db.relationship('Countries', back_populates='country_status')
-    customers = db.relationship('Customers', back_populates='customer_status')
-    stores = db.relationship('Stores', back_populates='store_status')
-    users = db.relationship('Users', back_populates='user_status')
-    products_services = db.relationship('ProductsServices', back_populates='product_service_status')
-    states_regions = db.relationship('StatesRegions', back_populates='state_region_status')
-    store_user_role = db.relationship('StoreUserRole', back_populates='status')
-    cities = db.relationship('Cities', back_populates='city_status')
-    store_products_services = db.relationship('StoreProductsServices', back_populates='status')
-    customer_addresses = db.relationship('CustomerAddresses', back_populates='address_status')
+    categories: Mapped[List['Categories']] = db.relationship('Categories', back_populates='category_status')
+    countries: Mapped[List['Countries']] = db.relationship('Countries', back_populates='country_status')
+    customers: Mapped[List['Customers']] = db.relationship('Customers', back_populates='customer_status')
+    stores: Mapped[List['Stores']] = db.relationship('Stores', back_populates='store_status')
+    users: Mapped[List['Users']] = db.relationship('Users', back_populates='user_status')
+    products_services: Mapped[List['ProductsServices']] = db.relationship('ProductsServices', back_populates='product_service_status')
+    states_regions: Mapped[List['StatesRegions']] = db.relationship('StatesRegions', back_populates='state_region_status')
+    store_user_role: Mapped[List['StoreUserRole']] = db.relationship('StoreUserRole', back_populates='status')
+    cities: Mapped[List['Cities']] = db.relationship('Cities', back_populates='city_status')
+    store_products_services: Mapped[List['StoreProductsServices']] = db.relationship('StoreProductsServices', back_populates='status')
+    customer_addresses: Mapped[List['CustomerAddresses']] = db.relationship('CustomerAddresses', back_populates='address_status')
+
 class EntityStatusesHistory(db.Model):
     __tablename__ = 'entity_statuses_history'
     __table_args__ = (
@@ -134,8 +135,9 @@ class OrderStatuses(db.Model):
     status_id = db.Column(db.Integer, primary_key=True, nullable=False)
     status_code = db.Column(db.String(50), nullable=False)
     status_description = db.Column(db.Text)
-    orders = db.relationship('Orders', back_populates='order_status')
-    order_details = db.relationship('OrderDetails', back_populates='product_service_status')
+    orders: Mapped[List['Orders']] = db.relationship('Orders', back_populates='order_status')
+    order_details: Mapped[List['OrderDetails']] = db.relationship('OrderDetails', back_populates='product_service_status')
+
 class OrderStatusesHistory(db.Model):
     __tablename__ = 'order_statuses_history'
     __table_args__ = (
@@ -187,7 +189,8 @@ class Roles(db.Model):
     role_id = db.Column(db.Integer, primary_key=True, nullable=False)
     role_code = db.Column(db.String(50), nullable=False)
     role_description = db.Column(db.Text)
-    store_user_role = db.relationship('StoreUserRole', back_populates='role')
+    store_user_role: Mapped[List['StoreUserRole']] = db.relationship('StoreUserRole', back_populates='role')
+
 class RolesHistory(db.Model):
     __tablename__ = 'roles_history'
     __table_args__ = (
@@ -293,7 +296,8 @@ class Categories(db.Model):
     category_description = db.Column(db.Text)
     category_pic_path = db.Column(db.String(255))
     category_status = db.relationship('EntityStatuses', back_populates='categories')
-    products_services = db.relationship('ProductsServices', back_populates='product_service_category')
+    products_services: Mapped[List['ProductsServices']] = db.relationship('ProductsServices', back_populates='product_service_category')
+
 class Countries(db.Model):
     __tablename__ = 'countries'
     __table_args__ = (
@@ -307,7 +311,8 @@ class Countries(db.Model):
     country_code = db.Column(db.String(10), nullable=False)
     country_status_id = db.Column(db.Integer, nullable=False)
     country_status = db.relationship('EntityStatuses', back_populates='countries')
-    states_regions = db.relationship('StatesRegions', back_populates='country')
+    states_regions: Mapped[List['StatesRegions']] = db.relationship('StatesRegions', back_populates='country')
+
 class Customers(db.Model):
     __tablename__ = 'customers'
     __table_args__ = (
@@ -323,8 +328,9 @@ class Customers(db.Model):
     customer_phone = db.Column(db.String(20), nullable=False)
     customer_status_id = db.Column(db.Integer, nullable=False)
     customer_status = db.relationship('EntityStatuses', back_populates='customers')
-    orders = db.relationship('Orders', back_populates='customer')
-    customer_addresses = db.relationship('CustomerAddresses', back_populates='customer')
+    orders: Mapped[List['Orders']] = db.relationship('Orders', back_populates='customer')
+    customer_addresses: Mapped[List['CustomerAddresses']] = db.relationship('CustomerAddresses', back_populates='customer')
+
 class Stores(db.Model):
     __tablename__ = 'stores'
     __table_args__ = (
@@ -341,8 +347,9 @@ class Stores(db.Model):
     store_description = db.Column(db.Text)
     store_phone = db.Column(db.String(20))
     store_status = db.relationship('EntityStatuses', back_populates='stores')
-    store_user_role = db.relationship('StoreUserRole', back_populates='store')
-    store_products_services = db.relationship('StoreProductsServices', back_populates='store')
+    store_user_role: Mapped[List['StoreUserRole']] = db.relationship('StoreUserRole', back_populates='store')
+    store_products_services: Mapped[List['StoreProductsServices']] = db.relationship('StoreProductsServices', back_populates='store')
+
 class Users(db.Model):
     __tablename__ = 'users'
     __table_args__ = (
@@ -358,7 +365,8 @@ class Users(db.Model):
     user_phone = db.Column(db.String(20), nullable=False)
     user_status_id = db.Column(db.Integer, nullable=False)
     user_status = db.relationship('EntityStatuses', back_populates='users')
-    store_user_role = db.relationship('StoreUserRole', back_populates='user')
+    store_user_role: Mapped[List['StoreUserRole']] = db.relationship('StoreUserRole', back_populates='user')
+
 class Orders(db.Model):
     __tablename__ = 'orders'
     __table_args__ = (
@@ -375,7 +383,8 @@ class Orders(db.Model):
     order_status_id = db.Column(db.Integer, nullable=False)
     customer = db.relationship('Customers', back_populates='orders')
     order_status = db.relationship('OrderStatuses', back_populates='orders')
-    order_details = db.relationship('OrderDetails', back_populates='order')
+    order_details: Mapped[List['OrderDetails']] = db.relationship('OrderDetails', back_populates='order')
+
 class ProductsServices(db.Model):
     __tablename__ = 'products_services'
     __table_args__ = (
@@ -394,7 +403,8 @@ class ProductsServices(db.Model):
     product_service_pic_path = db.Column(db.String(255))
     product_service_category = db.relationship('Categories', back_populates='products_services')
     product_service_status = db.relationship('EntityStatuses', back_populates='products_services')
-    store_products_services = db.relationship('StoreProductsServices', back_populates='product_service')
+    store_products_services: Mapped[List['StoreProductsServices']] = db.relationship('StoreProductsServices', back_populates='product_service')
+
 class StatesRegions(db.Model):
     __tablename__ = 'states_regions'
     __table_args__ = (
@@ -412,7 +422,8 @@ class StatesRegions(db.Model):
     state_region_status_id = db.Column(db.Integer, nullable=False)
     country = db.relationship('Countries', back_populates='states_regions')
     state_region_status = db.relationship('EntityStatuses', back_populates='states_regions')
-    cities = db.relationship('Cities', back_populates='state_region')
+    cities: Mapped[List['Cities']] = db.relationship('Cities', back_populates='state_region')
+
 class StoreUserRole(db.Model):
     __tablename__ = 'store_user_role'
     __table_args__ = (
@@ -448,7 +459,8 @@ class Cities(db.Model):
     city_status_id = db.Column(db.Integer, nullable=False)
     city_status = db.relationship('EntityStatuses', back_populates='cities')
     state_region = db.relationship('StatesRegions', back_populates='cities')
-    customer_addresses = db.relationship('CustomerAddresses', back_populates='city')
+    customer_addresses: Mapped[List['CustomerAddresses']] = db.relationship('CustomerAddresses', back_populates='city')
+
 class StoreProductsServices(db.Model):
     __tablename__ = 'store_products_services'
     __table_args__ = (
@@ -470,7 +482,8 @@ class StoreProductsServices(db.Model):
     product_service = db.relationship('ProductsServices', back_populates='store_products_services')
     status = db.relationship('EntityStatuses', back_populates='store_products_services')
     store = db.relationship('Stores', back_populates='store_products_services')
-    order_details = db.relationship('OrderDetails', back_populates='store_product_service')
+    order_details: Mapped[List['OrderDetails']] = db.relationship('OrderDetails', back_populates='store_product_service')
+
 class CustomerAddresses(db.Model):
     __tablename__ = 'customer_addresses'
     __table_args__ = (

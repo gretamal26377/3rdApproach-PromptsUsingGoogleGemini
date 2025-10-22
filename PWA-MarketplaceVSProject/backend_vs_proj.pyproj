@@ -47,6 +47,9 @@
     <Folder Include="tests\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\PWA-MarketplaceVSProject\backend\scripts\convert_models_sqlalchemy22flask_sqlalchemy.py">
+      <Link>convert_models_sqlalchemy22flask_sqlalchemy.py</Link>
+    </Compile>
     <Compile Include="alembic\env.py" />
     <Compile Include="alembic\versions\85cd3b1ae04c_1st_alembic_models2sql_attempt.py" />
     <Compile Include="app\admin\admin_management.py" />
@@ -61,8 +64,7 @@
     <Compile Include="app\shared\config.py" />
     <Compile Include="app\shared\database.py" />
     <Compile Include="app\shared\models.py" />
-    <Compile Include="app\shared\models_plain_sqlalchemy22flask_sqlalchemy.py" />
-    <Compile Include="app\shared\models_plain_sqlalchemy22flask_sqlalchemybak.py" />
+    <Compile Include="app\shared\models_plain_sqlalchemy22flask_sqlalchemy_bak.py" />
     <Compile Include="app\shared\models_sql2orm_flask_sqlalchemy.py" />
     <Compile Include="app\shared\models_sql2orm_plain_sqlalchemy2.py" />
     <Compile Include="app\shared\models_sql2orm_plain_sqlalchemy2_bak.py" />
