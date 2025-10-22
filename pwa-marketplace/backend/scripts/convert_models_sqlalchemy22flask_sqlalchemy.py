@@ -19,6 +19,9 @@ The script:
 - replaces `Mapped[...]` annotated attributes with plain assignments
 - changes `relationship(...)` -> `db.relationship(...)`
 - keeps __table_args__ (ForeignKeyConstraint / Index) intact and imports text/Index if present
+- adds nullable=False to mapped_column if the Mapped type is not Optional and nullable not set,
+  many History Tables have implicit Nullable=True fields by default that should be non-nullable.
+  However, these fields come from Tables where Nullable=False is enforced, so it shouldn't be a big issue
 
 It is not guaranteed to handle every edge case; inspect the result
 """
@@ -150,8 +153,9 @@ def convert_file(src: Path, dst: Path) -> None:
     # pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE | re.DOTALL)
 
     # This is the fix. By removing re.DOTALL, the `.` will not cross newlines, the whole pattern must be on a single line,
-    # unless you explicitly tell/change it to with an inline flag like (?s).
-    pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*mapped_column\((.*?)\)\s*$", re.MULTILINE)
+    # unless you explicitly tell/change it to with an inline flag like (?s)
+    # [ \t]*: Matches zero or more spaces " " or tabs "\t" at the end of the line (no newlines)
+    pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*mapped_column\((.*?)\)[ \t]*$", re.MULTILINE)
         
     def repl_mapped(match):
         indent = match.group(1)
@@ -184,7 +188,8 @@ def convert_file(src: Path, dst: Path) -> None:
     # Replace relationship(...) -> db.relationship(...)
     # \b: Asserts a word boundary, ensuring we match 'relationship' as a whole word
     text = re.sub(r"\brelationship\s*\(", "db.relationship(", text)
-
+    """
+    *** Not needed till now, because transform_mapped_column_args already prefixes types inside mapped_column calls ***
     # Replace type references like Integer -> db.Integer inside any remaining mapped_column args or Column defs
     # This is best-effort: prefix common SQLAlchemy type names with db. when they appear as standalone identifiers
     # Text and text are different: Text is a type, text() is a function used to inyect literal SQL text
@@ -194,7 +199,7 @@ def convert_file(src: Path, dst: Path) -> None:
     # Refactored to avoid altering import statements.
     # It works by splitting the text into lines and processing each line individually,
     # skipping any lines that start with 'from' or 'import'
-    """
+    
     processed_lines = []
     for line in text.splitlines():
         if line.strip().startswith(('from', 'import')):
@@ -220,7 +225,7 @@ def convert_file(src: Path, dst: Path) -> None:
     text = text.replace('mapped_column', 'db.Column')
 
     # Replace typing annotations for relationships like: var: Mapped[list['X']] = relationship(...) -> var = db.relationship(...)
-    rel_pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*db\.relationship\((.*?)\)\s*$", re.MULTILINE)
+    rel_pattern = re.compile(r"^(\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:\s*Mapped\[(.*?)\]\s*=\s*db\.relationship\((.*?)\)[ \t]*$", re.MULTILINE)
 
     def repl_rel(m):
         indent, name, inner = m.group(1), m.group(2), m.group(4)
