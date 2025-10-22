@@ -32,3 +32,4 @@ migrations/
 *.db
 
 secrets
+/.vs
