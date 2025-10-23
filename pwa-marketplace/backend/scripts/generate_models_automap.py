@@ -192,7 +192,7 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
                 child_attr = child_col
             lines.append(f"    {collection_attr} = db.relationship('{child_class}', back_populates='{child_attr}')")
 
-""""
+        """"
         # safe __repr__ using primary keys
         pk_cols = [c.name for c in table.primary_key.columns] if table.primary_key.columns else [list(table.columns)[0].name]
         lines.append('    def __repr__(self):')
@@ -201,7 +201,7 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
         else:
             inner = ', '.join([f"{c}={{{{self.{c}}}}}" for c in pk_cols])
             lines.append(f"        return f'<{cls_name} {inner}>'")
-"""
+     """
 
         lines.append('')
         lines.append('')
