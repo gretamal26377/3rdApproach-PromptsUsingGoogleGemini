@@ -142,6 +142,7 @@ services:
 # Define external secrets to avoid hardcoding sensitive info in this file
 secrets:
   mysql_root_password:
+    # path relative to this docker-compose.yml file
     file: ./database/secrets/mysql_root_password.txt
     # external: true  -- Valid for Docker Swarm secrets, not for Docker Compose secrets
   mysql_db_user_password:

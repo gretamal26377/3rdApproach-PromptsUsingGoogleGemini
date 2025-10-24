@@ -4,7 +4,7 @@ This script reflects the database schema and writes a static, reviewable Flask-S
 `db.Model` file suitable for use in this project.
 
 Usage (from backend/):
-  python scripts/generate_models_automap.py --out=app/shared/models.py
+  python scripts/generate_models_automap.py --out=app/shared/models_sql2orm_flask_sqlalchemy.py
   python scripts/generate_models_automap.py --url "mysql+pymysql://user:pass@db:3306/marketplace_db"
 
 If --url is not provided the script will attempt to load backend/app/shared/config.py using
@@ -20,7 +20,7 @@ import os
 import argparse
 import importlib.util
 from pathlib import Path
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, Enum
 
 # Type mapping (best-effort)
 TYPE_MAP = {
@@ -118,12 +118,14 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
                 cols = ', '.join([f"'{c.name}'" for c in ix.columns])
                 unique = ', unique=True' if ix.unique else ''
                 targs.append(f"Index('{ix.name}', {cols}{unique})")
-        # ForeignKeyConstraint objects
+
+        # [...]: This is a List Comprehension. It iterates over each constraint c in table.constraints
+        # fkcs: A list of ForeignKeyConstraint objects in the table's constraints
         fkcs = [c for c in table.constraints if c.__class__.__name__ == 'ForeignKeyConstraint']
         for fk in fkcs:
-            # use elements rather than .columns to avoid typing issues
-            cols = ', '.join([f"'{elem.parent.name}'" for elem in fk.elements])
-            refs = ', '.join([f"'{elem.column.table.name}.{elem.column.name}'" for elem in fk.elements])
+            # use .elements rather than .columns to avoid typing issues
+            cols = ', '.join([f"'{elem.parent.name}'" for elem in fk.elements]) # type: ignore
+            refs = ', '.join([f"'{elem.column.table.name}.{elem.column.name}'" for elem in fk.elements]) # type: ignore
             targs.append(f"ForeignKeyConstraint([{cols}], [{refs}])")
 
         if targs:
@@ -138,12 +140,13 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
         for col in table.columns:
             # Enhanced enum detection: many DB enums show as Enum with .enums attr
             typ = None
+            """ Not sure whether this is needed or not — leaving as comment for now
             try:
                 ctname = col.type.__class__.__name__.upper()
             except Exception:
                 ctname = str(col.type).upper()
-
-            if hasattr(col.type, 'enums') and getattr(col.type, 'enums'):
+            """
+            if isinstance(col.type, Enum) and hasattr(col.type, 'enums') and getattr(col.type, 'enums'):
                 # render as db.Enum('a','b', name='optional_name')
                 enum_vals = ', '.join(repr(e) for e in col.type.enums)
                 typ = f"db.Enum({enum_vals})"
@@ -192,7 +195,7 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
                 child_attr = child_col
             lines.append(f"    {collection_attr} = db.relationship('{child_class}', back_populates='{child_attr}')")
 
-        """"
+        """ Mostly used for debugging purposes; leaving commented out for now
         # safe __repr__ using primary keys
         pk_cols = [c.name for c in table.primary_key.columns] if table.primary_key.columns else [list(table.columns)[0].name]
         lines.append('    def __repr__(self):')
@@ -201,7 +204,7 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
         else:
             inner = ', '.join([f"{c}={{{{self.{c}}}}}" for c in pk_cols])
             lines.append(f"        return f'<{cls_name} {inner}>'")
-     """
+        """
 
         lines.append('')
         lines.append('')
@@ -212,13 +215,13 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
 
 
 def load_config_db_url() -> str | None:
-    # attempt to load backend/app/shared/config.py like other scripts in this repo do
+    # Attempt to load backend/app/shared/config.py like other scripts in this repo do
     try:
         base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         config_path = os.path.join(base, 'app', 'shared', 'config.py')
         spec = importlib.util.spec_from_file_location('projconf', config_path)
-        conf = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(conf)
+        conf = importlib.util.module_from_spec(spec) # type: ignore  # try-except handles None case
+        spec.loader.exec_module(conf) # type: ignore
         return getattr(conf.Config, 'SQLALCHEMY_DATABASE_URI', None)
     except Exception:
         return None

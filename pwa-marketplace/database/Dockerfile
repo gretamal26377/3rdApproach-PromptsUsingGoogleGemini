@@ -1,4 +1,6 @@
 FROM mysql:8.0
+# Replace with your specific image digest if you want to ensure exact version
+# FROM mysql@sha256:18dee92bbc23147cf0917a26b079c7b659e1170bd03f2ccc42b91236a02fa34b
 
 # Using secret management in docker-compose.yml instead of 
 # hardcoding the password here, so commenting this out

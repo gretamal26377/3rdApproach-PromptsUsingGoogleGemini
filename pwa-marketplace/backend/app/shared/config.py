@@ -24,7 +24,7 @@ class Config:
                 with open(pw_file, 'r', encoding='utf-8') as f:
                     password = f.read().strip()
         except Exception:
-            # If reading the secret fails, fall back to environment variable
+            # If reading the secret fails, fall back to password from env var/default
             pass # This command does nothing, it's Python syntax, it's used as a placeholder
                  # to indicate that we are intentionally ignoring exceptions here
 
