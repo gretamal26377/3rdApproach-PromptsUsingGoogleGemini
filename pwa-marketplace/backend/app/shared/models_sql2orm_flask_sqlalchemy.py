@@ -6,8 +6,8 @@ from sqlalchemy import Index, ForeignKeyConstraint, text
 class Categories(db.Model):
     __tablename__ = 'categories'
     __table_args__ = (
-        Index('category_name', 'category_name', unique=True),
         Index('category_status_id', 'category_status_id'),
+        Index('category_name', 'category_name', unique=True),
         ForeignKeyConstraint(['category_status_id'], ['entity_statuses.status_id']),
     )
 
@@ -15,7 +15,7 @@ class Categories(db.Model):
     category_name = db.Column(db.String(100), nullable=False)
     category_description = db.Column(db.Text)
     category_pic_path = db.Column(db.String(255))
-    category_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    category_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     category_status = db.relationship('EntityStatuses', back_populates='categories')
     products_services = db.relationship('ProductsServices', back_populates='product_service_category')
@@ -72,8 +72,8 @@ class Cities(db.Model):
 
     city_id = db.Column(db.Integer, primary_key=True)
     city_name = db.Column(db.String(100), nullable=False)
-    state_region_id = db.Column(db.Integer, nullable=False, db.ForeignKey('states_regions.state_region_id'))
-    city_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    state_region_id = db.Column(db.Integer, db.ForeignKey('states_regions.state_region_id'), nullable=False)
+    city_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     state_region = db.relationship('StatesRegions', back_populates='cities')
     city_status = db.relationship('EntityStatuses', back_populates='cities')
@@ -84,17 +84,17 @@ class StatesRegions(db.Model):
     __tablename__ = 'states_regions'
     __table_args__ = (
         Index('country_id', 'country_id'),
-        Index('state_region_status_id', 'state_region_status_id'),
         Index('state_region_code', 'state_region_code', unique=True),
-        ForeignKeyConstraint(['country_id'], ['countries.country_id']),
+        Index('state_region_status_id', 'state_region_status_id'),
         ForeignKeyConstraint(['state_region_status_id'], ['entity_statuses.status_id']),
+        ForeignKeyConstraint(['country_id'], ['countries.country_id']),
     )
 
     state_region_id = db.Column(db.Integer, primary_key=True)
     state_region_name = db.Column(db.String(100), nullable=False)
     state_region_code = db.Column(db.String(10), nullable=False)
-    country_id = db.Column(db.Integer, nullable=False, db.ForeignKey('countries.country_id'))
-    state_region_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    country_id = db.Column(db.Integer, db.ForeignKey('countries.country_id'), nullable=False)
+    state_region_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     country = db.relationship('Countries', back_populates='states_regions')
     state_region_status = db.relationship('EntityStatuses', back_populates='states_regions')
@@ -112,7 +112,7 @@ class Countries(db.Model):
     country_id = db.Column(db.Integer, primary_key=True)
     country_name = db.Column(db.String(100), nullable=False)
     country_code = db.Column(db.String(10), nullable=False)
-    country_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    country_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     country_status = db.relationship('EntityStatuses', back_populates='countries')
     states_regions = db.relationship('StatesRegions', back_populates='country')
@@ -121,8 +121,8 @@ class Countries(db.Model):
 class CitiesHistory(db.Model):
     __tablename__ = 'cities_history'
     __table_args__ = (
-        Index('changed_at', 'changed_at'),
         Index('city_id', 'city_id'),
+        Index('changed_at', 'changed_at'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -138,8 +138,8 @@ class CitiesHistory(db.Model):
 class CountriesHistory(db.Model):
     __tablename__ = 'countries_history'
     __table_args__ = (
-        Index('changed_at', 'changed_at'),
         Index('country_id', 'country_id'),
+        Index('changed_at', 'changed_at'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -156,20 +156,20 @@ class CustomerAddresses(db.Model):
     __tablename__ = 'customer_addresses'
     __table_args__ = (
         Index('city_id', 'city_id'),
-        Index('address_status_id', 'address_status_id'),
         Index('customer_id', 'customer_id'),
+        Index('address_status_id', 'address_status_id'),
         ForeignKeyConstraint(['city_id'], ['cities.city_id']),
         ForeignKeyConstraint(['address_status_id'], ['entity_statuses.status_id']),
         ForeignKeyConstraint(['customer_id'], ['customers.customer_id']),
     )
 
     address_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, nullable=False, db.ForeignKey('customers.customer_id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.customer_id'), nullable=False)
     address_line1 = db.Column(db.String(255), nullable=False)
     address_line2 = db.Column(db.String(255))
-    city_id = db.Column(db.Integer, nullable=False, db.ForeignKey('cities.city_id'))
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.city_id'), nullable=False)
     google_maps_url = db.Column(db.String(255), nullable=False)
-    address_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    address_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
     postal_code = db.Column(db.String(20), nullable=False)
 
     customer = db.relationship('Customers', back_populates='customer_addresses')
@@ -190,7 +190,7 @@ class Customers(db.Model):
     customer_name = db.Column(db.String(100), nullable=False)
     customer_password_hash = db.Column(db.String(255), nullable=False)
     customer_phone = db.Column(db.String(20), nullable=False)
-    customer_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    customer_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     customer_status = db.relationship('EntityStatuses', back_populates='customers')
     customer_addresses = db.relationship('CustomerAddresses', back_populates='customer')
@@ -201,8 +201,8 @@ class CustomerAddressesHistory(db.Model):
     __tablename__ = 'customer_addresses_history'
     __table_args__ = (
         Index('changed_at', 'changed_at'),
-        Index('address_id', 'address_id'),
         Index('customer_id', 'customer_id'),
+        Index('address_id', 'address_id'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -236,8 +236,8 @@ class CustomersHistory(db.Model):
 class EntityStatusesHistory(db.Model):
     __tablename__ = 'entity_statuses_history'
     __table_args__ = (
-        Index('status_id', 'status_id'),
         Index('changed_at', 'changed_at'),
+        Index('status_id', 'status_id'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -253,19 +253,19 @@ class EntityStatusesHistory(db.Model):
 class OrderDetails(db.Model):
     __tablename__ = 'order_details'
     __table_args__ = (
-        Index('product_service_status_id', 'product_service_status_id'),
         Index('store_product_service_id', 'store_product_service_id'),
-        ForeignKeyConstraint(['product_service_status_id'], ['order_statuses.status_id']),
+        Index('product_service_status_id', 'product_service_status_id'),
         ForeignKeyConstraint(['order_id'], ['orders.order_id']),
+        ForeignKeyConstraint(['product_service_status_id'], ['order_statuses.status_id']),
         ForeignKeyConstraint(['store_product_service_id'], ['store_products_services.id']),
     )
 
-    order_id = db.Column(db.Integer, primary_key=True, db.ForeignKey('orders.order_id'))
-    store_product_service_id = db.Column(db.Integer, primary_key=True, db.ForeignKey('store_products_services.id'))
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), primary_key=True)
+    store_product_service_id = db.Column(db.Integer, db.ForeignKey('store_products_services.id'), primary_key=True)
     product_service_quantity = db.Column(db.Integer, nullable=False)
     product_service_price = db.Column(db.Numeric, nullable=False)
     product_service_tot_price = db.Column(db.Numeric, nullable=False)
-    product_service_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('order_statuses.status_id'))
+    product_service_status_id = db.Column(db.Integer, db.ForeignKey('order_statuses.status_id'), nullable=False)
     product_service_filled_quantity = db.Column(db.Integer, nullable=False)
     product_service_filled_tot_price = db.Column(db.Numeric, nullable=False)
 
@@ -291,17 +291,17 @@ class OrderStatuses(db.Model):
 class Orders(db.Model):
     __tablename__ = 'orders'
     __table_args__ = (
-        Index('order_status_id', 'order_status_id'),
         Index('customer_id', 'customer_id'),
-        ForeignKeyConstraint(['order_status_id'], ['order_statuses.status_id']),
+        Index('order_status_id', 'order_status_id'),
         ForeignKeyConstraint(['customer_id'], ['customers.customer_id']),
+        ForeignKeyConstraint(['order_status_id'], ['order_statuses.status_id']),
     )
 
     order_id = db.Column(db.Integer, primary_key=True)
     order_tot_quantity = db.Column(db.Integer, nullable=False)
     order_tot_price = db.Column(db.Numeric, nullable=False)
-    customer_id = db.Column(db.Integer, nullable=False, db.ForeignKey('customers.customer_id'))
-    order_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('order_statuses.status_id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.customer_id'), nullable=False)
+    order_status_id = db.Column(db.Integer, db.ForeignKey('order_statuses.status_id'), nullable=False)
 
     customer = db.relationship('Customers', back_populates='orders')
     order_status = db.relationship('OrderStatuses', back_populates='orders')
@@ -311,21 +311,21 @@ class Orders(db.Model):
 class StoreProductsServices(db.Model):
     __tablename__ = 'store_products_services'
     __table_args__ = (
+        Index('status_id', 'status_id'),
         Index('idx_store', 'store_id'),
         Index('idx_product_service', 'product_service_id'),
-        Index('status_id', 'status_id'),
         Index('uk_store_product', 'store_id', 'product_service_id', unique=True),
-        ForeignKeyConstraint(['store_id'], ['stores.store_id']),
         ForeignKeyConstraint(['status_id'], ['entity_statuses.status_id']),
+        ForeignKeyConstraint(['store_id'], ['stores.store_id']),
         ForeignKeyConstraint(['product_service_id'], ['products_services.product_service_id']),
     )
 
     id = db.Column(db.Integer, primary_key=True)
-    store_id = db.Column(db.Integer, nullable=False, db.ForeignKey('stores.store_id'))
-    product_service_id = db.Column(db.Integer, nullable=False, db.ForeignKey('products_services.product_service_id'))
+    store_id = db.Column(db.Integer, db.ForeignKey('stores.store_id'), nullable=False)
+    product_service_id = db.Column(db.Integer, db.ForeignKey('products_services.product_service_id'), nullable=False)
     price = db.Column(db.Numeric, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
-    status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     store = db.relationship('Stores', back_populates='store_products_services')
     product_service = db.relationship('ProductsServices', back_populates='store_products_services')
@@ -336,8 +336,8 @@ class StoreProductsServices(db.Model):
 class Stores(db.Model):
     __tablename__ = 'stores'
     __table_args__ = (
-        Index('store_email', 'store_email', unique=True),
         Index('store_status_id', 'store_status_id'),
+        Index('store_email', 'store_email', unique=True),
         ForeignKeyConstraint(['store_status_id'], ['entity_statuses.status_id']),
     )
 
@@ -347,7 +347,7 @@ class Stores(db.Model):
     store_description = db.Column(db.Text)
     store_phone = db.Column(db.String(20))
     store_address = db.Column(db.Text, nullable=False)
-    store_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    store_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     store_status = db.relationship('EntityStatuses', back_populates='stores')
     store_products_services = db.relationship('StoreProductsServices', back_populates='store')
@@ -357,9 +357,9 @@ class Stores(db.Model):
 class ProductsServices(db.Model):
     __tablename__ = 'products_services'
     __table_args__ = (
+        Index('product_service_status_id', 'product_service_status_id'),
         Index('product_service_name', 'product_service_name', unique=True),
         Index('product_service_category_id', 'product_service_category_id'),
-        Index('product_service_status_id', 'product_service_status_id'),
         ForeignKeyConstraint(['product_service_status_id'], ['entity_statuses.status_id']),
         ForeignKeyConstraint(['product_service_category_id'], ['categories.category_id']),
     )
@@ -368,8 +368,8 @@ class ProductsServices(db.Model):
     product_service_name = db.Column(db.String(100), nullable=False)
     product_service_description = db.Column(db.Text)
     product_service_pic_path = db.Column(db.String(255))
-    product_service_category_id = db.Column(db.Integer, nullable=False, db.ForeignKey('categories.category_id'))
-    product_service_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    product_service_category_id = db.Column(db.Integer, db.ForeignKey('categories.category_id'), nullable=False)
+    product_service_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     product_service_category = db.relationship('Categories', back_populates='products_services')
     product_service_status = db.relationship('EntityStatuses', back_populates='products_services')
@@ -415,8 +415,8 @@ class OrderStatusesHistory(db.Model):
 class OrdersHistory(db.Model):
     __tablename__ = 'orders_history'
     __table_args__ = (
-        Index('order_id', 'order_id'),
         Index('changed_at', 'changed_at'),
+        Index('order_id', 'order_id'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -462,8 +462,8 @@ class Roles(db.Model):
 class RolesHistory(db.Model):
     __tablename__ = 'roles_history'
     __table_args__ = (
-        Index('role_id', 'role_id'),
         Index('changed_at', 'changed_at'),
+        Index('role_id', 'role_id'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -496,10 +496,10 @@ class StatesRegionsHistory(db.Model):
 class StoreProductsServicesHistory(db.Model):
     __tablename__ = 'store_products_services_history'
     __table_args__ = (
-        Index('store_id', 'store_id'),
-        Index('product_service_id', 'product_service_id'),
         Index('id', 'id'),
+        Index('store_id', 'store_id'),
         Index('changed_at', 'changed_at'),
+        Index('product_service_id', 'product_service_id'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -517,19 +517,19 @@ class StoreProductsServicesHistory(db.Model):
 class StoreUserRole(db.Model):
     __tablename__ = 'store_user_role'
     __table_args__ = (
+        Index('user_id', 'user_id'),
         Index('status_id', 'status_id'),
         Index('role_id', 'role_id'),
-        Index('user_id', 'user_id'),
-        ForeignKeyConstraint(['user_id'], ['users.user_id']),
         ForeignKeyConstraint(['store_id'], ['stores.store_id']),
-        ForeignKeyConstraint(['role_id'], ['roles.role_id']),
         ForeignKeyConstraint(['status_id'], ['entity_statuses.status_id']),
+        ForeignKeyConstraint(['role_id'], ['roles.role_id']),
+        ForeignKeyConstraint(['user_id'], ['users.user_id']),
     )
 
-    store_id = db.Column(db.Integer, primary_key=True, db.ForeignKey('stores.store_id'))
-    user_id = db.Column(db.Integer, primary_key=True, db.ForeignKey('users.user_id'))
-    role_id = db.Column(db.Integer, nullable=False, db.ForeignKey('roles.role_id'))
-    status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    store_id = db.Column(db.Integer, db.ForeignKey('stores.store_id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'), nullable=False)
+    status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     store = db.relationship('Stores', back_populates='store_user_roles')
     user = db.relationship('Users', back_populates='store_user_roles')
@@ -540,8 +540,8 @@ class StoreUserRole(db.Model):
 class Users(db.Model):
     __tablename__ = 'users'
     __table_args__ = (
-        Index('user_email', 'user_email', unique=True),
         Index('user_status_id', 'user_status_id'),
+        Index('user_email', 'user_email', unique=True),
         ForeignKeyConstraint(['user_status_id'], ['entity_statuses.status_id']),
     )
 
@@ -550,7 +550,7 @@ class Users(db.Model):
     user_name = db.Column(db.String(50), nullable=False)
     user_password_hash = db.Column(db.String(255), nullable=False)
     user_phone = db.Column(db.String(20), nullable=False)
-    user_status_id = db.Column(db.Integer, nullable=False, db.ForeignKey('entity_statuses.status_id'))
+    user_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     user_status = db.relationship('EntityStatuses', back_populates='users')
     store_user_roles = db.relationship('StoreUserRole', back_populates='user')
@@ -559,9 +559,9 @@ class Users(db.Model):
 class StoreUserRoleHistory(db.Model):
     __tablename__ = 'store_user_role_history'
     __table_args__ = (
-        Index('user_id', 'user_id'),
-        Index('store_id', 'store_id'),
         Index('changed_at', 'changed_at'),
+        Index('store_id', 'store_id'),
+        Index('user_id', 'user_id'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)

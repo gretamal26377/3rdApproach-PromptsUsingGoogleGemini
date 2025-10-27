@@ -46,8 +46,10 @@ TYPE_MAP = {
 def coltype_to_string(col_type) -> str:
     """Return a string like 'db.String(100)' or 'db.Integer' for a Column type object"""
     try:
+        # Get the class name of the column type in uppercase for comparison. eg: 'VARCHAR', 'INTEGER', etc.
         clsname = col_type.__class__.__name__.upper()
     except Exception:
+        # str(): Get the string representation of an object
         clsname = str(col_type).upper()
 
     # length-aware types
@@ -57,7 +59,7 @@ def coltype_to_string(col_type) -> str:
     for key in TYPE_MAP:
         if key in clsname:
             return TYPE_MAP[key]
-
+    # 'db.String' is fallback, and is valid for SQLAlchemy, representing a variable-length string
     return 'db.String'
 
 
@@ -65,28 +67,36 @@ def snake_to_camel(name: str) -> str:
     parts = name.split('_')
     return ''.join(p.capitalize() for p in parts)
 
-
 def render_column(col) -> str:
     """Render a column line for a Flask-SQLAlchemy model class"""
     name = col.name
     typ = coltype_to_string(col.type)
-    flags = []
-
-    if col.primary_key:
-        flags.append('primary_key=True')
-    if not col.nullable and not col.primary_key:
-        flags.append('nullable=False')
-    if getattr(col, 'unique', False):
-        flags.append('unique=True')
+    
+    # Enhanced enum detection
+    if isinstance(col.type, Enum) and hasattr(col.type, 'enums') and getattr(col.type, 'enums'):
+        # Render as db.Enum with values. ',' is the separator and goes before join to avoid trailing comma
+        # repr(): Get the string representation of an object
+        enum_vals = ', '.join(repr(e) for e in col.type.enums)
+        typ = f"db.Enum({enum_vals})"
+    
+    # Build positional args first (type, foreign keys)
+    args = [typ]
     if col.foreign_keys:
         fk = list(col.foreign_keys)[0]
-        flags.append(f"db.ForeignKey('{fk.target_fullname}')")
-
-    if flags:
-        return f"    {name} = db.Column({typ}, {', '.join(flags)})"
-    else:
-        return f"    {name} = db.Column({typ})"
-
+        args.append(f"db.ForeignKey('{fk.target_fullname}')")
+    
+    # Then keyword args
+    kwargs = []
+    if col.primary_key:
+        kwargs.append('primary_key=True')
+    if not col.nullable and not col.primary_key:
+        kwargs.append('nullable=False')
+    if getattr(col, 'unique', False):
+        kwargs.append('unique=True')
+    
+    # Combine: positional first, then keywords
+    all_args = args + kwargs
+    return f"    {name} = db.Column({', '.join(all_args)})"
 
 def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
     lines = []
@@ -99,6 +109,9 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
     # Precompute FK maps so we can emit back_populates on both sides
     fk_map = {}  # child_table -> list of (local_col_name, referred_table)
     parent_map = {}  # parent_table -> list of (child_table, local_col_name)
+
+    # meta.tables.items(): Corresponds to a dictionary where keys are table names and values are Table objects
+    # containing the tables schema information, such as fields, constraints, indexes, etc
     for table_name, table in meta.tables.items():
         for col in table.columns:
             for fk in col.foreign_keys:
@@ -111,7 +124,7 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
         lines.append(f'class {cls_name}(db.Model):')
         lines.append(f"    __tablename__ = '{table_name}'")
 
-        # render __table_args__ for table-level constraints if present
+        # render table indexes
         targs = []
         if table.indexes:
             for ix in table.indexes:
@@ -128,6 +141,7 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
             refs = ', '.join([f"'{elem.column.table.name}.{elem.column.name}'" for elem in fk.elements]) # type: ignore
             targs.append(f"ForeignKeyConstraint([{cols}], [{refs}])")
 
+        # Render __table_args__ if we have any
         if targs:
             lines.append('    __table_args__ = (')
             for t in targs:
@@ -136,38 +150,9 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
 
         lines.append('')
 
-        # Columns
+        # table.columns: An iterable collection of Column objects representing the columns/fields in the table
         for col in table.columns:
-            # Enhanced enum detection: many DB enums show as Enum with .enums attr
-            typ = None
-            """ Not sure whether this is needed or not — leaving as comment for now
-            try:
-                ctname = col.type.__class__.__name__.upper()
-            except Exception:
-                ctname = str(col.type).upper()
-            """
-            if isinstance(col.type, Enum) and hasattr(col.type, 'enums') and getattr(col.type, 'enums'):
-                # render as db.Enum('a','b', name='optional_name')
-                enum_vals = ', '.join(repr(e) for e in col.type.enums)
-                typ = f"db.Enum({enum_vals})"
-            else:
-                typ = coltype_to_string(col.type)
-
-            flags = []
-            if col.primary_key:
-                flags.append('primary_key=True')
-            if not col.nullable and not col.primary_key:
-                flags.append('nullable=False')
-            if getattr(col, 'unique', False):
-                flags.append('unique=True')
-            if col.foreign_keys:
-                fk = list(col.foreign_keys)[0]
-                flags.append(f"db.ForeignKey('{fk.target_fullname}')")
-
-            if flags:
-                lines.append(f"    {col.name} = db.Column({typ}, {', '.join(flags)})")
-            else:
-                lines.append(f"    {col.name} = db.Column({typ})")
+            lines.append(render_column(col))
 
         lines.append('')
 
