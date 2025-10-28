@@ -1,7 +1,7 @@
 from logging.config import fileConfig
 import os
 import sys
-# import importlib
+import importlib
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -60,14 +60,45 @@ if config.get_main_option("sqlalchemy.url") != 'sqlite:///:memory:':
 # Add your model's MetaData object here for 'autogenerate' support
 # Prefer Flask-SQLAlchemy metadata (db.metadata) since this project uses Flask-SQLAlchemy
 try:
+    # --- START: New dynamic model loading logic ---
+
+    # Get the custom 'models_file' argument from the command line, if provided.
+    # The -x flag is used for this: alembic -x models_file=path/to/models.py revision ...
+    models_file_path = context.get_x_argument(as_dictionary=True).get('models_file')
+
+    # If not provided via command line, fall back to the value in alembic.ini
+    if not models_file_path:
+        models_file_path = config.get_main_option('models_file')
+
+    if models_file_path:
+        # Convert the file path (e.g., "app/shared/models.py") to a module path
+        # (e.g., "app.shared.models") that Python can import. This is OS-agnostic
+        # Windows(\) and Linux-Unix(/)
+        p = Path(models_file_path)
+        # Remove the .py suffix and join the path parts with dots
+        module_path = '.'.join(p.with_suffix('').parts)
+        
+        print(f"Alembic: Loading models from '{module_path}' for autogenerate")
+        
+        # Dynamically import the models module
+        importlib.import_module(module_path)
+    else:
+        # If you want to keep the old behavior as a final fallback
+        print("Alembic: No models_file specified, using default import")
+        # (linter false positive, fixed by adding backend/ to sys.path above > ignored)
+        import app.shared.models   # type: ignore
+
+    # Now that the models are loaded, get the metadata from the db object
     # Import the Flask-SQLAlchemy `db` instance and ensure models are imported
     # so db.metadata is populated with table objects
     # (linter false positive, fixed by adding backend/ to sys.path above > ignored)
     from app.shared.database import db   # type: ignore
-    # (linter false positive, fixed by adding backend/ to sys.path above > ignored)
-    import app.shared.models   # type: ignore
     target_metadata = getattr(db, "metadata", None)
-except Exception:
+
+    # --- END: New dynamic model loading logic ---
+
+except Exception as e:
+    print(f"Alembic: Failed to load models for autogeneration. Error: {e}")
     target_metadata = None
 
 # Other values from config file , by the needs of env.py,
