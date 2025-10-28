@@ -12,6 +12,9 @@ project metadata from `app.shared.models.Base` for autogenerate support
 
 <span style="color:yellow">python -m alembic -c alembic.ini revision --autogenerate -m "Add Changes"</span>
 
+Using an input arg as models:<br>
+<span style="color:yellow">python -m alembic -x models_file=app/shared/models_sql2orm_flask_sqlalchemy.py -c alembic.ini revision --autogenerate -m "Add Changes"</span>
+
 ### Apply all migrations
 
 <span style="color:yellow">python -m alembic -c alembic.ini upgrade head</span>
