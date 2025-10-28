@@ -124,23 +124,37 @@ def generate_models_from_metadata(meta: MetaData, out_path: str) -> int:
         lines.append(f'class {cls_name}(db.Model):')
         lines.append(f"    __tablename__ = '{table_name}'")
 
-        # render table indexes
+        # Get a set of all column names in this table that have a foreign key
+        # This is a set comprehension that iterates over each column in the table's columns and
+        # collects the names of columns that have foreign keys into a set called fk_cols
+        fk_cols = {col.name for col in table.columns if col.foreign_keys}
+
+        # render table indexes, but skip redundant ones on FK columns
         targs = []
         if table.indexes:
             for ix in table.indexes:
+                # An index is redundant if it's a single-column, non-unique index 
+                # on a column that already has a foreign key.
+                is_single_col = len(ix.columns) == 1
+                col_name = list(ix.columns)[0].name if is_single_col else None
+                
+                if is_single_col and not ix.unique and col_name in fk_cols:
+                    continue  # Skip this redundant index
+
                 cols = ', '.join([f"'{c.name}'" for c in ix.columns])
                 unique = ', unique=True' if ix.unique else ''
                 targs.append(f"Index('{ix.name}', {cols}{unique})")
 
         # [...]: This is a List Comprehension. It iterates over each constraint c in table.constraints
         # fkcs: A list of ForeignKeyConstraint objects in the table's constraints
+        """ Commented snippet out because this is redundant with per-column ForeignKey rendering
         fkcs = [c for c in table.constraints if c.__class__.__name__ == 'ForeignKeyConstraint']
         for fk in fkcs:
             # use .elements rather than .columns to avoid typing issues
             cols = ', '.join([f"'{elem.parent.name}'" for elem in fk.elements]) # type: ignore
             refs = ', '.join([f"'{elem.column.table.name}.{elem.column.name}'" for elem in fk.elements]) # type: ignore
             targs.append(f"ForeignKeyConstraint([{cols}], [{refs}])")
-
+        """
         # Render __table_args__ if we have any
         if targs:
             lines.append('    __table_args__ = (')

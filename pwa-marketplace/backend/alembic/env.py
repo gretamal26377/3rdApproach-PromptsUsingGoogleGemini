@@ -55,21 +55,23 @@ if config.get_main_option("sqlalchemy.url") != 'sqlite:///:memory:':
             tmp_db_url = f"mysql+pymysql://{mysql_user}:{password}@{mysql_host}:3306/{mysql_db}"
             config.set_main_option('sqlalchemy.url', tmp_db_url)
 
-# if sqlalchemy.url is not set, then sqlalchemy.url from alembic.ini will be used
+# if sqlalchemy.url is not set, then sqlalchemy.url from alembic.ini will be used by default
 
 # Add your model's MetaData object here for 'autogenerate' support
 # Prefer Flask-SQLAlchemy metadata (db.metadata) since this project uses Flask-SQLAlchemy
 try:
     # Import the Flask-SQLAlchemy `db` instance and ensure models are imported
-    # so db.metadata is populated with table objects.
-    from app.shared.database import db
-    import app.shared.models  # noqa: F401  (side-effect: registers models on db.metadata)
+    # so db.metadata is populated with table objects
+    # (linter false positive, fixed by adding backend/ to sys.path above > ignored)
+    from app.shared.database import db   # type: ignore
+    # (linter false positive, fixed by adding backend/ to sys.path above > ignored)
+    import app.shared.models   # type: ignore
     target_metadata = getattr(db, "metadata", None)
 except Exception:
     target_metadata = None
 
-# Other values from the config, defined by the needs of env.py,
-# can be acquired:
+# Other values from config file , by the needs of env.py,
+# can be acquired/defined here:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
@@ -108,7 +110,7 @@ def run_migrations_offline() -> None:
         context manager: An object that defines the runtime context to be established
         begin_transaction(): Start a new transaction block
         run_migrations() in offline: Run migrations in 'offline' mode. That is,
-                                     generate SQL statements without executing them
+                                     generates SQL statements without executing them
     """
     with context.begin_transaction():
         context.run_migrations()

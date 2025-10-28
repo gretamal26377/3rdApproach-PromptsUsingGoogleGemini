@@ -27,7 +27,7 @@ start-db:
 	docker compose -f $(COMPOSE_FILE) up -d db $(SERVICE)
 
 # generate models from inside the container (writes to path relative to WORKDIR in Dockerfile)
-OUT ?= ./app/shared/models_sql2orm_plain-sqlalchemy2.py
+OUT ?= ./app/shared/models_sql2orm_plain_sqlalchemy2.py
 generate-models-from-container: start-db
     # 2>/dev/null: 0 = stdin, 1 = stdout, 2 = stderr. Redirect stderr to /dev/null to avoid
     # error message if secret file doesn't exist
@@ -39,7 +39,7 @@ generate-models-from-container: start-db
 	@echo "Generated file written to $(OUT). Review and git add/commit as needed"
 
 # generate models from host (writes to repo-relative path)
-OUT_HOST ?= ../app/shared/models_sql2orm_plain-sqlalchemy2.py
+OUT_HOST ?= ../app/shared/models_sql2orm_plain_sqlalchemy2.py
 generate-models-from-host:
 	@echo "Generating models from host repo and writing to $(OUT_HOST)..."
 	sh -lc '\

@@ -8,14 +8,15 @@ project metadata from `app.shared.models.Base` for autogenerate support
 
 Quick local (PowerShell) examples
 
-# Create an autogenerate revision (inspect the generated file before applying)
-python -m alembic -c pwa-marketplace/backend/alembic.ini revision --autogenerate -m "Add Changes"
+# Create an autogenerate revision (inspect the generated file before applying, run from backend folder)
+python -m alembic -c alembic.ini revision --autogenerate -m "Add Changes"
 
 # Apply all migrations
-python -m alembic -c pwa-marketplace/backend/alembic.ini upgrade head
+python -m alembic -c alembic.ini upgrade head
 
 # Generate SQL for a revision without applying (offline SQL) (Issue: This command is wrong and needs fixing)
-python -m alembic -c alembic.ini upgrade --sql head
+python -m alembic -c alembic.ini upgrade --sql head> ..\database\docker-entrypoint-initdb.d\models2SQL.sql.bak
+
 
 Docker Compose examples (run from repository root)
 

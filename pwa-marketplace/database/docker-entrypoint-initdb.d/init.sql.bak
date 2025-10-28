@@ -4,6 +4,7 @@ USE marketplace_db;
 /* Ensure status lookup table exists before tables that reference it */
 CREATE TABLE IF NOT EXISTS entity_statuses (
     status_id INT AUTO_INCREMENT PRIMARY KEY,
+    # UNIQUE: Creates an implicit index on the column
     status_code VARCHAR(50) UNIQUE NOT NULL, -- e.g., 'active', 'inactive', 'banned'
     status_description TEXT
 );
@@ -15,6 +16,8 @@ CREATE TABLE IF NOT EXISTS users (
     user_password_hash VARCHAR(255) NOT NULL,
     user_phone VARCHAR(20) NOT NULL,
     user_status_id INT NOT NULL,
+    # FOREIGN KEY constraint: Apart from the relationship, it creates an index on the column for most
+    # DB systems suach as PostgreSQL and MySQL/MariaDB
     FOREIGN KEY (user_status_id) REFERENCES entity_statuses (status_id)
 );
 
@@ -166,7 +169,6 @@ CREATE TABLE IF NOT EXISTS order_details (
     FOREIGN KEY (order_id) REFERENCES orders(order_id),
     FOREIGN KEY (store_product_service_id) REFERENCES store_products_services(id)
 );
-
 
 
 /* It's possible to create dummy data for testing purposes using the following SQL commands.

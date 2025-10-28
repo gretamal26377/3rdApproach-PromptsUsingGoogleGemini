@@ -6,9 +6,7 @@ from sqlalchemy import Index, ForeignKeyConstraint, text
 class Categories(db.Model):
     __tablename__ = 'categories'
     __table_args__ = (
-        Index('category_status_id', 'category_status_id'),
         Index('category_name', 'category_name', unique=True),
-        ForeignKeyConstraint(['category_status_id'], ['entity_statuses.status_id']),
     )
 
     category_id = db.Column(db.Integer, primary_key=True)
@@ -63,12 +61,6 @@ class CategoriesHistory(db.Model):
 
 class Cities(db.Model):
     __tablename__ = 'cities'
-    __table_args__ = (
-        Index('city_status_id', 'city_status_id'),
-        Index('state_region_id', 'state_region_id'),
-        ForeignKeyConstraint(['state_region_id'], ['states_regions.state_region_id']),
-        ForeignKeyConstraint(['city_status_id'], ['entity_statuses.status_id']),
-    )
 
     city_id = db.Column(db.Integer, primary_key=True)
     city_name = db.Column(db.String(100), nullable=False)
@@ -83,11 +75,7 @@ class Cities(db.Model):
 class StatesRegions(db.Model):
     __tablename__ = 'states_regions'
     __table_args__ = (
-        Index('country_id', 'country_id'),
         Index('state_region_code', 'state_region_code', unique=True),
-        Index('state_region_status_id', 'state_region_status_id'),
-        ForeignKeyConstraint(['state_region_status_id'], ['entity_statuses.status_id']),
-        ForeignKeyConstraint(['country_id'], ['countries.country_id']),
     )
 
     state_region_id = db.Column(db.Integer, primary_key=True)
@@ -104,9 +92,7 @@ class StatesRegions(db.Model):
 class Countries(db.Model):
     __tablename__ = 'countries'
     __table_args__ = (
-        Index('country_status_id', 'country_status_id'),
         Index('country_code', 'country_code', unique=True),
-        ForeignKeyConstraint(['country_status_id'], ['entity_statuses.status_id']),
     )
 
     country_id = db.Column(db.Integer, primary_key=True)
@@ -154,14 +140,6 @@ class CountriesHistory(db.Model):
 
 class CustomerAddresses(db.Model):
     __tablename__ = 'customer_addresses'
-    __table_args__ = (
-        Index('city_id', 'city_id'),
-        Index('customer_id', 'customer_id'),
-        Index('address_status_id', 'address_status_id'),
-        ForeignKeyConstraint(['city_id'], ['cities.city_id']),
-        ForeignKeyConstraint(['address_status_id'], ['entity_statuses.status_id']),
-        ForeignKeyConstraint(['customer_id'], ['customers.customer_id']),
-    )
 
     address_id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.customer_id'), nullable=False)
@@ -180,9 +158,7 @@ class CustomerAddresses(db.Model):
 class Customers(db.Model):
     __tablename__ = 'customers'
     __table_args__ = (
-        Index('customer_status_id', 'customer_status_id'),
         Index('customer_email', 'customer_email', unique=True),
-        ForeignKeyConstraint(['customer_status_id'], ['entity_statuses.status_id']),
     )
 
     customer_id = db.Column(db.Integer, primary_key=True)
@@ -252,13 +228,6 @@ class EntityStatusesHistory(db.Model):
 
 class OrderDetails(db.Model):
     __tablename__ = 'order_details'
-    __table_args__ = (
-        Index('store_product_service_id', 'store_product_service_id'),
-        Index('product_service_status_id', 'product_service_status_id'),
-        ForeignKeyConstraint(['order_id'], ['orders.order_id']),
-        ForeignKeyConstraint(['product_service_status_id'], ['order_statuses.status_id']),
-        ForeignKeyConstraint(['store_product_service_id'], ['store_products_services.id']),
-    )
 
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), primary_key=True)
     store_product_service_id = db.Column(db.Integer, db.ForeignKey('store_products_services.id'), primary_key=True)
@@ -290,12 +259,6 @@ class OrderStatuses(db.Model):
 
 class Orders(db.Model):
     __tablename__ = 'orders'
-    __table_args__ = (
-        Index('customer_id', 'customer_id'),
-        Index('order_status_id', 'order_status_id'),
-        ForeignKeyConstraint(['customer_id'], ['customers.customer_id']),
-        ForeignKeyConstraint(['order_status_id'], ['order_statuses.status_id']),
-    )
 
     order_id = db.Column(db.Integer, primary_key=True)
     order_tot_quantity = db.Column(db.Integer, nullable=False)
@@ -311,13 +274,7 @@ class Orders(db.Model):
 class StoreProductsServices(db.Model):
     __tablename__ = 'store_products_services'
     __table_args__ = (
-        Index('status_id', 'status_id'),
-        Index('idx_store', 'store_id'),
-        Index('idx_product_service', 'product_service_id'),
         Index('uk_store_product', 'store_id', 'product_service_id', unique=True),
-        ForeignKeyConstraint(['status_id'], ['entity_statuses.status_id']),
-        ForeignKeyConstraint(['store_id'], ['stores.store_id']),
-        ForeignKeyConstraint(['product_service_id'], ['products_services.product_service_id']),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -336,9 +293,7 @@ class StoreProductsServices(db.Model):
 class Stores(db.Model):
     __tablename__ = 'stores'
     __table_args__ = (
-        Index('store_status_id', 'store_status_id'),
         Index('store_email', 'store_email', unique=True),
-        ForeignKeyConstraint(['store_status_id'], ['entity_statuses.status_id']),
     )
 
     store_id = db.Column(db.Integer, primary_key=True)
@@ -357,11 +312,7 @@ class Stores(db.Model):
 class ProductsServices(db.Model):
     __tablename__ = 'products_services'
     __table_args__ = (
-        Index('product_service_status_id', 'product_service_status_id'),
         Index('product_service_name', 'product_service_name', unique=True),
-        Index('product_service_category_id', 'product_service_category_id'),
-        ForeignKeyConstraint(['product_service_status_id'], ['entity_statuses.status_id']),
-        ForeignKeyConstraint(['product_service_category_id'], ['categories.category_id']),
     )
 
     product_service_id = db.Column(db.Integer, primary_key=True)
@@ -415,8 +366,8 @@ class OrderStatusesHistory(db.Model):
 class OrdersHistory(db.Model):
     __tablename__ = 'orders_history'
     __table_args__ = (
-        Index('changed_at', 'changed_at'),
         Index('order_id', 'order_id'),
+        Index('changed_at', 'changed_at'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -432,8 +383,8 @@ class OrdersHistory(db.Model):
 class ProductsServicesHistory(db.Model):
     __tablename__ = 'products_services_history'
     __table_args__ = (
-        Index('changed_at', 'changed_at'),
         Index('product_service_id', 'product_service_id'),
+        Index('changed_at', 'changed_at'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -516,15 +467,6 @@ class StoreProductsServicesHistory(db.Model):
 
 class StoreUserRole(db.Model):
     __tablename__ = 'store_user_role'
-    __table_args__ = (
-        Index('user_id', 'user_id'),
-        Index('status_id', 'status_id'),
-        Index('role_id', 'role_id'),
-        ForeignKeyConstraint(['store_id'], ['stores.store_id']),
-        ForeignKeyConstraint(['status_id'], ['entity_statuses.status_id']),
-        ForeignKeyConstraint(['role_id'], ['roles.role_id']),
-        ForeignKeyConstraint(['user_id'], ['users.user_id']),
-    )
 
     store_id = db.Column(db.Integer, db.ForeignKey('stores.store_id'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True)
@@ -540,9 +482,7 @@ class StoreUserRole(db.Model):
 class Users(db.Model):
     __tablename__ = 'users'
     __table_args__ = (
-        Index('user_status_id', 'user_status_id'),
         Index('user_email', 'user_email', unique=True),
-        ForeignKeyConstraint(['user_status_id'], ['entity_statuses.status_id']),
     )
 
     user_id = db.Column(db.Integer, primary_key=True)
