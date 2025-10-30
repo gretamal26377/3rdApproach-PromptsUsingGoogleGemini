@@ -10,4 +10,7 @@ sqlalchemy
 sqlacodegen
 alembic
 gunicorn
+meilisearch
 bleach
+eralchemy2
+pygraphviz

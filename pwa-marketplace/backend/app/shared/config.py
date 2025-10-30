@@ -36,3 +36,7 @@ class Config:
         SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{user}:{password}@{host}:3306/{dbname}"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Meilisearch configuration
+    MEILISEARCH_URL = os.environ.get('MEILISEARCH_URL', 'http://localhost:7700')
+    MEILISEARCH_API_KEY = os.environ.get('MEILISEARCH_API_KEY', None)
