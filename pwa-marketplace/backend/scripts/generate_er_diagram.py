@@ -121,7 +121,8 @@ def generate_er_diagram_from_metadata():
         print("\n📊 Generating ER Diagram from SQLAlchemy metadata...")
         
         try:
-            # Create a temporary in-memory SQLite database with the schema
+            # --- Primary Method: In-memory SQLite with render_er ---
+            print("\nAttempting primary method (in-memory SQLite)...")
             from sqlalchemy import create_engine
             
             # Use an in-memory SQLite database
@@ -134,56 +135,59 @@ def generate_er_diagram_from_metadata():
             
             # Generate the diagram from the temporary database
             render_er('sqlite:///:memory:', output_path)
+            print("   ✅ Primary method successful.")
+
+        except Exception as e1:
+            print(f"\n⚠️ Primary method failed: {e1}")
+            print("   Falling back to alternative method (metadata-to-dot)...")
             
-            # Alternative: if the above doesn't work, try rendering from metadata directly
-            # This requires creating a DOT file first
-            from eralchemy2 import intermediary_to_dot
-            from eralchemy2.sqla import metadata_to_intermediary
-            
-            # Convert metadata to intermediary format
-            tables = metadata_to_intermediary(db.metadata)
-            
-            # Generate DOT format
-            dot_output = os.path.join(OUTPUT_DIR, OUTPUT_FILENAME.replace('.pdf', '.dot'))
-            intermediary_to_dot(tables, dot_output)
-            
-            # Convert DOT to PDF using graphviz
-            import subprocess
-            pdf_output = os.path.join(OUTPUT_DIR, OUTPUT_FILENAME)
-            subprocess.run(['dot', '-Tpdf', dot_output, '-o', pdf_output], check=True)
-            
-            print("\n✅ SUCCESS! ER Diagram generated successfully!")
-            print(f"   📁 Location: {pdf_output}")
-            print(f"   📏 File size: {os.path.getsize(pdf_output) / 1024:.2f} KB")
-            
-            print("\n📋 Diagram includes:")
-            print("   • All database tables and their columns")
-            print("   • Primary keys (PK)")
-            print("   • Foreign keys (FK)")
-            print("   • Relationships between tables")
-            print("   • Data types for each column")
-            
-            # Clean up DOT file
-            if os.path.exists(dot_output):
-                os.remove(dot_output)
-                print("   🧹 Cleaned up temporary DOT file")
-            
-            print("\n" + "=" * 70)
-            
-        except Exception as e:
-            print("\n❌ ERROR: Failed to generate ER diagram")
-            print(f"   Details: {str(e)}")
-            print("\nTroubleshooting tips:")
-            print("   1. Ensure graphviz is installed and in PATH")
-            print("   2. Try running 'dot -V' to verify graphviz installation")
-            print("   3. Check that eralchemy2 is properly installed")
-            return
+            try:
+                # --- Alternative Method: Metadata to DOT file ---
+                import subprocess
+                from eralchemy2.dot import intermediary_to_dot
+                from eralchemy2.sqla import metadata_to_intermediary
+
+                tables = metadata_to_intermediary(db.metadata)
+                dot_output = os.path.join(OUTPUT_DIR, OUTPUT_FILENAME.replace('.pdf', '.dot'))
+                intermediary_to_dot(tables, dot_output)
+                
+                subprocess.run(['dot', '-Tpdf', dot_output, '-o', output_path], check=True)
+                print("   ✅ Alternative method successful")
+
+                # Clean up DOT file
+                # if os.path.exists(dot_output):
+                #    os.remove(dot_output)
+                #    print("      🧹 Cleaned up temporary DOT file")
+
+            except Exception as e2:
+                print("\n❌ ERROR: Both generation methods failed")
+                print(f"   Primary method error: {e1}")
+                print(f"   Alternative method error: {e2}")
+                print("\nTroubleshooting tips:")
+                print("   1. Ensure graphviz is installed and in your system's PATH")
+                print("   2. Run 'dot -V' in your terminal to verify graphviz installation")
+                print("   3. Check for errors in your SQLAlchemy model definitions")
+                return
+
+        # --- Success Message ---
+        print("\n✅ SUCCESS! ER Diagram generated successfully!")
+        print(f"   📁 Location: {output_path}")
+        if os.path.exists(output_path):
+            print(f"   📏 File size: {os.path.getsize(output_path) / 1024:.2f} KB")
+        
+        print("\n📋 Diagram includes:")
+        print("   • All database tables and their columns")
+        print("   • Primary keys (PK)")
+        print("   • Foreign keys (FK)")
+        print("   • Relationships between tables")
+        print("   • Data types for each column")
+        print("\n" + "=" * 70)
 
 
 if __name__ == '__main__':
-    print("\nChoose generation method:")
-    print("1. From database URI (requires database connection)")
-    print("2. From SQLAlchemy metadata (no database required)")
+    print("\nIt'll try method (1), if fail, try method (2):")
+    print("1. From SQLAlchemy metadata (no database required)")
+    print("2. From database URI (requires database connection)")
     
     # Default to metadata mode as it's more reliable
     try:
