@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Database Schema - ER Diagram</title>
+    /* <style>: Embed CSS styles directly in the HTML document */
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        h1 { color: #333; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; }
+        .table-container { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .table-name { font-size: 24px; color: #2196F3; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #4CAF50; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f5f5f5; }
+        .pk { color: #e91e63; font-weight: bold; }
+        .fk { color: #2196F3; font-style: italic; }
+        .nullable { color: #999; }
+        .relationships { background: #fff9c4; padding: 10px; margin: 10px 0; border-left: 4px solid #fbc02d; }
+        .summary { background: #e3f2fd; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 5px; }
+        .badge-pk { background: #e91e63; color: white; }
+        .badge-fk { background: #2196F3; color: white; }
+        .badge-not-null { background: #4CAF50; color: white; }
+        .badge-unique { background: #9c27b0; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Database Schema Documentation</h1>
+    <p>Generated: 2025-11-01 02:37:59</p>
+    <div class='summary'>
+        <h2>Summary</h2>
+        <p><strong>Total Tables:</strong> 32</p>
+        <p><strong>Business Tables:</strong> 16</p>
+        <p><strong>History/Audit Tables:</strong> 16</p>
+    </div>
+    <h2>Table Details</h2>
+    <div class='table-container'>
+        <div class='table-name'>📋 categories</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>category_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>category_name</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>category_description</strong></td>
+                    <td>TEXT</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>category_pic_path</strong></td>
+                    <td>VARCHAR(255)</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>category_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • category_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 cities</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>city_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>city_name</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>state_region_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>city_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • state_region_id → states_regions.state_region_id<br>
+            • city_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 countries</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>country_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>country_name</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>country_code</strong></td>
+                    <td>VARCHAR(10)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>country_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • country_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 customer_addresses</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>address_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>customer_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>address_line1</strong></td>
+                    <td>VARCHAR(255)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>address_line2</strong></td>
+                    <td>VARCHAR(255)</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>city_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>google_maps_url</strong></td>
+                    <td>VARCHAR(255)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>address_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>postal_code</strong></td>
+                    <td>VARCHAR(20)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • customer_id → customers.customer_id<br>
+            • city_id → cities.city_id<br>
+            • address_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 customers</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>customer_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>customer_email</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>customer_name</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>customer_password_hash</strong></td>
+                    <td>VARCHAR(255)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>customer_phone</strong></td>
+                    <td>VARCHAR(20)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>customer_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • customer_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 entity_statuses</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>status_code</strong></td>
+                    <td>VARCHAR(50)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>status_description</strong></td>
+                    <td>TEXT</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 order_details</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>order_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>store_product_service_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_quantity</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_price</strong></td>
+                    <td>NUMERIC</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_tot_price</strong></td>
+                    <td>NUMERIC</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_filled_quantity</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_filled_tot_price</strong></td>
+                    <td>NUMERIC</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • order_id → orders.order_id<br>
+            • store_product_service_id → store_products_services.id<br>
+            • product_service_status_id → order_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 order_statuses</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>status_code</strong></td>
+                    <td>VARCHAR(50)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>status_description</strong></td>
+                    <td>TEXT</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 orders</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>order_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>order_tot_quantity</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>order_tot_price</strong></td>
+                    <td>NUMERIC</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>customer_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>order_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • customer_id → customers.customer_id<br>
+            • order_status_id → order_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 products_services</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>product_service_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_name</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_description</strong></td>
+                    <td>TEXT</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_pic_path</strong></td>
+                    <td>VARCHAR(255)</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_category_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • product_service_category_id → categories.category_id<br>
+            • product_service_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 roles</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>role_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>role_code</strong></td>
+                    <td>VARCHAR(50)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>role_description</strong></td>
+                    <td>TEXT</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 states_regions</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>state_region_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>state_region_name</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>state_region_code</strong></td>
+                    <td>VARCHAR(10)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>country_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>state_region_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • country_id → countries.country_id<br>
+            • state_region_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 store_products_services</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>store_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>product_service_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>price</strong></td>
+                    <td>NUMERIC</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>stock</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • store_id → stores.store_id<br>
+            • product_service_id → products_services.product_service_id<br>
+            • status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 store_user_role</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>store_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>user_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>role_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • store_id → stores.store_id<br>
+            • user_id → users.user_id<br>
+            • role_id → roles.role_id<br>
+            • status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 stores</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>store_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>store_email</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>store_name</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>store_description</strong></td>
+                    <td>TEXT</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>store_phone</strong></td>
+                    <td>VARCHAR(20)</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td><strong>store_address</strong></td>
+                    <td>TEXT</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>store_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • store_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+    <div class='table-container'>
+        <div class='table-name'>📋 users</div>
+        <table>
+            <thead>
+                <tr><th>Column</th><th>Type</th><th>Constraints</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>user_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-pk'>PK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>user_email</strong></td>
+                    <td>VARCHAR(100)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>user_name</strong></td>
+                    <td>VARCHAR(50)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>user_password_hash</strong></td>
+                    <td>VARCHAR(255)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>user_phone</strong></td>
+                    <td>VARCHAR(20)</td>
+                    <td><span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+                <tr>
+                    <td><strong>user_status_id</strong></td>
+                    <td>INTEGER</td>
+                    <td><span class='badge badge-fk'>FK</span> <span class='badge badge-not-null'>NOT NULL</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class='relationships'>
+            <strong>Relationships:</strong><br>
+            • user_status_id → entity_statuses.status_id<br>
+        </div>
+    </div>
+</body>
+</html>

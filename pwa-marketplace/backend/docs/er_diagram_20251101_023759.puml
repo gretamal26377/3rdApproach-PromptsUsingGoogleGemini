@@ -1,0 +1,166 @@
+@startuml
+!define Table(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define primary_key(x) <b>x</b>
+!define foreign_key(x) <i>x</i>
+hide methods
+hide stereotypes
+
+entity "categories" as categories {
+  + **category_id** : INTEGER <<PK>>
+  category_name : VARCHAR(100)
+  category_description : TEXT
+  category_pic_path : VARCHAR(255)
+  # *category_status_id* : INTEGER <<FK>>
+}
+
+entity "entity_statuses" as entity_statuses {
+  + **status_id** : INTEGER <<PK>>
+  status_code : VARCHAR(50)
+  status_description : TEXT
+}
+
+entity "cities" as cities {
+  + **city_id** : INTEGER <<PK>>
+  city_name : VARCHAR(100)
+  # *state_region_id* : INTEGER <<FK>>
+  # *city_status_id* : INTEGER <<FK>>
+}
+
+entity "states_regions" as states_regions {
+  + **state_region_id** : INTEGER <<PK>>
+  state_region_name : VARCHAR(100)
+  state_region_code : VARCHAR(10)
+  # *country_id* : INTEGER <<FK>>
+  # *state_region_status_id* : INTEGER <<FK>>
+}
+
+entity "countries" as countries {
+  + **country_id** : INTEGER <<PK>>
+  country_name : VARCHAR(100)
+  country_code : VARCHAR(10)
+  # *country_status_id* : INTEGER <<FK>>
+}
+
+entity "customer_addresses" as customer_addresses {
+  + **address_id** : INTEGER <<PK>>
+  # *customer_id* : INTEGER <<FK>>
+  address_line1 : VARCHAR(255)
+  address_line2 : VARCHAR(255)
+  # *city_id* : INTEGER <<FK>>
+  google_maps_url : VARCHAR(255)
+  # *address_status_id* : INTEGER <<FK>>
+  postal_code : VARCHAR(20)
+}
+
+entity "customers" as customers {
+  + **customer_id** : INTEGER <<PK>>
+  customer_email : VARCHAR(100)
+  customer_name : VARCHAR(100)
+  customer_password_hash : VARCHAR(255)
+  customer_phone : VARCHAR(20)
+  # *customer_status_id* : INTEGER <<FK>>
+}
+
+entity "order_details" as order_details {
+  + **order_id** : INTEGER <<PK>>
+  + **store_product_service_id** : INTEGER <<PK>>
+  product_service_quantity : INTEGER
+  product_service_price : NUMERIC
+  product_service_tot_price : NUMERIC
+  # *product_service_status_id* : INTEGER <<FK>>
+  product_service_filled_quantity : INTEGER
+  product_service_filled_tot_price : NUMERIC
+}
+
+entity "order_statuses" as order_statuses {
+  + **status_id** : INTEGER <<PK>>
+  status_code : VARCHAR(50)
+  status_description : TEXT
+}
+
+entity "orders" as orders {
+  + **order_id** : INTEGER <<PK>>
+  order_tot_quantity : INTEGER
+  order_tot_price : NUMERIC
+  # *customer_id* : INTEGER <<FK>>
+  # *order_status_id* : INTEGER <<FK>>
+}
+
+entity "store_products_services" as store_products_services {
+  + **id** : INTEGER <<PK>>
+  # *store_id* : INTEGER <<FK>>
+  # *product_service_id* : INTEGER <<FK>>
+  price : NUMERIC
+  stock : INTEGER
+  # *status_id* : INTEGER <<FK>>
+}
+
+entity "stores" as stores {
+  + **store_id** : INTEGER <<PK>>
+  store_email : VARCHAR(100)
+  store_name : VARCHAR(100)
+  store_description : TEXT
+  store_phone : VARCHAR(20)
+  store_address : TEXT
+  # *store_status_id* : INTEGER <<FK>>
+}
+
+entity "products_services" as products_services {
+  + **product_service_id** : INTEGER <<PK>>
+  product_service_name : VARCHAR(100)
+  product_service_description : TEXT
+  product_service_pic_path : VARCHAR(255)
+  # *product_service_category_id* : INTEGER <<FK>>
+  # *product_service_status_id* : INTEGER <<FK>>
+}
+
+entity "roles" as roles {
+  + **role_id** : INTEGER <<PK>>
+  role_code : VARCHAR(50)
+  role_description : TEXT
+}
+
+entity "store_user_role" as store_user_role {
+  + **store_id** : INTEGER <<PK>>
+  + **user_id** : INTEGER <<PK>>
+  # *role_id* : INTEGER <<FK>>
+  # *status_id* : INTEGER <<FK>>
+}
+
+entity "users" as users {
+  + **user_id** : INTEGER <<PK>>
+  user_email : VARCHAR(100)
+  user_name : VARCHAR(50)
+  user_password_hash : VARCHAR(255)
+  user_phone : VARCHAR(20)
+  # *user_status_id* : INTEGER <<FK>>
+}
+
+entity_statuses ||--o{ categories
+states_regions ||--o{ cities
+entity_statuses ||--o{ cities
+countries ||--o{ states_regions
+entity_statuses ||--o{ states_regions
+entity_statuses ||--o{ countries
+customers ||--o{ customer_addresses
+cities ||--o{ customer_addresses
+entity_statuses ||--o{ customer_addresses
+entity_statuses ||--o{ customers
+orders ||--o{ order_details
+store_products_services ||--o{ order_details
+order_statuses ||--o{ order_details
+customers ||--o{ orders
+order_statuses ||--o{ orders
+stores ||--o{ store_products_services
+products_services ||--o{ store_products_services
+entity_statuses ||--o{ store_products_services
+entity_statuses ||--o{ stores
+categories ||--o{ products_services
+entity_statuses ||--o{ products_services
+stores ||--o{ store_user_role
+users ||--o{ store_user_role
+roles ||--o{ store_user_role
+entity_statuses ||--o{ store_user_role
+entity_statuses ||--o{ users
+
+@enduml

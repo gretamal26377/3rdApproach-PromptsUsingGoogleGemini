@@ -1,0 +1,143 @@
+erDiagram
+    CATEGORIES {
+        int category_id PK NOT_NULL
+        string category_name NOT_NULL
+        text category_description
+        string category_pic_path
+        int category_status_id FK NOT_NULL
+    }
+    ENTITY-STATUSES {
+        int status_id PK NOT_NULL
+        string status_code NOT_NULL
+        text status_description
+    }
+    CITIES {
+        int city_id PK NOT_NULL
+        string city_name NOT_NULL
+        int state_region_id FK NOT_NULL
+        int city_status_id FK NOT_NULL
+    }
+    STATES-REGIONS {
+        int state_region_id PK NOT_NULL
+        string state_region_name NOT_NULL
+        string state_region_code NOT_NULL
+        int country_id FK NOT_NULL
+        int state_region_status_id FK NOT_NULL
+    }
+    COUNTRIES {
+        int country_id PK NOT_NULL
+        string country_name NOT_NULL
+        string country_code NOT_NULL
+        int country_status_id FK NOT_NULL
+    }
+    CUSTOMER-ADDRESSES {
+        int address_id PK NOT_NULL
+        int customer_id FK NOT_NULL
+        string address_line1 NOT_NULL
+        string address_line2
+        int city_id FK NOT_NULL
+        string google_maps_url NOT_NULL
+        int address_status_id FK NOT_NULL
+        string postal_code NOT_NULL
+    }
+    CUSTOMERS {
+        int customer_id PK NOT_NULL
+        string customer_email NOT_NULL
+        string customer_name NOT_NULL
+        string customer_password_hash NOT_NULL
+        string customer_phone NOT_NULL
+        int customer_status_id FK NOT_NULL
+    }
+    ORDER-DETAILS {
+        int order_id PK FK NOT_NULL
+        int store_product_service_id PK FK NOT_NULL
+        int product_service_quantity NOT_NULL
+        NUMERIC product_service_price NOT_NULL
+        NUMERIC product_service_tot_price NOT_NULL
+        int product_service_status_id FK NOT_NULL
+        int product_service_filled_quantity NOT_NULL
+        NUMERIC product_service_filled_tot_price NOT_NULL
+    }
+    ORDER-STATUSES {
+        int status_id PK NOT_NULL
+        string status_code NOT_NULL
+        text status_description
+    }
+    ORDERS {
+        int order_id PK NOT_NULL
+        int order_tot_quantity NOT_NULL
+        NUMERIC order_tot_price NOT_NULL
+        int customer_id FK NOT_NULL
+        int order_status_id FK NOT_NULL
+    }
+    STORE-PRODUCTS-SERVICES {
+        int id PK NOT_NULL
+        int store_id FK NOT_NULL
+        int product_service_id FK NOT_NULL
+        NUMERIC price NOT_NULL
+        int stock NOT_NULL
+        int status_id FK NOT_NULL
+    }
+    STORES {
+        int store_id PK NOT_NULL
+        string store_email NOT_NULL
+        string store_name NOT_NULL
+        text store_description
+        string store_phone
+        text store_address NOT_NULL
+        int store_status_id FK NOT_NULL
+    }
+    PRODUCTS-SERVICES {
+        int product_service_id PK NOT_NULL
+        string product_service_name NOT_NULL
+        text product_service_description
+        string product_service_pic_path
+        int product_service_category_id FK NOT_NULL
+        int product_service_status_id FK NOT_NULL
+    }
+    ROLES {
+        int role_id PK NOT_NULL
+        string role_code NOT_NULL
+        text role_description
+    }
+    STORE-USER-ROLE {
+        int store_id PK FK NOT_NULL
+        int user_id PK FK NOT_NULL
+        int role_id FK NOT_NULL
+        int status_id FK NOT_NULL
+    }
+    USERS {
+        int user_id PK NOT_NULL
+        string user_email NOT_NULL
+        string user_name NOT_NULL
+        string user_password_hash NOT_NULL
+        string user_phone NOT_NULL
+        int user_status_id FK NOT_NULL
+    }
+
+    ENTITY-STATUSES ||--o{ CATEGORIES : has
+    STATES-REGIONS ||--o{ CITIES : has
+    ENTITY-STATUSES ||--o{ CITIES : has
+    COUNTRIES ||--o{ STATES-REGIONS : has
+    ENTITY-STATUSES ||--o{ STATES-REGIONS : has
+    ENTITY-STATUSES ||--o{ COUNTRIES : has
+    CUSTOMERS ||--o{ CUSTOMER-ADDRESSES : has
+    CITIES ||--o{ CUSTOMER-ADDRESSES : has
+    ENTITY-STATUSES ||--o{ CUSTOMER-ADDRESSES : has
+    ENTITY-STATUSES ||--o{ CUSTOMERS : has
+    ORDERS ||--|| ORDER-DETAILS : has
+    STORE-PRODUCTS-SERVICES ||--|| ORDER-DETAILS : has
+    ORDER-STATUSES ||--o{ ORDER-DETAILS : has
+    CUSTOMERS ||--o{ ORDERS : has
+    ORDER-STATUSES ||--o{ ORDERS : has
+    STORES ||--o{ STORE-PRODUCTS-SERVICES : has
+    PRODUCTS-SERVICES ||--o{ STORE-PRODUCTS-SERVICES : has
+    ENTITY-STATUSES ||--o{ STORE-PRODUCTS-SERVICES : has
+    ENTITY-STATUSES ||--o{ STORES : has
+    CATEGORIES ||--o{ PRODUCTS-SERVICES : has
+    ENTITY-STATUSES ||--o{ PRODUCTS-SERVICES : has
+    STORES ||--|| STORE-USER-ROLE : has
+    USERS ||--|| STORE-USER-ROLE : has
+    ROLES ||--o{ STORE-USER-ROLE : has
+    ENTITY-STATUSES ||--o{ STORE-USER-ROLE : has
+    ENTITY-STATUSES ||--o{ USERS : has

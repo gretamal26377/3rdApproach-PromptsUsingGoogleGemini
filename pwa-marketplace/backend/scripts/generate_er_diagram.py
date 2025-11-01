@@ -32,8 +32,8 @@ except ImportError:
     print("  Mac: brew install graphviz")
     sys.exit(1)
 
-from app.shared.database import db
-from app import create_app
+from app.shared.database import db   # type: ignore
+from app import create_app   # type: ignore
 
 # --- Configuration ---
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), '..', 'docs')
@@ -112,7 +112,7 @@ def generate_er_diagram_from_metadata():
     
     with app.app_context():
         # Import all models to ensure they're registered with SQLAlchemy
-        from app.shared import models_sql2orm_flask_sqlalchemy  # noqa: F401
+        from app.shared import models_sql2orm_flask_sqlalchemy    # type: ignore
         
         # Ensure output directory exists
         os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -144,12 +144,12 @@ def generate_er_diagram_from_metadata():
             try:
                 # --- Alternative Method: Metadata to DOT file ---
                 import subprocess
-                from eralchemy2.dot import intermediary_to_dot
-                from eralchemy2.sqla import metadata_to_intermediary
+                from eralchemy2.main import intermediary_to_dot
+                from eralchemy2.main import metadata_to_intermediary  # type: ignore
 
-                tables = metadata_to_intermediary(db.metadata)
+                tables, relationships = metadata_to_intermediary(db.metadata)
                 dot_output = os.path.join(OUTPUT_DIR, OUTPUT_FILENAME.replace('.pdf', '.dot'))
-                intermediary_to_dot(tables, dot_output)
+                intermediary_to_dot(tables, relationships, output=dot_output)
                 
                 subprocess.run(['dot', '-Tpdf', dot_output, '-o', output_path], check=True)
                 print("   ✅ Alternative method successful")

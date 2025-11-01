@@ -6,19 +6,7 @@ multiple rendering options, including methods that don't require Graphviz
 system installation
 
 Usage (from backend/):
-    python                 "</body>",
-                "<body>",
-                "    <h1>Database Schema Documentation</h1>",
-                f"    <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>",
-            ]
-            
-            # Summary section
-            tables = [t for t in db.metadata.tables.keys() if '_history' not in t]
-            history_tables = [t for t in db.metadata.tables.keys() if '_history' in t]
-            
-            html_content.append("    <div class='summary'>")
-            html_content.append("        <h2>Summary</h2>")
-            html_content.append(f"        <p><strong>Total Tables:</strong> {len(db.metadata.tables)}</p>")nerate_er_diagram_alt
+    python -m scripts.generate_er_diagram_alt
 """
 
 import os
@@ -37,7 +25,7 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__), '..', 'docs')
 OUTPUT_BASE = f'er_diagram_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
 # --- End Configuration ---
 
-
+# Function defined, but not used... ?
 def check_graphviz_installed():
     """Check if Graphviz is installed on the system"""
     import subprocess
