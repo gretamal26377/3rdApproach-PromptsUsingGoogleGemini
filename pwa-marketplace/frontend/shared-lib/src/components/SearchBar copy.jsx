@@ -7,8 +7,7 @@ import { Search } from "lucide-react";
 // - fetcher(query): optional async function(query) => { stores:[], products:[] } for server-side search
 // - placeholder, className, onSelect(item)
 
-const defaultPlaceholder =
-  "Search for products/services, stores or categories...";
+const defaultPlaceholder = "Search for products/services or stores...";
 
 export default function SearchBar({
   items = null,

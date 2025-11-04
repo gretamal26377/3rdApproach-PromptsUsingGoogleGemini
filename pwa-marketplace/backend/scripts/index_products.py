@@ -27,7 +27,7 @@ from app.shared.models_sql2orm_flask_sqlalchemy import StoreProductsServices, Pr
 from app import create_app
 
 # --- Configuration ---
-INDEX_NAME = 'products'
+INDEX_NAME = 'products_services'
 # --- End Configuration ---
 
 def run_indexing():
@@ -66,26 +66,27 @@ def run_indexing():
             ).join(
                 Stores, StoreProductsServices.store_id == Stores.store_id
             ).all()
-            print(f"Found {len(listings)} product listings to index.")
+            print(f"Found {len(listings)} product/service listings to index")
         except Exception as e:
             print(f"Error: Failed to fetch data from the database. Details: {e}")
             return
 
         if not listings:
-            print("No product listings found in the database. Exiting.")
+            print("No product/service listings found in the database. Exiting")
             return
 
         # 3. Structure Documents for Meilisearch
         documents = []
-        for listing, product, store in listings:
+        # Iterate and unpack the listings into these three variables
+        for listing, product_service, store in listings:
             doc = {
                 # Use the unique ID of the listing as the document ID
                 'id': listing.id,
                 # This is the key for grouping results by the base product
-                'base_product_service_id': product.product_service_id,
-                'product_name': product.product_service_name,
-                'product_description': product.product_service_description,
-                'product_pic_path': product.product_service_pic_path,
+                'base_product_service_id': product_service.product_service_id,
+                'product_service_name': product_service.product_service_name,
+                'product_service_description': product_service.product_service_description,
+                'product_service_pic_path': product_service.product_service_pic_path,
                 # Seller-specific information
                 'price': float(listing.price), # Ensure price is a float for sorting
                 'stock': listing.stock,
@@ -94,18 +95,18 @@ def run_indexing():
             }
             documents.append(doc)
         
-        print(f"Prepared {len(documents)} documents for indexing.")
+        print(f"Prepared {len(documents)} documents for indexing")
 
         # 4. Configure and Add Documents to Meilisearch Index
         try:
             print(f"Updating index '{INDEX_NAME}'...")
             
             # Set index settings
-            # These settings are crucial for the search logic in the API.
+            # These settings are crucial for the search logic in the API
             settings = {
                 'searchableAttributes': [
-                    'product_name',
-                    'product_description',
+                    'product_service_name',
+                    'product_service_description',
                     'store_name'
                 ],
                 'filterableAttributes': [
@@ -114,6 +115,8 @@ def run_indexing():
                     'price'
                 ],
                 'sortableAttributes': [
+                    'store_name',
+                    'product_service_name',
                     'price'
                 ],
                 'rankingRules': [
@@ -128,21 +131,23 @@ def run_indexing():
             }
             task = client.index(INDEX_NAME).update_settings(settings)
             print(f"Update settings task queued (Task UID: {task.task_uid}). Waiting for completion...")
-            # It's good practice to wait for tasks to complete
+            # Wait up to 5 seconds for the settings update to complete, After 5 seconds the script continues,
+            # but execution will raise an exception despite the task going on, because this line's idea was
+            # to ensure task completion before proceeding
             client.wait_for_task(task.task_uid, timeout_in_ms=5000)
-            print("Index settings updated successfully.")
+            print("Index settings updated successfully")
 
             # Add documents to the index
             task = client.index(INDEX_NAME).add_documents(documents, primary_key='id')
             print(f"Add documents task queued (Task UID: {task.task_uid}). Waiting for completion...")
             client.wait_for_task(task.task_uid, timeout_in_ms=5000)
-            print("Documents added successfully.")
+            print("Documents added successfully")
 
         except Exception as e:
             print(f"Error: An error occurred while indexing documents to Meilisearch. Details: {e}")
             return
 
-    print("Product indexing process completed successfully.")
+    print("Product indexing process completed successfully")
 
 
 if __name__ == '__main__':

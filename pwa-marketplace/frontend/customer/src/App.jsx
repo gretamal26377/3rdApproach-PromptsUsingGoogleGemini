@@ -174,6 +174,7 @@ function AppContent() {
       <CustomerNav cart={cart} handleLogout={logout} />
       {/* main: This is an HTML5 semantic element that represents the dominant/main content of the document's <body> */}
       <main className="container mx-auto p-4">
+        {/* A component can be invoked with any amount of props and then it receives just the ones it defines */}
         <CustomerRoutes
           cart={cart}
           addToCart={addToCart}

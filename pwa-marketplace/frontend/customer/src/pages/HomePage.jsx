@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { debounce } from "lodash";
+import { api } from "shared-lib";
 import { Button } from "shared-lib";
 import { Card, CardContent, CardHeader, CardTitle } from "shared-lib";
 import { Badge } from "shared-lib";
@@ -145,6 +147,41 @@ const HomePage = () => {
   }, []);
 
   const navigate = useNavigate();
+
+  const debouncedSearch = useCallback(
+    debounce(async (query, callback) => {
+      if (query.length < 2) {
+        callback({ productsServices: [], stores: [] });
+        return;
+      }
+      try {
+        const results = await api.get(`/search?q=${query}`);
+        const productsServices = results.map((productService) => ({
+          type: "Product/Service",
+          id: productService.base_product_service_id,
+          title: productService.name,
+          description: `From $${productService.best_price.toFixed(2)}`,
+          path: `/products/${productService.base_product_service_id}/listings`,
+          price: productService.best_price,
+        }));
+        callback({ productsServices, stores: [] });
+      } catch (error) {
+        console.error("Search failed:", error);
+        callback({ productsServices: [], stores: [] });
+      }
+    }, 300),
+    // []: Empty dependency array for useCallback ensures the debounce function is created only once
+    []
+  );
+
+  const searchProductsServices = (query) => {
+    return new Promise((resolve) => {
+      debouncedSearch(query, (results) => {
+        resolve(results);
+      });
+    });
+  };
+
   const handleSelect = (item) => navigate(item.path);
 
   return (
@@ -163,9 +200,9 @@ const HomePage = () => {
       <div className="flex justify-center sticky top-[5.5rem] md:top-20 z-20 bg-background text-text dark:bg-background-dark dark:text-text-dark py-2">
         <div className="w-full max-w-md relative">
           <SearchBar
-            items={{ stores, products }}
+            fetcher={searchProductsServices}
             onSelect={handleSelect}
-            placeholder="Search for products or stores..."
+            placeholder="Search for products/services, stores or categories..."
           />
         </div>
       </div>

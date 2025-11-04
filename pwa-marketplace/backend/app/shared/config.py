@@ -37,6 +37,6 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Meilisearch configuration
+    # Meilisearch configuration. Port: 7700 is the default associated with Meilisearch
     MEILISEARCH_URL = os.environ.get('MEILISEARCH_URL', 'http://localhost:7700')
     MEILISEARCH_API_KEY = os.environ.get('MEILISEARCH_API_KEY', None)

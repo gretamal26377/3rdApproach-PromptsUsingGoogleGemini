@@ -1,6 +1,6 @@
 /**
  * Utility function to join class names conditionally
- * ... at the beginning of classes array is named the "rest parameter", which
+ * "..." at the beginning of classes array is named the "rest parameter", which
  * allows the function to accept any number of arguments
  */
 export function cn(...classes) {

@@ -16,7 +16,7 @@ const ProductPage = ({ addToCart }) => {
         setProduct(productData);
         setLoading(false);
       } catch (err) {
-        setError(err.message || "Failed to load product data.");
+        setError(err.message || "Failed to load product data");
         setLoading(false);
       }
     };
@@ -25,7 +25,7 @@ const ProductPage = ({ addToCart }) => {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
-  if (!product) return <p>Product not found.</p>;
+  if (!product) return <p>Product not found</p>;
 
   return (
     <div>

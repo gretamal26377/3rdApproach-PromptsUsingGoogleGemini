@@ -112,7 +112,7 @@ def generate_er_diagram_from_metadata():
     
     with app.app_context():
         # Import all models to ensure they're registered with SQLAlchemy
-        from app.shared import models_sql2orm_flask_sqlalchemy    # type: ignore
+        from app.shared import models_sql2orm_flask_sqlalchemy    # type: ignore  # noqa: F401
         
         # Ensure output directory exists
         os.makedirs(OUTPUT_DIR, exist_ok=True)
