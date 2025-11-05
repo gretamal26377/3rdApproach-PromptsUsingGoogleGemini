@@ -24,7 +24,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from app.shared.database import db
 from app.shared.models_sql2orm_flask_sqlalchemy import StoreProductsServices, ProductsServices, Stores, Categories
-from app import create_app
+# As this index is thought to customer facing search, we use the customer app factory
+from app.customer import create_app
 
 # --- Configuration ---
 INDEX_NAME = 'products_services'

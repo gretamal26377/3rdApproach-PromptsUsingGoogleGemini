@@ -7,7 +7,7 @@ import meilisearch
 from flask import Blueprint, request, jsonify, current_app
 
 # A dedicated blueprint for search functionality
-search_bp = Blueprint('search_bp', __name__, url_prefix='/api')
+search_bp = Blueprint('search_bp', __name__, url_prefix='/api-search')
 
 INDEX_NAME = 'products_services'
 
@@ -58,13 +58,13 @@ def search_products():
         # Sequence unpacking where 2nd value is not needed (_), named this way following Python convention
         for base_product_id_iterator, _ in facet_distribution['base_product_service_id'].items():
             # Perform a filtered and sorted search to find the best-priced item
-            # for this specific base product/service
+            # for each specific base product/service
             product_service_specific_results = index.search(
                 search_term,
                 {
                     'filter': f'base_product_service_id = {base_product_id_iterator}',
                     'sort': ['price:asc'],
-                    'limit': 1 # We only need the top result (the one with the lowest price)
+                    'limit': 1 # We only need the top result (the one with the lowest price per base product/service)
                 }
             )
 

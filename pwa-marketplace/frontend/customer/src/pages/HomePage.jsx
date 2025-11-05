@@ -169,7 +169,7 @@ const HomePage = () => {
         console.error("Search failed:", error);
         callback({ productsServices: [], stores: [] });
       }
-    }, 300),
+    }, 300), // 300 milliseconds debounce time
     // []: Empty dependency array for useCallback ensures the debounce function is created only once
     []
   );
