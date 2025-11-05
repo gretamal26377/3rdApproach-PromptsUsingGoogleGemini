@@ -8,13 +8,13 @@ problem by creating a document for each unique seller's listing but linking
 them via a common 'base_product_service_id'.
 
 Usage (from backend/):
-  python -m scripts.index_products
+  python -m scripts.index_products_services
 """
 
 import os
 import sys
 import meilisearch
-import time
+# import time
 
 # --- Path Setup ---
 # Add the project's root directory (backend/) to the Python path
@@ -60,11 +60,14 @@ def run_indexing():
             listings = db.session.query(
                 StoreProductsServices,
                 ProductsServices,
-                Stores
+                Stores,
+                Categories
             ).join(
                 ProductsServices, StoreProductsServices.product_service_id == ProductsServices.product_service_id
             ).join(
                 Stores, StoreProductsServices.store_id == Stores.store_id
+            ).join(
+                Categories, ProductsServices.product_service_category_id == Categories.category_id
             ).all()
             print(f"Found {len(listings)} product/service listings to index")
         except Exception as e:
@@ -77,21 +80,27 @@ def run_indexing():
 
         # 3. Structure Documents for Meilisearch
         documents = []
-        # Iterate and unpack the listings into these three variables
-        for listing, product_service, store in listings:
+        # Iterate and unpack the listings into these four variables
+        for listing, product_service, store, category in listings:
             doc = {
                 # Use the unique ID of the listing as the document ID
                 'id': listing.id,
-                # This is the key for grouping results by the base product
+                'document_type': 'Product/Service',
+                # This is the key for grouping results by the base product/service
                 'base_product_service_id': product_service.product_service_id,
                 'product_service_name': product_service.product_service_name,
                 'product_service_description': product_service.product_service_description,
                 'product_service_pic_path': product_service.product_service_pic_path,
+                # Category information
+                'category_id': category.category_id,
+                'category_name': category.category_name,
+                'category_description': category.category_description,
                 # Seller-specific information
                 'price': float(listing.price), # Ensure price is a float for sorting
                 'stock': listing.stock,
                 'store_id': store.store_id,
                 'store_name': store.store_name,
+                'store_description': store.store_description,
             }
             documents.append(doc)
         
@@ -107,17 +116,27 @@ def run_indexing():
                 'searchableAttributes': [
                     'product_service_name',
                     'product_service_description',
-                    'store_name'
+                    'store_name',
+                    'store_description',
+                    'category_name',
+                    'category_description',
+                    'price',
+                    'stock'
                 ],
                 'filterableAttributes': [
                     'base_product_service_id',
                     'store_id',
-                    'price'
+                    'category_id',
+                    'document_type',
+                    'price',
+                    'stock'
                 ],
                 'sortableAttributes': [
                     'store_name',
                     'product_service_name',
-                    'price'
+                    'category_name',
+                    'price',
+                    'stock'
                 ],
                 'rankingRules': [
                     'words',
@@ -132,7 +151,7 @@ def run_indexing():
             task = client.index(INDEX_NAME).update_settings(settings)
             print(f"Update settings task queued (Task UID: {task.task_uid}). Waiting for completion...")
             # Wait up to 5 seconds for the settings update to complete, After 5 seconds the script continues,
-            # but execution will raise an exception despite the task going on, because this line's idea was
+            # but execution will raise an exception despite the task goes on, because this line's idea was
             # to ensure task completion before proceeding
             client.wait_for_task(task.task_uid, timeout_in_ms=5000)
             print("Index settings updated successfully")
