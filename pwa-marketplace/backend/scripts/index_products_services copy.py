@@ -28,14 +28,15 @@ from app.shared.models_sql2orm_flask_sqlalchemy import StoreProductsServices, Pr
 from app.customer import create_app
 
 # --- Configuration ---
-INDEX_NAME = 'products_services_stores_categories'
+INDEX_NAME = 'products_services'
 # --- End Configuration ---
 
 def run_indexing():
     """
-    Connects to the database and Meilisearch, fetches data and index it
+    Connects to the database and Meilisearch, fetches product listings,
+    and indexes them
     """
-    print("Starting data indexing process...")
+    print("Starting product indexing process...")
 
     # Create a Flask app context to access the database and config
     app = create_app()
@@ -52,10 +53,12 @@ def run_indexing():
             return
 
         # 2. Fetch Data from Database
-        print("Fetching data from DB...")
+        # We query the 'StoreProductsServices' table which represents a single product
+        # listing by a specific store. We join with ProductsServices and Stores to get
+        # all the details we need for the search document
+        print("Fetching product/service listings from the database...")
         try:
-            # Fetch all products/services
-            all_products_services = db.session.query(
+            listings = db.session.query(
                 StoreProductsServices,
                 ProductsServices,
                 Stores,
@@ -67,32 +70,24 @@ def run_indexing():
             ).join(
                 Categories, ProductsServices.product_service_category_id == Categories.category_id
             ).all()
-            print(f"Found {len(all_products_services)} products/services to index")
-
-            # Fetch all stores
-            all_stores = db.session.query(Stores).all()
-            print(f"Found {len(all_stores)} stores to index")
-
-            # Fetch all categories
-            all_categories = db.session.query(Categories).all()
-            print(f"Found {len(all_categories)} categories to index")
-
+            print(f"Found {len(listings)} product/service listings to index")
         except Exception as e:
             print(f"Error: Failed to fetch data from the database. Details: {e}")
             return
 
-        if not all_products_services and not all_stores and not all_categories:
-            print("No data found in the database. Exiting")
+        if not listings:
+            print("No product/service listings found in the database. Exiting")
             return
 
         # 3. Structure Documents for Meilisearch
         documents = []
-
-        # Process products/services
-        for store_product_service, product_service, store, category in all_products_services:
+        # Iterate and unpack the listings into these four variables
+        for listing, product_service, store, category in listings:
             doc = {
-                'id': f'product_service_{store_product_service.id}',
+                # Use the unique ID of the listing as the document ID
+                'id': listing.id,
                 'document_type': 'Product/Service',
+                # This is the key for grouping results by the base product/service
                 'base_product_service_id': product_service.product_service_id,
                 'product_service_name': product_service.product_service_name,
                 'product_service_description': product_service.product_service_description,
@@ -107,28 +102,6 @@ def run_indexing():
                 'store_id': store.store_id,
                 'store_name': store.store_name,
                 'store_description': store.store_description,
-            }
-            documents.append(doc)
-
-        # Process stores
-        for store in all_stores:
-            doc = {
-                'id': f'store_{store.store_id}',
-                'document_type': 'Store',
-                'store_id': store.store_id,
-                'store_name': store.store_name,
-                'store_description': store.store_description,
-            }
-            documents.append(doc)
-
-        # Process categories
-        for category in all_categories:
-            doc = {
-                'id': f'category_{category.category_id}',
-                'document_type': 'Category',
-                'category_id': category.category_id,
-                'category_name': category.category_name,
-                'category_description': category.category_description,
             }
             documents.append(doc)
         

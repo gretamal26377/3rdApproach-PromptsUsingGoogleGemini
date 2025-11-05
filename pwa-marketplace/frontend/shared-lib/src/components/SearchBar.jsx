@@ -140,7 +140,7 @@ export default function SearchBar({
     }
   }, [highlighted]);
 
-  const handleKeyDown = (e) => {
+  const handlePressedKey = (e) => {
     if (!showResults) return;
     const count = flattenedResults.length;
     if (count === 0) return;
@@ -188,7 +188,7 @@ export default function SearchBar({
         value={query}
         onChange={handleChange}
         onFocus={() => setShowResults(true)}
-        onKeyDown={handleKeyDown}
+        onKeyDown={handlePressedKey}
         placeholder={placeholder}
         aria-label={placeholder}
         aria-haspopup="listbox"

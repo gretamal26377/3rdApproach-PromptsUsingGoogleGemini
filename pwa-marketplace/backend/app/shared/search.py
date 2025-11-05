@@ -9,13 +9,13 @@ from flask import Blueprint, request, jsonify, current_app
 # A dedicated blueprint for search functionality
 search_bp = Blueprint('search_bp', __name__, url_prefix='/api-search')
 
-INDEX_NAME = 'products_services'
+INDEX_NAME = 'products_services_stores_categories'
 
 # No need of sanitisation here as Meilisearch client handles that internally
 @search_bp.route('/search', methods=['GET'])
 def search_products():
     """
-    Performs a search query against the Meilisearch 'products_services' index
+    Performs a search query against the Meilisearch 'products_services_stores_categories' index
 
     This endpoint is designed to handle typeahead search from the frontend.
     It uses Meilisearch's faceting and filtering capabilities to return one
