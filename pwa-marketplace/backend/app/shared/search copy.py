@@ -62,22 +62,22 @@ def search_products():
         }
 
         # 3. Process each document type found in the search.
-        #    Sequence unpacking where 2nd value is not needed (_), named this way following Python convention
+        #    
         for doc_type, _ in facet_distribution['document_type'].items():
             if doc_type == 'Product/Service':
-                # For products/services, we need to find the best-priced item for each unique base product/service.
-                # This is a more complex aggregation
-                product_service_facet_search = index.search(
+                # For products, we need to find the best-priced item for each unique base product.
+                # This is a more complex aggregation.
+                product_facet_search = index.search(
                     search_term,
                     {
                         'filter': 'document_type = "Product/Service"',
                         'facets': ['base_product_service_id']
                     }
                 )
-                product_service_facets = product_service_facet_search.facet_distribution
-                if product_service_facets and 'base_product_service_id' in product_service_facets:
-                    for base_id, _ in product_service_facets['base_product_service_id'].items():
-                        # For each unique product/service, find the listing with the lowest price
+                product_facets = product_facet_search.facet_distribution
+                if product_facets and 'base_product_service_id' in product_facets:
+                    for base_id, _ in product_facets['base_product_service_id'].items():
+                        # For each unique product, find the listing with the lowest price.
                         best_price_search = index.search(
                             search_term,
                             {
@@ -97,7 +97,7 @@ def search_products():
                             })
 
             elif doc_type in ['Store', 'Category']:
-                # For stores and categories, the logic is simpler: just get the search hits
+                # For stores and categories, the logic is simpler: just get the search hits.
                 type_search_results = index.search(
                     search_term,
                     {
@@ -126,7 +126,7 @@ def search_products():
 
     except Exception as e:
         current_app.logger.error(f"Meilisearch query failed: {e}")
-        return jsonify({'message': 'Search service is currently unavailable'}), 503
+        return jsonify({'message': 'Search service is currently unavailable.'}), 503
 
 # No need of sanitisation here as Flask allows only integers for base_product_service_id
 # Milisearch also cooperates with it as we're using its filtering capabilities
