@@ -43,13 +43,14 @@ def search_products():
 
         # --- Main Search Logic ---
         # 1. Perform a broad search and get facet distribution for each document type
+        #    search_results = Contains all data details categorized by document type
         search_results = index.search(
             search_term,
             {
                 'facets': ['document_type']
             }
         )
-
+        # facet_distribution: Contains counts of each document type found in the search
         facet_distribution = search_results.facet_distribution
         if not facet_distribution or 'document_type' not in facet_distribution:
             return jsonify({})
@@ -63,6 +64,8 @@ def search_products():
 
         # 3. Process each document type found in the search.
         #    Sequence unpacking where 2nd value is not needed (_), named this way following Python convention
+        #    facet_distribution['document_type'].items(): Contains document types and their counts. In this case it
+        #    contains counts for three document types: 'Product/Service', 'Store', 'Category'
         for doc_type, _ in facet_distribution['document_type'].items():
             if doc_type == 'Product/Service':
                 # For products/services, we need to find the best-priced item for each unique base product/service.
@@ -102,7 +105,8 @@ def search_products():
                     search_term,
                     {
                         'filter': f'document_type = "{doc_type}"',
-                        'limit': 5  # Limit to 5 results per type for a clean UI
+                        'limit': 5  # Limit to 5 best matches per document type ranked by Milisearch
+                                    # internal algorithm based on defined ranking rules
                     }
                 )
                 
@@ -112,6 +116,8 @@ def search_products():
                         grouped_results["stores"].append({
                             'id': hit['store_id'],
                             'name': hit['store_name'],
+                            # '': It's a default value used when 'store_description' is missing,
+                            # that is, when store_description key doesn't exist in the hit dictionary
                             'description': hit.get('store_description', '')
                         })
                 elif doc_type == 'Category':

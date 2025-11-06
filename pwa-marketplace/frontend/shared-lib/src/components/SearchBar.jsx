@@ -1,44 +1,62 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
+import { debounce } from "lodash";
+import { api } from "shared-lib";
 
 // Props:
-// - items: { stores: [], products: [] } or a flattened array of items with { type, id, title, description, path, price }
-// - fetcher(query): optional async function(query) => { stores:[], products:[] } for server-side search
 // - placeholder, className, onSelect(item)
 
 const defaultPlaceholder =
   "Search for products/services, stores or categories...";
 
 export default function SearchBar({
-  items = null,
-  fetcher = null,
   placeholder = defaultPlaceholder,
   className = "",
   onSelect = null,
-  maxHeight = 240,
+  maxHeight = 400, // Increased max height to accommodate more sections
 }) {
   const [query, setQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
-  const [data, setData] = useState(items);
+  const [data, setData] = useState({
+    products_services: [],
+    stores: [],
+    categories: [],
+  });
   const [announcement, setAnnouncement] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const wrapperRef = useRef(null);
-  const resultsRef = useRef(null);
   const [highlighted, setHighlighted] = useState(-1);
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!items && fetcher) {
-      let mounted = true;
-      fetcher("")
-        .then((res) => mounted && setData(res))
-        .catch(() => {});
-      return () => (mounted = false);
-    } else {
-      setData(items);
-    }
-  }, [items, fetcher]);
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery) => {
+      if (searchQuery.length < 2) {
+        setData({ products_services: [], stores: [], categories: [] });
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const results = await api.get(`/search?q=${searchQuery}`);
+        setData(
+          results || { products_services: [], stores: [], categories: [] }
+        );
+      } catch (error) {
+        console.error("Search failed:", error);
+        setData({ products_services: [], stores: [], categories: [] });
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300), // 300ms debounce to reduce API calls to when user stops typing for >= 300ms
+    [] // No dependencies, created only once
+  );
 
   useEffect(() => {
     function onDocClick(e) {
@@ -50,69 +68,62 @@ export default function SearchBar({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  const { filteredStores, filteredProducts, flattenedResults } = useMemo(() => {
-    const stores =
-      (data && data.stores) ||
-      (Array.isArray(data) ? data.filter((i) => i.type === "store") : []);
-    const products =
-      (data && data.products) ||
-      (Array.isArray(data) ? data.filter((i) => i.type === "product") : []);
-    const q = (query || "").trim().toLowerCase();
+  const { products_services, stores, categories, flattenedResults } =
+    useMemo(() => {
+      // data?: It's modern JS syntax called Optional Chaining. It tells JS if data isn't null or undefined, then return it.
+      //        If it is then return []. This prevents runtime errors when trying to access properties of null/undefined
+      const ps = (data?.products_services || []).map((p) => ({
+        type: "product_service",
+        id: p.base_product_service_id,
+        title: p.name,
+        description: `From $${p.lowest_price.toFixed(2)}`,
+        path: `/products/${p.base_product_service_id}/listings`,
+        price: p.lowest_price,
+      }));
 
-    const fs = stores.filter((s) =>
-      q === ""
-        ? true
-        : ((s.name || s.title || "") + " " + (s.description || ""))
-            .toLowerCase()
-            .includes(q)
-    );
-    const fp = products.filter((p) =>
-      q === ""
-        ? true
-        : ((p.name || p.title || "") + " " + (p.description || ""))
-            .toLowerCase()
-            .includes(q)
-    );
+      const s = (data?.stores || []).map((st) => ({
+        type: "store",
+        id: st.id,
+        title: st.name,
+        description: st.description,
+        path: `/stores/${st.id}`,
+      }));
 
-    const flatStores = fs.map((s) => ({
-      type: "store",
-      id: s.id,
-      title: s.name || s.title,
-      description: s.description || "",
-      path: s.path || `/stores/${s.id}`,
-    }));
-    const flatProducts = fp.map((p) => ({
-      type: "product",
-      id: p.id,
-      title: p.name || p.title,
-      description: p.description || "",
-      path: p.path || `/products/${p.id}`,
-      price: p.price,
-    }));
-    return {
-      filteredStores: fs,
-      filteredProducts: fp,
-      flattenedResults: [...flatStores, ...flatProducts],
-    };
-  }, [data, query]);
+      const c = (data?.categories || []).map((cat) => ({
+        type: "category",
+        id: cat.id,
+        title: cat.name,
+        description: cat.description,
+        path: `/categories/${cat.id}`, // Assuming a category page route
+      }));
+
+      return {
+        products_services: ps,
+        stores: s,
+        categories: c,
+        flattenedResults: [...ps, ...s, ...c],
+      };
+    }, [data]);
 
   useEffect(() => {
     if (!showResults || query.trim() === "") {
       setAnnouncement("");
       return;
     }
-    const storeCount = filteredStores.length || 0;
-    const productCount = filteredProducts.length || 0;
-    let msg = `${storeCount} store${
-      storeCount !== 1 ? "s" : ""
-    } and ${productCount} product${productCount !== 1 ? "s" : ""} found`;
+    const productCount = products_services.length || 0;
+    const storeCount = stores.length || 0;
+    const categoryCount = categories.length || 0;
+
+    let msg = `${productCount} products/services, ${storeCount} stores, and ${categoryCount} categories found`;
+
     if (highlighted >= 0 && flattenedResults[highlighted]) {
       msg += ` Selected ${flattenedResults[highlighted].title}.`;
     }
     setAnnouncement(msg);
   }, [
-    filteredStores,
-    filteredProducts,
+    products_services,
+    stores,
+    categories,
     highlighted,
     showResults,
     query,
@@ -146,23 +157,19 @@ export default function SearchBar({
     if (count === 0) return;
 
     if (e.key === "ArrowDown") {
+      // preventDefault(): Stops the default action of the key press
       e.preventDefault();
-      setHighlighted((prev) => {
-        const current = prev < 0 ? 0 : prev;
-        return (current + 1) % count;
-      });
+      setHighlighted((prev) => (prev + 1) % count);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlighted((prev) => {
-        const current = prev < 0 ? 0 : prev;
-        return (current - 1 + count) % count;
-      });
+      setHighlighted((prev) => (prev - 1 + count) % count);
     } else if (e.key === "Enter") {
       e.preventDefault();
       const idx = highlighted >= 0 ? highlighted : 0;
       if (flattenedResults[idx]) {
         const item = flattenedResults[idx];
         setShowResults(false);
+        // If onSelect prop is provided, call it with the selected item, if not navigate to item's path
         if (onSelect) return onSelect(item);
         return navigate(item.path);
       }
@@ -172,8 +179,11 @@ export default function SearchBar({
   };
 
   const handleChange = (e) => {
-    setQuery(e.target.value);
+    const newQuery = e.target.value;
+    setQuery(newQuery);
     setShowResults(true);
+    setIsLoading(true);
+    debouncedSearch(newQuery);
   };
 
   const itemClass = (isHighlighted) =>
@@ -199,6 +209,10 @@ export default function SearchBar({
         }
         className="w-full pr-10 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 border rounded px-3 py-2"
       />
+      {isLoading && (
+        // "...": Indicates loading in progress
+        <div className="absolute right-3 top-2.5 text-gray-400">...</div>
+      )}
 
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
@@ -207,31 +221,38 @@ export default function SearchBar({
       {showResults && query.trim() !== "" && (
         <div
           id="search-results"
-          ref={resultsRef}
           role="listbox"
           aria-label="Search results"
           className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 overflow-auto"
           style={{ maxHeight }}
         >
           <div className="p-2">
-            <div>
-              <h3 className="text-sm font-semibold px-2 py-1 text-gray-700 dark:text-gray-200">
-                Stores ({filteredStores.length})
-              </h3>
-              {filteredStores.length === 0 ? (
-                <div className="px-2 py-1 text-sm text-gray-500 dark:text-gray-400">
-                  No stores found
-                </div>
-              ) : (
-                filteredStores.map((s) => {
+            {isLoading && (
+              <div className="px-2 py-1 text-sm text-gray-500 dark:text-gray-400">
+                Searching...
+              </div>
+            )}
+
+            {!isLoading && flattenedResults.length === 0 && (
+              <div className="px-2 py-1 text-sm text-gray-500 dark:text-gray-400">
+                No results found for "{query}"
+              </div>
+            )}
+
+            {!isLoading && products_services.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold px-2 py-1 text-gray-700 dark:text-gray-200">
+                  Products & Services ({products_services.length})
+                </h3>
+                {products_services.map((ps) => {
                   const globalIndex = flattenedResults.findIndex(
-                    (it) => it.type === "store" && it.id === s.id
+                    (it) => it.type === "product_service" && it.id === ps.id
                   );
                   const isHighlighted = globalIndex === highlighted;
                   return (
                     <Link
-                      key={s.id}
-                      to={s.path || `/stores/${s.id}`}
+                      key={`product_service-${ps.id}`}
+                      to={ps.path}
                       onClick={() => setShowResults(false)}
                       data-global-index={globalIndex}
                       id={`result-${globalIndex}`}
@@ -240,63 +261,96 @@ export default function SearchBar({
                       className={itemClass(isHighlighted)}
                     >
                       <div className="flex justify-between items-center">
-                        <span className="font-medium">{s.name || s.title}</span>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          View
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {s.description}
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-
-            <hr className="my-2 border-gray-200 dark:border-gray-700" />
-
-            <div>
-              <h3 className="text-sm font-semibold px-2 py-1 text-gray-700 dark:text-gray-200">
-                Products & Services ({filteredProducts.length})
-              </h3>
-              {filteredProducts.length === 0 ? (
-                <div className="px-2 py-1 text-sm text-gray-500 dark:text-gray-400">
-                  No products found
-                </div>
-              ) : (
-                filteredProducts.map((p) => {
-                  const globalIndex = flattenedResults.findIndex(
-                    (it) => it.type === "product" && it.id === p.id
-                  );
-                  const isHighlighted = globalIndex === highlighted;
-                  return (
-                    <Link
-                      key={p.id}
-                      to={p.path || `/products/${p.id}`}
-                      onClick={() => setShowResults(false)}
-                      data-global-index={globalIndex}
-                      id={`result-${globalIndex}`}
-                      role="option"
-                      aria-selected={isHighlighted}
-                      className={itemClass(isHighlighted)}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{p.name || p.title}</span>
-                        {p.price != null && (
+                        <span className="font-medium">{ps.title}</span>
+                        {ps.price != null && (
                           <span className="text-sm text-gray-500 dark:text-gray-400">
-                            ${p.price}
+                            ${ps.price.toFixed(2)}
                           </span>
                         )}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {p.description}
+                        {ps.description}
                       </div>
                     </Link>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
+
+            {!isLoading && stores.length > 0 && (
+              <>
+                <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                <div>
+                  <h3 className="text-sm font-semibold px-2 py-1 text-gray-700 dark:text-gray-200">
+                    Stores ({stores.length})
+                  </h3>
+                  {stores.map((s) => {
+                    const globalIndex = flattenedResults.findIndex(
+                      (it) => it.type === "store" && it.id === s.id
+                    );
+                    const isHighlighted = globalIndex === highlighted;
+                    return (
+                      <Link
+                        key={`store-${s.id}`}
+                        to={s.path}
+                        onClick={() => setShowResults(false)}
+                        data-global-index={globalIndex}
+                        id={`result-${globalIndex}`}
+                        role="option"
+                        aria-selected={isHighlighted}
+                        className={itemClass(isHighlighted)}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">{s.title}</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            View
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {s.description}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {!isLoading && categories.length > 0 && (
+              <>
+                <hr className="my-2 border-gray-200 dark:border-gray-700" />
+                <div>
+                  <h3 className="text-sm font-semibold px-2 py-1 text-gray-700 dark:text-gray-200">
+                    Categories ({categories.length})
+                  </h3>
+                  {categories.map((c) => {
+                    const globalIndex = flattenedResults.findIndex(
+                      (it) => it.type === "category" && it.id === c.id
+                    );
+                    const isHighlighted = globalIndex === highlighted;
+                    return (
+                      <Link
+                        key={`category-${c.id}`}
+                        to={c.path}
+                        onClick={() => setShowResults(false)}
+                        data-global-index={globalIndex}
+                        id={`result-${globalIndex}`}
+                        role="option"
+                        aria-selected={isHighlighted}
+                        className={itemClass(isHighlighted)}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">{c.title}</span>
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {c.description}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
