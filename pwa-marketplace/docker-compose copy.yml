@@ -33,38 +33,11 @@ services:
     volumes:
       # Mounting is only suggested for development, in production use :ro or no mount
       - ./frontend:/pwa-marketplace/frontend:ro
+    # Define environment variables
+    environment:
+      - REACT_APP_API_BASE_URL=http://backend-customer:5000/api
     depends_on:
       - backend-customer
-    restart: always
-
-  backend-search:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile-search
-    # Search has no a standard port number, so we use 5002 as for host as for its container
-    ports:
-      - "5002:5002"
-    volumes:
-      - ./backend:/pwa-marketplace/backend:ro
-    depends_on:
-      - db
-      - meilisearch
-    working_dir: /pwa-marketplace/backend
-    command: ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]
-    environment:
-      <<: *database-credentials
-      MEILISEARCH_URL: http://meilisearch:7700
-      # Optionally add MEILISEARCH_API_KEY if needed
-    restart: always
-
-  meilisearch:
-    image: getmeili/meilisearch:v1.7
-    ports:
-      - "7700:7700"
-    environment:
-      MEILI_NO_ANALYTICS: "true"
-    volumes:
-      - meili_data:/meili_data
     restart: always
 
   frontend-admin:
@@ -79,6 +52,8 @@ services:
       - "3001:3000"
     volumes:
       - ./frontend:/pwa-marketplace/frontend:ro
+    environment:
+      - REACT_APP_API_BASE_URL=http://backend-admin:5001/api
     depends_on:
       - backend-admin
     restart: always
@@ -177,4 +152,3 @@ secrets:
 # Define named volumes as persistent storage
 volumes:
   db_data:
-  meili_data:

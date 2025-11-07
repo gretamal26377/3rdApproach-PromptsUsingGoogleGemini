@@ -1,6 +1,12 @@
 // This line defines the base URL for the API. It's set via env var and if not provided, defaults to a local server URL
+
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:5001/api";
+
+const SEARCH_API_BASE_URL =
+  import.meta.env.VITE_SEARCH_API_BASE_URL ||
+  "http://localhost:5002/api-search";
 
 const api = {
   get: async (endpoint, token = null) => {
@@ -17,6 +23,24 @@ const api = {
     });
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  // Dedicated method for search requests
+  getSearch: async (endpoint, token = null) => {
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    const response = await fetch(`${SEARCH_API_BASE_URL}/${endpoint}`, {
+      method: "GET",
+      headers,
+    });
+    if (!response.ok) {
+      throw new Error(`Search API request failed: ${response.status}`);
     }
     return response.json();
   },
