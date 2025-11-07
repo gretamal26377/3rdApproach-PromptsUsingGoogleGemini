@@ -209,8 +209,8 @@ export default function SearchBar({
         }
         className="w-full pr-10 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 border rounded px-3 py-2"
       />
+      {/* "...": It's used as a loading indicator that appears on the input's right side, every time a search is in progress */}
       {isLoading && (
-        // "...": Indicates loading in progress
         <div className="absolute right-3 top-2.5 text-gray-400">...</div>
       )}
 
