@@ -24,8 +24,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from app.shared.database import db
 from app.shared.models_sql2orm_flask_sqlalchemy import StoreProductsServices, ProductsServices, Stores, Categories
-# As this index is thought to customer facing search, we use the customer app factory
-from app.customer import create_app
+from app.shared.search_wsgi import create_app
 
 # --- Configuration ---
 INDEX_NAME = 'products_services_stores_categories'
@@ -102,8 +101,8 @@ def run_indexing():
                 'category_name': category.category_name,
                 'category_description': category.category_description,
                 # Seller-specific information
-                'price': float(listing.price), # Ensure price is a float for sorting
-                'stock': listing.stock,
+                'price': float(store_product_service.price), # Ensure price is a float for sorting
+                'stock': store_product_service.stock,
                 'store_id': store.store_id,
                 'store_name': store.store_name,
                 'store_description': store.store_description,

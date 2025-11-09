@@ -13,8 +13,7 @@ def create_app(config_class=Config):
     # It also connects the DB through SQLALCHEMY_DATABASE_URI setting in config
     init_extensions(app)
 
-    # Register only customer and search blueprints
+    # Register customer blueprint
     app.register_blueprint(customer_bp)
-    # app.register_blueprint(search_bp) # Done in shared/search_wsgi.py
 
     return app

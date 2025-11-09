@@ -39,4 +39,16 @@ class Config:
 
     # Meilisearch configuration. Port: 7700 is the default associated with Meilisearch
     MEILISEARCH_URL = os.environ.get('MEILISEARCH_URL', 'http://localhost:7700')
-    MEILISEARCH_API_KEY = os.environ.get('MEILISEARCH_API_KEY', None)
+
+    # Read Meilisearch API key from Docker secret if available
+    _meili_api_key_file = os.environ.get('MEILISEARCH_API_KEY_FILE')
+    _meili_api_key = None
+    if _meili_api_key_file and os.path.exists(_meili_api_key_file):
+        try:
+            with open(_meili_api_key_file, 'r', encoding='utf-8') as f:
+                _meili_api_key = f.read().strip()
+        except Exception:
+            pass
+    if not _meili_api_key:
+        _meili_api_key = os.environ.get('MEILISEARCH_API_KEY', None)
+    MEILISEARCH_API_KEY = _meili_api_key

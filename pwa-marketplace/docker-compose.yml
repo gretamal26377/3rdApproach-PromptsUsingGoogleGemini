@@ -26,6 +26,9 @@ services:
     ports:
       # First number is host machine's port and second is container's port
       - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://backend-customer:5000/api
+      - VITE_SEARCH_API_BASE_URL=http://backend-search:5002/api-search
     # Mounting host machine's path to container's path. This way,
     # changes in host machine's path are reflected in container's path without rebuilding the image.
     # Before the colon, host machine's path and after, it's the container's path
@@ -54,8 +57,11 @@ services:
     environment:
       <<: *database-credentials
       MEILISEARCH_URL: http://meilisearch:7700
-      # Optionally add MEILISEARCH_API_KEY if needed
+      # Use Docker secret for Meilisearch API key
+      MEILISEARCH_API_KEY_FILE: /run/secrets/meilisearch_api_key
     restart: always
+    secrets:
+      - meilisearch_api_key
 
   meilisearch:
     image: getmeili/meilisearch:v1.7
@@ -77,6 +83,9 @@ services:
       # As host machine is just one, port must be different. However, as in this case
       # each frontend run in different container, they can use the same port
       - "3001:3000"
+    environment:
+      - VITE_API_BASE_URL=http://backend-admin:5000/api
+      - VITE_SEARCH_API_BASE_URL=http://backend-search:5002/api-search
     volumes:
       - ./frontend:/pwa-marketplace/frontend:ro
     depends_on:
@@ -173,6 +182,9 @@ secrets:
   mysql_db_user_password:
     file: ./database/secrets/mysql_db_user_password.txt
     # external: true
+
+  meilisearch_api_key:
+    file: ./database/secrets/meilisearch_api_key.txt
 
 # Define named volumes as persistent storage
 volumes:
