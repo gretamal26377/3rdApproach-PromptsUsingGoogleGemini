@@ -102,6 +102,7 @@ services:
       - ./backend:/pwa-marketplace/backend:ro
     depends_on:
       - db
+      - backend-search
 
     # Corresponds to working directory inside the container
     # Run from repository backend root so imports like `app.customer.wsgi` work
@@ -135,6 +136,7 @@ services:
       - ./backend:/pwa-marketplace/backend:rw
     depends_on:
       - db
+      - backend-search
 
     working_dir: /pwa-marketplace/backend
 

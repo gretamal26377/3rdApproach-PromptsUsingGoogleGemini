@@ -44,7 +44,7 @@ export default function SearchBar({
         return;
       }
       try {
-        const results = await api.get(`/search?q=${searchQuery}`);
+        const results = await api.getSearch(`/search?q=${searchQuery}`);
         setData(
           results || { products_services: [], stores: [], categories: [] }
         );
