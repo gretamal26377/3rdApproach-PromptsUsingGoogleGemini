@@ -32,16 +32,19 @@ fi
 if [ -z "${DATABASE_URL:-}" ]; then
   PW_FILE="${MYSQL_PASSWORD_FILE:-/run/secrets/mysql_db_user_password}"
   PASSWORD=""
+  # -f: True if file exists and is a regular file
   if [ -f "$PW_FILE" ]; then
     # remove potential CR/LF
     PASSWORD=$(tr -d '\r\n' < "$PW_FILE")
   else
+    # :- : corresponds to or (:) + default empty string (-)
     PASSWORD="${PW_FILE:-}"
   fi
 
   MYSQL_USER="${MYSQL_USER:-db_user}"
   MYSQL_DATABASE="${MYSQL_DATABASE:-marketplace_db}"
 
+  # -n: True if the string length is greater than zero
   if [ -n "$PASSWORD" ]; then
     export DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${PASSWORD}@${MYSQL_HOST}:3306/${MYSQL_DATABASE}"
   fi

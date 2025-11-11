@@ -31,7 +31,7 @@ export default function SearchBar({
   });
   const [announcement, setAnnouncement] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const wrapperRef = useRef(null);
+  const wrapperRef = useRef(null); // Purpose: Detecting clicks outside the component
   const [highlighted, setHighlighted] = useState(-1);
 
   const navigate = useNavigate();
@@ -60,6 +60,7 @@ export default function SearchBar({
 
   useEffect(() => {
     function onDocClick(e) {
+      // If click is outside the search bar component, close the results dropdown
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
         setShowResults(false);
       }
@@ -76,9 +77,10 @@ export default function SearchBar({
         type: "product_service",
         id: p.base_product_service_id,
         title: p.name,
-        description: `From $${p.lowest_price.toFixed(2)}`,
+        price: `From $${p.lowest_price.toFixed(2)}`,
         path: `/products/${p.base_product_service_id}/listings`,
-        price: p.lowest_price,
+        thumbnailUrl: p.thumbnail_url,
+        stock: p.stock,
       }));
 
       const s = (data?.stores || []).map((st) => ({
@@ -146,6 +148,7 @@ export default function SearchBar({
     const el = wrapperRef.current.querySelector(
       `[data-global-index="${highlighted}"]`
     );
+    // if element exists and has scrollIntoView function, scroll it into view
     if (el && typeof el.scrollIntoView === "function") {
       el.scrollIntoView({ block: "nearest" });
     }
@@ -192,6 +195,7 @@ export default function SearchBar({
     }`;
 
   return (
+    // Associate wrapperRef with the container div to detect outside clicks and highlighted item scrolling
     <div className={`w-full max-w-md relative ${className}`} ref={wrapperRef}>
       <input
         type="text"
@@ -256,20 +260,33 @@ export default function SearchBar({
                       onClick={() => setShowResults(false)}
                       data-global-index={globalIndex}
                       id={`result-${globalIndex}`}
-                      role="option"
+                      role="option" // Aria role for accessibility
                       aria-selected={isHighlighted}
                       className={itemClass(isHighlighted)}
                     >
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{ps.title}</span>
-                        {ps.price != null && (
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            ${ps.price.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {ps.description}
+                      <div className="flex items-center gap-2 justify-between">
+                        <div className="flex items-center gap-2">
+                          {ps.thumbnailUrl && (
+                            <img
+                              src={ps.thumbnailUrl}
+                              alt={ps.title}
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          )}
+                          <span className="font-medium">{ps.title}</span>
+                        </div>
+                        <div className="flex flex-col items-end min-w-[70px]">
+                          {ps.price != null && (
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                              {ps.price}
+                            </span>
+                          )}
+                          {ps.stock != null && (
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              Stock: {ps.stock}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </Link>
                   );
