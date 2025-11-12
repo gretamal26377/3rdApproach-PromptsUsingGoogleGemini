@@ -1,7 +1,6 @@
 from flask import Flask
-from app.shared.search import search_bp
+from .search import search_bp
 from app.shared.config import Config
-
 
 def create_app():
     app = Flask(__name__)

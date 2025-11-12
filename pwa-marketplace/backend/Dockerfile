@@ -23,9 +23,23 @@ WORKDIR /pwa-marketplace/backend
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy shared code and scripts that are common to both backends
+
+# Copy shared code and scripts that are common to both backends, except the Search Engine implementation
 COPY ./app/shared ./app/shared
 COPY ./scripts ./scripts
+
+# Build ARG for selecting the search engine implementation (Meilisearch or Google Search Engine)
+ARG SEARCH_ENGINE=meili
+
+# Remove any existing search directory and copy the selected engine implementation to app/shared/search
+RUN rm -rf ./app/shared/search \
+     && if [ "$SEARCH_ENGINE" = "meili" ]; then \
+     cp -r ./app/shared/search_meili ./app/shared/search; \
+     elif [ "$SEARCH_ENGINE" = "google" ]; then \
+     cp -r ./app/shared/search_google ./app/shared/search; \
+     else \
+     echo "Unknown SEARCH_ENGINE: $SEARCH_ENGINE" && exit 1; \
+     fi
 
 # Ensure scripts are executable
 RUN chmod +x ./scripts/entrypoint.sh ./scripts/wait-for-it.sh
@@ -55,7 +69,7 @@ ENV BACKEND_TYPE=${BACKEND_TYPE}
 # Entrypoint builds runtime secrets/ENV (DATABASE_URL) and then execs the CMD
 # (if CMD isn't overridden for docker-compose having a command: directive)
 ENTRYPOINT ["./scripts/entrypoint.sh"]
-    
+
 # Set default CMD based on BACKEND_TYPE 
 CMD ["/bin/sh", "-c", "if [ '$BACKEND_TYPE' = 'admin' ]; \
      then exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.admin.wsgi:app; \
