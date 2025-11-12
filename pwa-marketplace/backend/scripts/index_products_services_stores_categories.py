@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 # --- End Path Setup ---
 
 from app.shared.database import db
-from app.shared.models_sql2orm_flask_sqlalchemy import StoreProductsServices, ProductsServices, Stores, Categories
+from app.shared.models_sql2orm_flask_sqlalchemy import StoreProductsServices, ProductsServices, Stores, Categories, EntityStatuses
 from app.shared.search_wsgi import create_app
 
 # --- Configuration ---
@@ -52,8 +52,12 @@ def run_indexing():
 
         # 2. Fetch Data from Database
         print("Fetching data from DB...")
+
         try:
-            # Fetch all products/services
+            # Subquery for active status_id
+            active_status = db.session.query(EntityStatuses.status_id).filter(EntityStatuses.status_code == 'active').scalar_subquery()
+
+            # Fetch all products/services with only 'active' status for all involved tables
             all_products_services = db.session.query(
                 StoreProductsServices,
                 ProductsServices,
@@ -65,16 +69,21 @@ def run_indexing():
                 Stores, StoreProductsServices.store_id == Stores.store_id
             ).join(
                 Categories, ProductsServices.product_service_category_id == Categories.category_id
+            ).filter(
+                StoreProductsServices.status_id == active_status,
+                ProductsServices.product_service_status_id == active_status,
+                Stores.store_status_id == active_status,
+                Categories.category_status_id == active_status
             ).all()
-            print(f"Found {len(all_products_services)} products/services to index")
+            print(f"Found {len(all_products_services)} products/services to index (active only)")
 
-            # Fetch all stores
-            all_stores = db.session.query(Stores).all()
-            print(f"Found {len(all_stores)} stores to index")
+            # Fetch all stores with 'active' status
+            all_stores = db.session.query(Stores).filter(Stores.store_status_id == active_status).all()
+            print(f"Found {len(all_stores)} stores to index (active only)")
 
-            # Fetch all categories
-            all_categories = db.session.query(Categories).all()
-            print(f"Found {len(all_categories)} categories to index")
+            # Fetch all categories with 'active' status
+            all_categories = db.session.query(Categories).filter(Categories.category_status_id == active_status).all()
+            print(f"Found {len(all_categories)} categories to index (active only)")
 
         except Exception as e:
             print(f"Error: Failed to fetch data from the database. Details: {e}")
