@@ -203,7 +203,7 @@ const AdminProductManagement = () => {
       {error && (
         <Dialog>
           <DialogContent>
-            <AlertCircle className="h-4 w-4 text-red-500" />
+            <AlertCircle className="h-4 w-4 text-red-700" />
             <DialogTitle>Error</DialogTitle>
             <DialogDescription>{error}</DialogDescription>
           </DialogContent>
@@ -225,7 +225,7 @@ const AdminProductManagement = () => {
           </TableHeader>
           <TableBody>
             {products.map((product) => (
-              <TableRow key={product.id}>
+              <TableRow key={product.id} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <TableCell>{product.name}</TableCell>
                 <TableCell>{product.description}</TableCell>
                 <TableCell>${product.price.toFixed(2)}</TableCell>
@@ -244,7 +244,7 @@ const AdminProductManagement = () => {
                       variant="destructive"
                       size="icon"
                       onClick={() => confirmDeleteProduct(product.id)}
-                      className="hover:bg-red-700"
+                      className="hover:bg-red-800"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

@@ -1,0 +1,20 @@
+/* Global project-wide styles */
+
+@import "tailwindcss/preflight";
+@tailwind utilities;
+
+body {
+  /** @reference line added after persistent error, reading myself error description.
+      GitHub Copilot couldn't help me after several attempts
+  */
+  @reference "tailwindcss";
+  /** @apply font-size is diff from font-family: sans-serif.
+      It last applies the browser’s default sans-serif font (often Arial or Helvetica).
+      Fist one uses Tailwind’s full font-sans stack
+  */
+  @apply font-sans;
+  /* @apply bg-red-600; // Just for testing */
+  margin: 0;
+  padding: 0;
+  color: #222;
+}

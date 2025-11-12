@@ -1,0 +1,18 @@
+# As this line has CI: "" marks are needed to avoid confusion with
+# previous and next lines
+name: "CI: Block Non-Develop Branch PRs to Test Branch"
+
+on:
+  pull_request:
+    branches:
+      - test
+
+jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if PR is not from develop branch
+        if: github.head_ref != 'develop'
+        run: |
+          echo "Pull requests to test branch must come from develop branch"
+          exit 1

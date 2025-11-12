@@ -53,7 +53,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="p-4">
+    <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded shadow p-4">
       <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
         <LayoutDashboard className="h-8 w-8 text-blue-500" />
         Dashboard

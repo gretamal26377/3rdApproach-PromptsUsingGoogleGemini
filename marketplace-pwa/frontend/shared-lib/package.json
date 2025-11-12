@@ -2,6 +2,7 @@
   "name": "shared-lib",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "exports": {
     ".": "./dist/index.js"
   },
@@ -12,28 +13,22 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel src --out-dir dist",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build": "babel src --out-dir dist"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@babel/cli": "^7.27.2",
-    "@babel/core": "^7.27.4",
+    "@babel/cli": "^7.28.0",
+    "@babel/core": "^7.28.0",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
     "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
     "@babel/plugin-transform-runtime": "^7.27.4",
-    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-env": "^7.28.0",
     "@babel/preset-react": "^7.27.1",
-    "@storybook/addon-docs": "^9.0.11",
-    "@storybook/addon-webpack5-compiler-swc": "^3.0.0",
-    "@storybook/react-webpack5": "^9.0.11",
-    "eslint-plugin-storybook": "^9.0.11",
-    "prop-types": "^15.8.1",
-    "storybook": "^9.0.11"
+    "prop-types": "^15.8.1"
   }
 }

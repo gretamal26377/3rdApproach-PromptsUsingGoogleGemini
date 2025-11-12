@@ -6,7 +6,7 @@ import AdminUserManagement from "./components/AdminUserManagement";
 import AdminStoreManagement from "./components/AdminStoreManagement";
 import AdminProductManagement from "./components/AdminProductManagement";
 import AdminOrderManagement from "./components/AdminOrderManagement";
-import LoginPage from "shared-lib";
+import { LoginPage } from "shared-lib";
 
 export default function AdminRoutes() {
   return (

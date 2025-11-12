@@ -1,0 +1,31 @@
+name: Rebuild and Restart Local Storybook Docker
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  rebuild-storybook:
+    # self-hosted is the runner for the local machine where the Docker container will run
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: marketplace-pwa/frontend/shared-lib
+    steps:
+      # Checkout command clones the repo code into the GitHub runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build Storybook
+        run: npm run build-storybook
+      - name: Build Docker image
+        run: docker build -t storybook-local .
+      - name: Stop old container (ignore error if not running)
+        run: docker stop storybook-local || true
+      - name: Remove old container (ignore error if not running)
+        run: docker rm storybook-local || true
+      - name: Run new container
+        run: docker run -d --name storybook-local -p 8080:80 storybook-local

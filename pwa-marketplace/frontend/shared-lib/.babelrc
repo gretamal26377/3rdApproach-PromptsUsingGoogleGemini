@@ -1,0 +1,22 @@
+/**
+ * This file is used to configure Babel for shared-lib. This is needed because
+ * the shared library contains React components or other modern JS that needs to be transpiled,
+ * which is basically converting modern JS (JSX, TS or TSX) into a version that is compatible with browsers.
+ * Browsers are just able to understand standard JS.
+ */
+{
+  "presets": [
+    "@babel/preset-env",
+    "@babel/preset-react"
+  ],
+  "plugins": [
+    // "@babel/plugin-proposal-class-properties", // Deprecated, use transform instead
+    "@babel/plugin-transform-class-properties",
+    "@babel/plugin-transform-runtime",
+    "@babel/plugin-syntax-dynamic-import",
+    // "@babel/plugin-proposal-object-rest-spread", // Deprecated, use transform instead
+    "@babel/plugin-transform-object-rest-spread",
+    // "@babel/plugin-proposal-export-namespace-from", // Deprecated, use transform instead
+    "@babel/plugin-transform-export-namespace-from",
+  ]
+}

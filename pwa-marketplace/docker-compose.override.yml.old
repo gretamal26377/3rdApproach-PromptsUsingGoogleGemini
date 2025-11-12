@@ -1,0 +1,9 @@
+# This file is used to override the default settings in docker-compose.yml
+# This is useful for development purposes, this case allows to modify init.sql file
+# without needing to rebuild the database container
+# To run use the usual command: docker compose up
+# This will run both docker-compose.yml and docker-compose.override.yml
+services:
+  db:
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql

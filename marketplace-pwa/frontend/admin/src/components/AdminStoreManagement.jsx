@@ -184,7 +184,7 @@ const AdminStoreManagement = () => {
       {error && (
         <Dialog>
           <DialogContent>
-            <AlertCircle className="h-4 w-4 text-red-500" />
+            <AlertCircle className="h-4 w-4 text-red-700" />
             <DialogTitle>Error</DialogTitle>
             <DialogDescription>{error}</DialogDescription>
           </DialogContent>
@@ -205,7 +205,7 @@ const AdminStoreManagement = () => {
           </TableHeader>
           <TableBody>
             {stores.map((store) => (
-              <TableRow key={store.id}>
+              <TableRow key={store.id} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <TableCell>{store.name}</TableCell>
                 <TableCell>{store.description}</TableCell>
                 <TableCell>{store.ownerId}</TableCell>
@@ -223,7 +223,7 @@ const AdminStoreManagement = () => {
                       variant="destructive"
                       size="icon"
                       onClick={() => confirmDeleteStore(store.id)}
-                      className="hover:bg-red-700"
+                      className="hover:bg-red-800"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

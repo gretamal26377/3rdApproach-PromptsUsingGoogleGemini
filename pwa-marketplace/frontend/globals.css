@@ -1,0 +1,57 @@
+/* Global project-wide styles */
+
+/* @import "tailwindcss/preflight"; */
+@import "tailwindcss";
+
+/* Add this line for manual dark mode toggling */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Explicitly tell Tailwind to scan these directories for classes */
+@source "./admin/src/";
+@source "./customer/src/";
+@source "./shared-lib/src/";
+
+/**
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+*/
+
+/* New way to define custom colours using @theme for Tailwind 4+ utility generation */
+@theme {
+  --color-background: #e4e4e4;
+  --color-background-dark: #18181b;
+  --color-text: #18181b;
+  --color-text-dark: #ffffff;
+}
+
+/**
+  root & dark sections are needed for fallbacks by non-Tailwind usages, needed by the browser.
+  So it's fine colours are defined here again
+ */
+:root {
+  --color-background: #e4e4e4;
+  --color-text: #18181b;
+}
+
+.dark {
+  --color-background-dark: #18181b;
+  --color-text-dark: #ffffff;
+}
+
+body {
+  /** @reference line added after persistent error, reading myself error description.
+      GitHub Copilot couldn't help me after several attempts
+  */
+  /* @reference "tailwindcss"; */
+  /** @apply font-size is diff from font-family: sans-serif.
+      It last applies the browser’s default sans-serif font (often Arial or Helvetica).
+      Fist one uses Tailwind’s full font-sans stack
+  */
+  @apply font-sans;
+  /* @apply bg-red-600; // Just for testing */
+  margin: 0;
+  padding: 0;
+  color: var(--color-text);
+  background-color: var(--color-background);
+}

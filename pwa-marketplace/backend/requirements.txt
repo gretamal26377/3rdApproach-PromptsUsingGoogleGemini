@@ -1,0 +1,16 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+mysql-connector-python
+PyMySQL
+PyJWT
+cryptography
+python-dotenv
+sqlalchemy
+sqlacodegen
+alembic
+gunicorn
+meilisearch
+bleach
+eralchemy2
+pygraphviz

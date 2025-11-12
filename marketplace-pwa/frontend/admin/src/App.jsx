@@ -3,8 +3,9 @@ import { useLocation, Link, Routes, Route } from "react-router-dom";
 import { AuthContext } from "shared-lib";
 import AdminRoutes from "./Routes";
 import { Button } from "shared-lib";
-import LoginPage from "shared-lib";
+import { LoginPage } from "shared-lib";
 import AdminDashboard from "./components/AdminDashboard";
+import { DarkModeToggle } from "shared-lib";
 
 function AdminLanding() {
   return (
@@ -41,16 +42,20 @@ function AppContent() {
           </div>
         </>
       )}
-      <footer className="bg-gray-200 text-center p-4 mt-8">
-        <p className="text-gray-600">
-          &copy; {new Date().getFullYear()} Marketplace Admin Web App. All
-          rights reserved
+      <footer className="bg-gray-200 dark:bg-gray-800 text-center p-4 mt-8 text-gray-600 dark:text-gray-300">
+        <p>
+          &copy; {new Date().getFullYear()} PWA-Marketplace. All rights reserved
         </p>
       </footer>
     </>
   );
 }
 
-const App = () => <AppContent />;
+const App = () => (
+  <div className="bg-background text-text dark:bg-background-dark dark:text-text-dark min-h-screen">
+    <DarkModeToggle />
+    <AppContent />
+  </div>
+);
 
 export default App;

@@ -9,7 +9,7 @@ ARG BACKEND_TYPE=customer
 ENV BACKEND_TYPE=${BACKEND_TYPE}
 # You need both to pass the value from build-time into the running container
 
-# Notice: WORKDIR sets the default working folder only for commands like RUN, CMD, and ENTRYPOINT
+# Notice: WORKDIR sets the default working folder in Docker image/container affecting only commands like RUN, CMD, and ENTRYPOINT
 WORKDIR /marketplace-pwa/backend/
 
 # COPY and ADD:

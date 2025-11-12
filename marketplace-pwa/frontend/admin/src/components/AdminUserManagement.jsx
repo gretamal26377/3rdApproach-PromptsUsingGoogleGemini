@@ -180,7 +180,7 @@ const AdminUserManagement = () => {
       {error && (
         <Dialog>
           <DialogContent>
-            <AlertCircle className="h-4 w-4 text-red-500" />
+            <AlertCircle className="h-4 w-4 text-red-700" />
             <DialogTitle>Error</DialogTitle>
             <DialogDescription>{error}</DialogDescription>
           </DialogContent>
@@ -201,7 +201,7 @@ const AdminUserManagement = () => {
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.id}>
+              <TableRow key={user.id} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <TableCell>{user.username}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.isAdmin ? "Yes" : "No"}</TableCell>
@@ -219,7 +219,7 @@ const AdminUserManagement = () => {
                       variant="destructive"
                       size="icon"
                       onClick={() => confirmDeleteUser(user.id)}
-                      className="hover:bg-red-700"
+                      className="hover:bg-red-800"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

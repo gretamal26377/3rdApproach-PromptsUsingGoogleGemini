@@ -1,0 +1,194 @@
+# filepath: pwa-marketplace/docker-compose.yml
+# To run use the usual command: docker compose -d up
+
+# version: "3.8" // When I run I receive a warning msg noticing attribute `version` is obsolete
+# and it suggests to remove it, so I did it
+
+# Reusable DB credentials defined via YAML anchor, to avoid repetition.
+# So we can use `<<: *database-credentials` to merge/include these env vars in each service
+x-database-credentials: &database-credentials
+  # These special env var names are used by the official MySQL Docker image
+  # to create root password and an additional db_user automatically at container 1st start
+  # Files mounted by Docker Compose secrets (available at /run/secrets/<name>)
+  MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+  MYSQL_DATABASE: marketplace_db
+  MYSQL_USER: db_user
+  MYSQL_PASSWORD_FILE: /run/secrets/mysql_db_user_password
+
+services:
+  frontend-customer:
+    build:
+      # Corresponds to the source code folder considered as context to create the Docker image
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP_TYPE: customer
+    ports:
+      # First number is host machine's port and second is container's port
+      - "3000:3000"
+    environment:
+      - VITE_API_BASE_URL=http://backend-customer:5000/api
+      - VITE_SEARCH_API_BASE_URL=http://backend-search:5002/api-search
+    # Mounting host machine's path to container's path. This way,
+    # changes in host machine's path are reflected in container's path without rebuilding the image.
+    # Before the colon, host machine's path and after, it's the container's path
+    # Choose rw for dev, :ro or no mount for production
+    volumes:
+      # Mounting is only suggested for development, in production use :ro or no mount
+      - ./frontend:/pwa-marketplace/frontend:ro
+    depends_on:
+      - backend-customer
+    restart: always
+
+  backend-search:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-search
+    # Search has no a standard port number, so we use 5002 as for host as for its container
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./backend:/pwa-marketplace/backend:ro
+    depends_on:
+      - db
+      - meilisearch
+    working_dir: /pwa-marketplace/backend
+    command: ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]
+    environment:
+      <<: *database-credentials
+      MEILISEARCH_URL: http://meilisearch:7700
+      # Use Docker secret for Meilisearch API key
+      MEILISEARCH_API_KEY_FILE: /run/secrets/meilisearch_api_key
+    restart: always
+    secrets:
+      - meilisearch_api_key
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.7
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meili_data:/meili_data
+    restart: always
+
+  frontend-admin:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP_TYPE: admin
+    ports:
+      # As host machine is just one, port must be different. However, as in this case
+      # each frontend run in different container, they can use the same port
+      - "3001:3000"
+    environment:
+      - VITE_API_BASE_URL=http://backend-admin:5000/api
+      - VITE_SEARCH_API_BASE_URL=http://backend-search:5002/api-search
+    volumes:
+      - ./frontend:/pwa-marketplace/frontend:ro
+    depends_on:
+      - backend-admin
+    restart: always
+
+  backend-customer:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/pwa-marketplace/backend:ro
+    depends_on:
+      - db
+      - backend-search
+
+    # Corresponds to working directory inside the container
+    # Run from repository backend root so imports like `app.customer.wsgi` work
+    working_dir: /pwa-marketplace/backend
+
+    # command: Override default command defined in Dockerfile (eg: CMD)
+    # Use gunicorn to serve the WSGI app as a long-running process
+    # --worker=3 means 3 concurrent requests can be handled at the same time
+    # rule of thumb: workers limit = 2 * number_of_CPU_cores + 1
+    # --bind=0.0.0.0:5000 means bind (listen for incoming requests) to all interfaces
+    # (container's localhost, other containers and any host's port mapped to
+    # the container) on container port 5000
+    command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5000", "app.customer.wsgi:app"]
+    
+    # Use mapping style so we can merge the shared DB credentials via YAML anchor
+    environment:
+      <<: *database-credentials
+      BACKEND_TYPE: customer
+    # Make the DB user password secret available inside the backend container
+    secrets:
+      - mysql_db_user_password
+    restart: always
+
+  backend-admin:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./backend:/pwa-marketplace/backend:rw
+    depends_on:
+      - db
+      - backend-search
+
+    working_dir: /pwa-marketplace/backend
+
+    command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5001", "app.admin.wsgi:app"]
+
+    environment:
+      <<: *database-credentials
+      BACKEND_TYPE: admin
+    secrets:
+      - mysql_db_user_password
+    restart: always
+
+  db:
+    image: mysql:8.0
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    environment:
+      <<: *database-credentials
+    ports:
+      - "3306:3306"
+    secrets:
+      - mysql_root_password  # Uncommented, because root password is needed available inside container
+      - mysql_db_user_password
+    volumes:
+      # Changing default MySQL data path implies changing default
+      # MySQL data folder in config file (my.cnf) and new path permissions.
+      # Mounting db_data volume to /var/lib/mysql in order to persists
+      # this folder data. This way, /var/lib/mysql data is not lost when
+      # container is removed
+      - db_data:/var/lib/mysql
+      # Mounting init scripts to the path that MySQL image run when starting
+      # If there are multiple scripts, they will be executed in alphabetical order
+      - ./database/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/:ro
+      # Notice: Set proper permissions (bash: chmod +x) for the mounted 
+      # script files (if not, MySQL container may not start)
+    restart: always
+
+# Define external secrets to avoid hardcoding sensitive info in this file
+secrets:
+  mysql_root_password:
+    # path relative to this docker-compose.yml file
+    file: ./database/secrets/mysql_root_password.txt
+    # external: true  -- Valid for Docker Swarm secrets, not for Docker Compose secrets
+  mysql_db_user_password:
+    file: ./database/secrets/mysql_db_user_password.txt
+    # external: true
+
+  meilisearch_api_key:
+    file: ./database/secrets/meilisearch_api_key.txt
+
+# Define named volumes as persistent storage
+volumes:
+  db_data:
+  meili_data:

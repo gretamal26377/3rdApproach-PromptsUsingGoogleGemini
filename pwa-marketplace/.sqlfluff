@@ -1,0 +1,7 @@
+[sqlfluff]
+# AI suggested that it's best practice to source control these settings
+
+# Set to 0 to disable large-file skipping, or set a larger byte limit (e.g. 100000)
+large_file_skip_byte_limit = 0
+dialect = mysql
+max_line_length = 150

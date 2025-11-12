@@ -4,12 +4,17 @@ import { AuthContext } from "shared-lib";
 import CustomerRoutes from "./Routes";
 import { Button } from "shared-lib";
 import { ShoppingCart } from "lucide-react";
-import authService from "shared-lib";
+import { authService } from "shared-lib";
+import { DarkModeToggle } from "shared-lib";
+
+// This is for testing purposes to see if the shared-lib is correctly imported
+import * as SharedLib from "shared-lib";
+console.log(SharedLib); // This will log all exports from shared-lib
 
 function CustomerNav({ cart, handleLogout }) {
   const { isLoggedIn, isAdmin } = useContext(AuthContext);
   return (
-    <nav className="bg-white shadow-md p-4">
+    <nav className="bg-white dark:bg-gray-900 shadow-md p-4 text-gray-800 dark:text-gray-200">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-xl font-bold text-gray-800">
           PWA-Marketplace
@@ -20,7 +25,7 @@ function CustomerNav({ cart, handleLogout }) {
               <Link to="/cart" className="relative">
                 <ShoppingCart className="h-6 w-6 text-gray-700" />
                 {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-red-700 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                     {cart.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 )}
@@ -110,8 +115,9 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="bg-background text-text dark:bg-background-dark dark:text-text-dark min-h-screen">
       <CustomerNav cart={cart} handleLogout={logout} />
+      <DarkModeToggle />
 
       {/* main: This is an HTML5 semantic element that represents the dominant/main content of the document's <body> */}
       <main className="container mx-auto p-4">
@@ -123,9 +129,9 @@ function AppContent() {
         />
       </main>
 
-      <footer className="bg-gray-200 text-center p-4 mt-8">
+      <footer className="bg-gray-200 dark:bg-gray-800 text-center p-4 mt-8 text-gray-600 dark:text-gray-300">
         {/* p: This is an HTML5 semantic element that represents a paragraph */}
-        <p className="text-gray-600">
+        <p>
           {/* &copy;: This is an HTML entity that represents the copyright symbol
           {new Date().getFullYear()}: This JS expression gets the current year */}
           &copy; {new Date().getFullYear()} PWA-Marketplace. All rights reserved

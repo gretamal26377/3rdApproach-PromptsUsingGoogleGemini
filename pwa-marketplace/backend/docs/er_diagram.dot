@@ -1,0 +1,98 @@
+digraph G {
+    graph [
+        rankdir="LR",  // Left to Right orientation
+        bgcolor="white",
+        fontname="Sans-serif",
+        fontsize="10",
+        label="\nE-Commerce Retail System ER Diagram"
+    ];
+    node [
+        shape="Mrecord", // Box with separate title and body sections
+        style="filled",
+        fillcolor="lightyellow",
+        fontname="Sans-serif",
+        fontsize="9"
+    ];
+    edge [
+        fontsize="8",
+        fontname="Sans-serif",
+        color="gray30",
+        penwidth="1.0"
+    ];
+
+    // --- Entities ---
+
+    // Statuses
+    EntityStatuses [label="{<head> EntityStatuses | + status_id: int (PK)\l + status_code: varchar (UK)\l + status_description: varchar\l}"];
+    OrderStatuses [label="{<head> OrderStatuses | + status_id: int (PK)\l + status_code: varchar (UK)\l + status_description: varchar\l}"];
+
+    // Geography
+    Countries [label="{<head> Countries | + country_id: int (PK)\l + country_name: varchar\l + country_code: varchar (UK)\l + country_status_id: int (FK)\l}"];
+    StatesRegions [label="{<head> StatesRegions | + state_region_id: int (PK)\l + state_region_name: varchar\l + state_region_code: varchar (UK)\l + country_id: int (FK)\l + state_region_status_id: int (FK)\l}"];
+    Cities [label="{<head> Cities | + city_id: int (PK)\l + city_name: varchar\l + state_region_id: int (FK)\l + city_status_id: int (FK)\l}"];
+
+    // Customers & Addresses
+    Customers [label="{<head> Customers | + customer_id: int (PK)\l + customer_email: varchar (UK)\l + customer_name: varchar\l + customer_phone: varchar\l + customer_status_id: int (FK)\l}"];
+    CustomerAddresses [label="{<head> CustomerAddresses | + address_id: int (PK)\l + customer_id: int (FK)\l + city_id: int (FK)\l + address_line1: varchar\l + postal_code: varchar\l + google_maps_url: varchar\l + address_status_id: int (FK)\l}"];
+
+    // Users & Stores
+    Roles [label="{<head> Roles | + role_id: int (PK)\l + role_code: varchar (UK)\l + role_description: varchar\l}"];
+    Users [label="{<head> Users | + user_id: int (PK)\l + user_email: varchar (UK)\l + user_name: varchar\l + user_status_id: int (FK)\l}"];
+    Stores [label="{<head> Stores | + store_id: int (PK)\l + store_email: varchar (UK)\l + store_name: varchar\l + store_address: varchar\l + store_status_id: int (FK)\l}"];
+    StoreUserRole [label="{<head> StoreUserRole (Association) | + store_id: int (PK, FK)\l + user_id: int (PK, FK)\l + role_id: int (FK)\l + status_id: int (FK)\l}"];
+
+    // Products & Services
+    Categories [label="{<head> Categories | + category_id: int (PK)\l + category_name: varchar (UK)\l + category_description: varchar\l + category_status_id: int (FK)\l}"];
+    ProductsServices [label="{<head> ProductsServices | + product_service_id: int (PK)\l + product_service_name: varchar (UK)\l + description: varchar\l + product_service_category_id: int (FK)\l + product_service_status_id: int (FK)\l}"];
+    StoreProductsServices [label="{<head> StoreProductsServices (Association) | + id: int (PK)\l + store_id: int (FK)\l + product_service_id: int (FK)\l + price: numeric\l + stock: int\l + status_id: int (FK)\l}"]; // Note: The (store_id, product_service_id) is a UK, but not a composite PK in the model.
+
+    // Orders & Details
+    Orders [label="{<head> Orders | + order_id: int (PK)\l + customer_id: int (FK)\l + order_tot_quantity: int\l + order_tot_price: numeric\l + order_status_id: int (FK)\l}"];
+    OrderDetails [label="{<head> OrderDetails (Association) | + order_id: int (PK, FK)\l + store_product_service_id: int (PK, FK)\l + product_service_quantity: int\l + price: numeric\l + total_price: numeric\l + product_service_status_id: int (FK)\l}"];
+
+
+    // --- Relationships ---
+    // Statuses relations
+    Countries -> EntityStatuses [label="status"];
+    StatesRegions -> EntityStatuses [label="status"];
+    Cities -> EntityStatuses [label="status"];
+    Customers -> EntityStatuses [label="status"];
+    CustomerAddresses -> EntityStatuses [label="status"];
+    Users -> EntityStatuses [label="status"];
+    Stores -> EntityStatuses [label="status"];
+    StoreUserRole -> EntityStatuses [label="status"];
+    Categories -> EntityStatuses [label="status"];
+    ProductsServices -> EntityStatuses [label="status"];
+    StoreProductsServices -> EntityStatuses [label="status"];
+    Orders -> OrderStatuses [label="status"]; // Specific order status
+
+    // Geography relations
+    Countries -> StatesRegions [label="1:N"];
+    StatesRegions -> Cities [label="1:N"];
+
+    // Customer & Address relations
+    Customers -> CustomerAddresses [label="1:N"];
+    Cities -> CustomerAddresses [label="1:N"];
+
+    // User & Store relations
+    Users -> StoreUserRole [label="1:N"];
+    Stores -> StoreUserRole [label="1:N"];
+    Roles -> StoreUserRole [label="1:N"]; // StoreUserRole links Users and Stores to Roles
+
+    // Product & Service relations
+    Categories -> ProductsServices [label="1:N"];
+    Stores -> StoreProductsServices [label="1:N"];
+    ProductsServices -> StoreProductsServices [label="1:N"];
+
+    // Order & Details relations
+    Customers -> Orders [label="1:N"];
+    Orders -> OrderDetails [label="1:N"]; // Order has many OrderDetails
+    StoreProductsServices -> OrderDetails [label="1:N"]; // Each OrderDetail refers to one specific StoreProductService
+
+
+    // Grouping entities for better visual layout (optional but helps Graphviz)
+    { rank = same; EntityStatuses; OrderStatuses; Roles; Categories; }
+    { rank = same; Countries; Users; Stores; ProductsServices; }
+    { rank = same; StatesRegions; Customers; StoreUserRole; StoreProductsServices; }
+    { rank = same; Cities; CustomerAddresses; Orders; OrderDetails; }
+}

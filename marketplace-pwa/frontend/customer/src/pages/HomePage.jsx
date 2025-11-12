@@ -4,11 +4,7 @@ import { Button } from "shared-lib";
 import { Input } from "shared-lib";
 import { Card, CardContent, CardHeader, CardTitle } from "shared-lib";
 import { Badge } from "shared-lib";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "shared-lib";
+import { Carousel, CarouselContent, CarouselItem } from "shared-lib";
 import { ScrollArea } from "shared-lib";
 import { cn } from "shared-lib";
 import { Store, ShoppingBag, Search, ChevronRight } from "lucide-react";

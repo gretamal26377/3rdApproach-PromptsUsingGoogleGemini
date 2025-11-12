@@ -222,7 +222,7 @@ const AdminOrderManagement = () => {
       {error && (
         <Dialog>
           <DialogContent>
-            <AlertCircle className="h-4 w-4 text-red-500" />
+            <AlertCircle className="h-4 w-4 text-red-700" />
             <DialogTitle>Error</DialogTitle>
             <DialogDescription>{error}</DialogDescription>
           </DialogContent>
@@ -245,7 +245,7 @@ const AdminOrderManagement = () => {
           </TableHeader>
           <TableBody>
             {orders.map((order) => (
-              <TableRow key={order.id}>
+              <TableRow key={order.id} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
                 <TableCell>{order.id}</TableCell>
                 <TableCell>{order.userId}</TableCell>
                 <TableCell>{format(order.orderDate, "PPPpp")}</TableCell>
@@ -270,7 +270,7 @@ const AdminOrderManagement = () => {
                       variant="destructive"
                       size="icon"
                       onClick={() => confirmDeleteOrder(order.id)}
-                      className="hover:bg-red-700"
+                      className="hover:bg-red-800"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

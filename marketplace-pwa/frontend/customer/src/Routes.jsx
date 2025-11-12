@@ -2,7 +2,7 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import LoginPage from "shared-lib";
+import { LoginPage } from "shared-lib";
 import SignupPage from "./pages/SignupPage";
 import StoresPage from "./pages/StoresPage";
 import StorePage from "./pages/StorePage";

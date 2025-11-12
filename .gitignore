@@ -1,4 +1,8 @@
-/.venv
+# IDE
+# .vscode/ commented out because AI suggested in gral to commit project-wide settings suach as those in
+# settings.json, extensions.json or launch.json. If you want to ignore all VSCode settings, uncomment the line below
+#.vscode/
+
 # Node.js dependencies
 # This line tells Git to ignore any folder named node_modules anywhere in your repository,
 # at any depth
@@ -14,3 +18,18 @@ out/
 
 *storybook.log
 storybook-static
+
+# Python envs
+venv/
+.venv*/
+__pycache__/
+*.pyc
+
+# Migrations (keep if desired; often committed)
+migrations/
+
+# Database files
+*.db
+
+secrets
+/.vs

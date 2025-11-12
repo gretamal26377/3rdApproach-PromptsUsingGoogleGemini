@@ -9,9 +9,9 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.49.2",
     "react-router-dom": "^6.21.1",
-    "react-scripts": "^5.0.1",
-    "zod": "^3.22.4",
-    "shared-lib": "file:../shared-lib"
+    "react-scripts": "^0.0.0",
+    "shared-lib": "file:../shared-lib",
+    "zod": "^3.22.4"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -31,5 +31,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
   }
 }
