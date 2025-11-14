@@ -39,6 +39,7 @@ services:
     depends_on:
       - backend-customer
     restart: always
+    command: ["node", "server.js"]
 
   backend-search:
     build:

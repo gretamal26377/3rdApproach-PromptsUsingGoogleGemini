@@ -46,4 +46,6 @@ RUN npm run build
 EXPOSE 3000
 
 # Start the selected frontend app using as path latest WORKDIR setting
-CMD ["npm", "start"]
+ARG APP_TYPE=customer
+RUN echo "APP_TYPE is $APP_TYPE"
+CMD ["sh", "-c", "if [ \"$APP_TYPE\" = \"customer\" ]; then node server.js; else npm start; fi"]
