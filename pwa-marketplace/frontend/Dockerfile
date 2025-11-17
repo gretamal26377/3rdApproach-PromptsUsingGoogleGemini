@@ -1,4 +1,27 @@
 # Notice: In Dockerfiles can't have inline comments, just above or below the code
+
+###############################################
+# 1️⃣ BUILD STAGE — production build with full Node
+###############################################
+FROM node:20 AS build
+
+# Build shared-lib
+WORKDIR /pwa-marketplace/frontend/shared-lib
+# Copy only package metadata to leverage caching
+COPY ./shared-lib/package*.json ./
+# Install deps (including devDependencies)
+RUN npm ci
+# Copy shared-lib
+COPY ./shared-lib ./
+# Build SSR bundle + client bundle
+RUN npm run build
+
+
+
+
+
+
+
 # Use the official Node.js ver 18 with Alpine lightweight Linux
 FROM node:22-alpine
 
@@ -7,7 +30,7 @@ FROM node:22-alpine
 ARG APP_TYPE=customer
 
 # Set working directory to the project root in Docker image/container
-WORKDIR /marketplace-pwa/frontend
+WORKDIR /pwa-marketplace/frontend
 
 # Copy shared-lib
 COPY ./shared-lib ./shared-lib
@@ -26,19 +49,22 @@ COPY ./${APP_TYPE} ./${APP_TYPE}
 # COPY ./package*.json ./
 
 # Install system dependencies
-RUN apk add python3 make g++
+# RUN apk add python3 make g++
 # RUN apk add --no-cache python3 make g++
 
 # Only for debugging purposes, list the files in the current WORKDIR
 # RUN ls -l && ls -l admin && ls -l customer && ls -l shared-lib
 
 # Build shared-lib
-WORKDIR /marketplace-pwa/frontend/shared-lib
+WORKDIR /pwa-marketplace/frontend/shared-lib
 RUN npm install
 RUN npm run build
 
 # Build selected Frontend app inside the container taking as path WORKDIR
-WORKDIR /marketplace-pwa/frontend/${APP_TYPE}
+WORKDIR /pwa-marketplace/frontend/${APP_TYPE}
+# Alternative to npm install. ci: Means clean install, more suitable for CI/CD pipelines
+# Install dependencies based on package-lock.json to ensure exact versions
+# RUN npm ci
 RUN npm install
 RUN npm run build
 

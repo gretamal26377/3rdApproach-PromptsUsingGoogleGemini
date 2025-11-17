@@ -4,9 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:ssr": "node server.js",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "serve": "node dist/server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
