@@ -27,6 +27,7 @@ services:
       # First number is host machine's port and second is container's port
       - "3000:3000"
     environment:
+      - NODE_ENV=production
       - VITE_API_BASE_URL=http://backend-customer:5000/api
       - VITE_SEARCH_API_BASE_URL=http://backend-search:5002/api-search
     # Mounting host machine's path to container's path. This way,

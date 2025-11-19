@@ -1,4 +1,4 @@
-# Use Node.js to build Storybook
+# This Dockerfile is for building and deploying Storybook (no shared-lib)
 FROM node:22-alpine AS build
 
 # Remember this will run in a new and isolated container, so

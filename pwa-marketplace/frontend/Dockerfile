@@ -1,20 +1,61 @@
 # Notice: In Dockerfiles can't have inline comments, just above or below the code
 
 ###############################################
-# 1️⃣ BUILD STAGE — production build with full Node
+# 1️⃣ BUILD STAGE — Production build with full node + pnpm
 ###############################################
 FROM node:20 AS build
 
-# Build shared-lib
-WORKDIR /pwa-marketplace/frontend/shared-lib
-# Copy only package metadata to leverage caching
-COPY ./shared-lib/package*.json ./
-# Install deps (including devDependencies)
-RUN npm ci
-# Copy shared-lib
-COPY ./shared-lib ./
-# Build SSR bundle + client bundle
-RUN npm run build
+# Enable corepack for pnpm
+RUN corepack enable
+# Following best practice to use a WORKDIR called /app
+WORKDIR /app
+# Copy workspace definition files first (cache-friendly)
+COPY ./pnpm-workspace.yaml ./
+COPY ./package.json ./
+COPY ./pnpm-lock.yaml ./
+# Copy ONLY package.json of shared-lib + customer (no source yet)
+COPY ./shared-lib/package.json ./frontend/shared-lib/
+COPY ./customer/package.json ./frontend/customer/
+# Install deps for the whole workspace (only prod ones needed later)
+RUN pnpm install --frozen-lockfile
+# Now copy source files
+COPY ./shared-lib ./frontend/shared-lib
+COPY ./customer ./frontend/customer
+# Build and bundle shared-lib to customer frontend (SSR-ready)
+RUN pnpm --filter ./frontend/shared-lib build
+RUN pnpm --filter ./frontend/customer build
+
+###############################################
+# 2️⃣ PRODUCTION RUNTIME STAGE — Optimised image with node-slim (SSR server)
+###############################################
+FROM node:20-slim AS server
+
+# Create a non-root user
+RUN groupadd -r deploygroup && useradd -r -g deploygroup deployuser
+# Following best practice to use a WORKDIR called /app inside the deployment image/container
+WORKDIR /app
+# Add pnpm via corepack (safe for runtime)
+RUN corepack enable
+
+
+
+
+# Copy only built artifacts and minimal runtime dependencies
+COPY --from=build /app/frontend/customer/dist ./dist
+COPY --from=build /app/frontend/customer/package.json ./
+COPY --from=build /app/pnpm-lock.yaml ./
+# Install only production dependencies (SSR server only)
+RUN pnpm install --prod --frozen-lockfile
+# Run as non-root
+USER nodejs
+EXPOSE 3000
+# Healthcheck for SSR server
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD node ./dist/healthcheck.js || exit 1
+CMD ["node", "dist/server.js"]
+
+
+
 
 
 

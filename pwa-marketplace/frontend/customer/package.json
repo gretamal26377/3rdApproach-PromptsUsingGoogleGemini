@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "vite",
     "dev:ssr": "node server.js",
-    "build": "vite build",
+    "build:client": "vite build",
+    "build:server": "vite build --ssr server.js",
+    "build": "npm run build:client && npm run build:server",
     "lint": "eslint .",
     "preview": "vite preview",
-    "serve": "node dist/server.js"
+    "serve": "node dist/server/server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
