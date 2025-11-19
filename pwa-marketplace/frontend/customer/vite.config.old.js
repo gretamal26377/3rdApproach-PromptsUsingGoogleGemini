@@ -1,8 +1,6 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import ssr from 'vite-plugin-ssr/plugin';
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -10,7 +8,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss(), ssr({ pageFilesDir: 'src/pages' })],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       // Always import from 'shared-lib'

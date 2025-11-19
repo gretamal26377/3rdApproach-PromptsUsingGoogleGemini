@@ -1,38 +1,28 @@
-import express from "express";
-import { createServer as createViteServer } from "vite";
-import fs from "fs";
-import path from "path";
+const express = require("express");
+const { createPageRenderer } = require("vite-plugin-ssr");
+const vite = require("vite");
+const isProduction = process.env.NODE_ENV === "production";
+const root = __dirname;
 
 async function startServer() {
   const app = express();
-  const vite = await createViteServer({
-    server: { middlewareMode: "ssr" },
-    // This server doesn't fit other choices such as: vue3, angular, etc. So it's set to custom
-    appType: "custom",
-  });
-
-  // use vite's connect instance as middleware
-  app.use(vite.middlewares);
-
-  // Sets up a "catch-all" middleware function that will run for every single HTTP request your server receives
-  // async allows using await inside the function
-  app.use("*", async (req, res) => {
-    const url = req.originalUrl;
-    // Read index.html
-    let template = fs.readFileSync(
-      path.resolve(__dirname, "index.html"),
-      "utf-8"
-    );
-    // Apply Vite HTML transforms. This injects the Vite HMR client, and
-    // also applies HTML transforms from Vite plugins, e.g. global preambles
-    template = await vite.transformIndexHtml(url, template);
-    // { render }: Destructured function exported from entry-server.jsx
-    const { render } = await vite.ssrLoadModule("/src/entry-server.jsx");
-    const appHtml = render();
-    // Inject the app-rendered HTML into the template
-    const html = template.replace(`<!--app-html-->`, appHtml);
-    // res: Express 'res'ponse object
-    res.status(200).set({ "Content-Type": "text/html" }).end(html);
+  let viteDevServer;
+  if (!isProduction) {
+    viteDevServer = await vite.createServer({
+      root,
+      server: { middlewareMode: "ssr" },
+    });
+    app.use(viteDevServer.middlewares);
+  } else {
+    app.use(express.static(`${root}/dist/client`));
+  }
+  const renderPage = createPageRenderer({ viteDevServer, isProduction, root });
+  app.get("*", async (req, res, next) => {
+    const pageContextInit = { urlOriginal: req.originalUrl };
+    const pageContext = await renderPage(pageContextInit);
+    const { httpResponse } = pageContext;
+    if (!httpResponse) return next();
+    httpResponse.pipe(res);
   });
 
   app.listen(3000, () => {

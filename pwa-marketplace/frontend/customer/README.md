@@ -26,28 +26,44 @@ _**vite build**_
 
 Definition/Explanation for this is in _**vite.config.js**_
 
-## SSR (Server-Side Rendering) Setup
+## SSR with vite-plugin-ssr (Centralized Routing)
 
-This app is now configured for SEO-friendly SSR using Vite SSR and Express
+This app uses vite-plugin-ssr for SEO-friendly SSR, while keeping centralized routing (React Router in App.jsx/Routes.jsx).
 
-### Local Development (SSR)
+### How it works
 
-1. Install dependencies and build shared-lib:
-   ```sh
-   cd ../../shared-lib
-   npm install
-   npm run build
-   ```
-2. Install dependencies for customer frontend:
-   ```sh
-   cd ../customer
-   npm install
-   ```
-3. Start the SSR server:
-   ```sh
-   node server.js
-   ```
-   The app will be available at http://localhost:3000
+- SSR entry files are in `src/pages/`:
+  - `_default.page.server.jsx` (SSR)
+  - `_default.page.client.jsx` (hydration)
+  - `index.page.jsx` (points to your App)
+- Your existing App.jsx and Routes.jsx remain unchanged and manage all routes
+- Service worker registration and BrowserRouter are only used on the client
+- StaticRouter is used on the server for SSR
+
+### Development
+
+```sh
+pnpm install
+pnpm run dev
+```
+
+### Production
+
+```sh
+pnpm run build
+pnpm start
+```
+
+App runs at http://localhost:3000
+
+### File Overview
+
+- `index.html`: Contains `<div id="root"><!--app-html--></div>` for SSR injection
+- `server.js`: SSR server (Express)
+- `src/pages/_default.page.server.jsx`: SSR entry
+- `src/pages/_default.page.client.jsx`: Hydration entry
+- `src/pages/index.page.jsx`: Points to App.jsx (centralized routing)
+- `App.jsx`, `Routes.jsx`: Your main app and routing logic (unchanged)
 
 ### Docker Compose (Recommended for full stack)
 
@@ -56,19 +72,6 @@ This app is now configured for SEO-friendly SSR using Vite SSR and Express
   docker compose up frontend-customer
   ```
   Then visit http://localhost:3000
-
-### How it works
-
-- On each request, the server renders the app to HTML (SSR) and sends it to the browser
-- The browser hydrates the app for full interactivity (CSR)
-- All code and components are shared between SSR and CSR entry points
-
-### File Overview
-
-- `server.js`: Express SSR server
-- `src/entry-server.jsx`: Server-side entry (for SSR)
-- `src/entry-client.jsx`: Client-side entry (for hydration)
-- `index.html`: Contains `<div id="root"><!--app-html--></div>` for SSR injection
 
 ### Notes
 
