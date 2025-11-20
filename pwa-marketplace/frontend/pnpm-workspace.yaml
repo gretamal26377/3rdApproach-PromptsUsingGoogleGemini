@@ -1,4 +1,5 @@
+# Recommended definition if pnpm-workspace.yaml is inside the 'frontend' folder
 packages:
-  - 'frontend/admin'
-  - 'frontend/customer'
-  - 'frontend/shared-lib'
+  - 'admin'      # Looks in frontend/admin
+  - 'customer'   # Looks in frontend/customer
+  - 'shared-lib' # Looks in frontend/shared-lib
