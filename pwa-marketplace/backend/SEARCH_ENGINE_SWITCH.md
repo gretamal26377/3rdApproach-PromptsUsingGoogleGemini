@@ -3,7 +3,7 @@
 This backend supports two search engine implementations:
 
 - **Meilisearch** (default, production-ready)
-- **Google Search Engine** (placeholder, for future integration)
+- **Google Search Engine**
 
 ## How It Works
 
@@ -46,8 +46,37 @@ app/shared/
   search/          # Build-time mount point (selected engine)
 ```
 
-## Notes
 
-- The Google Search Engine implementation is a placeholder and returns 501 Not Implemented.
-- To add a new engine, create a new directory under `app/shared/`, implement `search.py` and `search_wsgi.py`, and update the Dockerfile if needed.
-- The Dockerfile will fail the build if an unknown `SEARCH_ENGINE` is provided.
+## Google Search API Setup
+
+To use the Google Search JSON API integration:
+
+1. **Obtain Credentials:**
+  - Create a Programmable Search Engine at https://programmablesearchengine.google.com/
+  - Get your Search Engine ID (CX) and enable the Custom Search API in Google Cloud Console
+  - Create an API key in Google Cloud Console
+
+2. **Set Environment Variables:**
+  - `GOOGLE_SEARCH_API_KEY`: Your Google API key
+  - `GOOGLE_SEARCH_CX`: Your Programmable Search Engine ID
+  - Set these in your environment, Docker Compose, or deployment config
+
+3. **Install Dependencies:**
+  - Ensure `requests` is present in `requirements.txt`
+
+4. **Build and Run:**
+  - Build with `SEARCH_ENGINE=google` as shown above
+  - The backend will use the Google Search API for `/api-search/search` requests
+
+5. **Response Format:**
+  - The API will always return a normalized structure:
+    ```json
+    {
+     "products_services": [...],
+     "stores": [],
+     "categories": []
+    }
+    ```
+
+---
+*The Google Search Engine implementation now returns real results from Google Custom Search*

@@ -1,6 +1,9 @@
 import os
 
 class Config:
+    # Google Search API configuration
+    GOOGLE_SEARCH_API_KEY = os.environ.get('GOOGLE_SEARCH_API_KEY')
+    GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX')
     # SECRET_KEY is used for session management and should be kept secret in production.
     # It's different from DB password
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret')
