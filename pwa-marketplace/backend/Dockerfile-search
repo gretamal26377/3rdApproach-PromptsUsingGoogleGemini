@@ -1,15 +1,20 @@
 # Dockerfile for backend-search service
 FROM python:3.11-slim
 
-WORKDIR /pwa-marketplace/backend
+WORKDIR /app
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+ARG SEARCH_ENGINE=meili
 
-# Expose port for search service
-EXPOSE 5002
+# Remove any existing search directory
+RUN rm -rf ./app/shared/search
+# Copy only the chosen search backend
+COPY ./app/shared/search_${SEARCH_ENGINE} ./search
+
+# Expose port for search service (just for documentation purpose)
+# EXPOSE 5002
 
 # Entrypoint for search service (runs only the search API)
-CMD ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]
+# CMD ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]

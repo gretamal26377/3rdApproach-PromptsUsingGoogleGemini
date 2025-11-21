@@ -1,8 +1,7 @@
 // This line defines the base URL for the API. It's set via env var and if not provided, defaults to a local server URL
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:5001/api";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
 
 const SEARCH_API_BASE_URL =
   import.meta.env.VITE_SEARCH_API_BASE_URL ||
@@ -27,7 +26,36 @@ const api = {
     return response.json();
   },
 
-  // Dedicated method for search requests
+  /**
+   * Dedicated method for search requests
+   *
+   * The normalized search result format is:
+   * {
+   *   products_services: [
+   *     {
+   *       base_product_service_id: number,
+   *       name: string,
+   *       thumbnail_url: string | null,
+   *       lowest_price: number,
+   *       category_name: string | null
+   *     }, ...
+   *   ],
+   *   stores: [
+   *     {
+   *       id: number,
+   *       name: string,
+   *       description: string
+   *     }, ...
+   *   ],
+   *   categories: [
+   *     {
+   *       id: number,
+   *       name: string,
+   *       description: string
+   *     }, ...
+   *   ]
+   * }
+   */
   getSearch: async (endpoint, token = null) => {
     const headers = {
       "Content-Type": "application/json",
@@ -42,7 +70,19 @@ const api = {
     if (!response.ok) {
       throw new Error(`Search API request failed: ${response.status}`);
     }
-    return response.json();
+    const data = await response.json();
+    // Runtime check for normalized structure
+    if (
+      typeof data !== "object" ||
+      !("products_services" in data) ||
+      !("stores" in data) ||
+      !("categories" in data)
+    ) {
+      throw new Error(
+        "Search API response is not in the expected normalized format"
+      );
+    }
+    return data;
   },
 
   // post is used for creating new resources

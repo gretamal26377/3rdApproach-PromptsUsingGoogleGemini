@@ -28,19 +28,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY ./app/shared ./app/shared
 COPY ./scripts ./scripts
 
-# Build ARG for selecting the search engine implementation (Meilisearch or Google Search Engine)
-ARG SEARCH_ENGINE=meili
-
-# Remove any existing search directory and copy the selected engine implementation to app/shared/search
-RUN rm -rf ./app/shared/search \
-     && if [ "$SEARCH_ENGINE" = "meili" ]; then \
-     cp -r ./app/shared/search_meili ./app/shared/search; \
-     elif [ "$SEARCH_ENGINE" = "google" ]; then \
-     cp -r ./app/shared/search_google ./app/shared/search; \
-     else \
-     echo "Unknown SEARCH_ENGINE: $SEARCH_ENGINE" && exit 1; \
-     fi
-
 # Ensure scripts are executable
 RUN chmod +x ./scripts/entrypoint.sh ./scripts/wait-for-it.sh
 

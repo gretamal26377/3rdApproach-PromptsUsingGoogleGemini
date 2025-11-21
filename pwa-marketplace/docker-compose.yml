@@ -36,7 +36,7 @@ services:
     # Choose rw for dev, :ro or no mount for production
     volumes:
       # Mounting is only suggested for development, in production use :ro or no mount
-      - ./frontend:/pwa-marketplace/frontend:ro
+      - ./frontend:/pwa-marketplace/frontend:/app:ro
     depends_on:
       - backend-customer
     restart: always
@@ -46,11 +46,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile-search
+      args:
+        SEARCH_ENGINE: meili
     # Search has no a standard port number, so we use 5002 as for host as for its container
     ports:
       - "5002:5002"
     volumes:
-      - ./backend:/pwa-marketplace/backend:ro
+      - ./backend:/pwa-marketplace/backend:/app:ro
     depends_on:
       - db
       - meilisearch

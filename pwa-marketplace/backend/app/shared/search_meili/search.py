@@ -31,6 +31,33 @@ def search_products():
     # '': Default value if no 'q' parameter is provided
     search_term = request.args.get('q', '').strip()
 
+    # --- Normalized Response Format ---
+    # {
+    #   "products_services": [
+    #     {
+    #       "base_product_service_id": int,
+    #       "name": str,
+    #       "thumbnail_url": str | null,
+    #       "lowest_price": float,
+    #       "category_name": str | null
+    #     }, ...
+    #   ],
+    #   "stores": [
+    #     {
+    #       "id": int,
+    #       "name": str,
+    #       "description": str
+    #     }, ...
+    #   ],
+    #   "categories": [
+    #     {
+    #       "id": int,
+    #       "name": str,
+    #       "description": str
+    #     }, ...
+    #   ]
+    # }
+
     if not search_term:
         return jsonify({})  # Return empty object if no query
 
@@ -48,10 +75,6 @@ def search_products():
             search_term,
             {'facets': ['document_type']}
         )
-        # facet_distribution: Contains counts of each document type found in the search
-        facet_distribution = search_results.facet_distribution
-        if not facet_distribution or 'document_type' not in facet_distribution:
-            return jsonify({})
 
         # 2. Initialize structure for the final grouped results
         grouped_results = {
@@ -59,6 +82,14 @@ def search_products():
             "stores": [],
             "categories": []
         }
+
+        # facet_distribution: Contains counts of each document type found in the search
+        facet_distribution = search_results.facet_distribution
+        if not facet_distribution or 'document_type' not in facet_distribution:
+            # jsonify({}): Return empty object and automatically sets/add/return status code 200 despite explicitly not setting it 
+            # return jsonify({})
+            # Best Practice: Changed to return object with empty keys
+            return jsonify(grouped_results), 200
 
         # 3. Process each document type found in the search.
         #    Sequence unpacking where 2nd value is not needed (_), named this way following Python convention
