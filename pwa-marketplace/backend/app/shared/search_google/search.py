@@ -29,6 +29,7 @@ def search_products():
     }
     try:
         resp = requests.get(url, params=params, timeout=5)
+        # Checks the HTTP response status. If it's successful, continues; otherwise raises an error
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
@@ -41,7 +42,7 @@ def search_products():
 
     products_services = []
     # Google Custom Search returns a list of items, but not in your domain model.
-    # We'll map each result to a product_service, using available fields.
+    # We'll map each result to a product_service, using available fields
     for item in data.get("items", []):
         products_services.append({
             "base_product_service_id": item.get("cacheId", 0),

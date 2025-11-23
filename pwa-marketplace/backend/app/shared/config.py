@@ -1,9 +1,6 @@
 import os
 
 class Config:
-    # Google Search API configuration
-    GOOGLE_SEARCH_API_KEY = os.environ.get('GOOGLE_SEARCH_API_KEY')
-    GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX')
     # SECRET_KEY is used for session management and should be kept secret in production.
     # It's different from DB password
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret')
@@ -40,18 +37,41 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Meilisearch configuration. Port: 7700 is the default associated with Meilisearch
-    MEILISEARCH_URL = os.environ.get('MEILISEARCH_URL', 'http://localhost:7700')
+    if os.environ.get('SEARCH_ENGINE') == 'meili':
+        # Meilisearch configuration. Port: 7700 is the default associated with Meilisearch
+        MEILISEARCH_URL = os.environ.get('MEILISEARCH_URL', 'http://localhost:7700')
 
-    # Read Meilisearch API key from Docker secret if available
-    _meili_api_key_file = os.environ.get('MEILISEARCH_API_KEY_FILE')
-    _meili_api_key = None
-    if _meili_api_key_file and os.path.exists(_meili_api_key_file):
-        try:
-            with open(_meili_api_key_file, 'r', encoding='utf-8') as f:
-                _meili_api_key = f.read().strip()
-        except Exception:
-            pass
-    if not _meili_api_key:
-        _meili_api_key = os.environ.get('MEILISEARCH_API_KEY', None)
-    MEILISEARCH_API_KEY = _meili_api_key
+        # Read Meilisearch API key from Docker secret if available
+        _meili_api_key_file = os.environ.get('MEILISEARCH_API_KEY_FILE')
+        _meili_api_key = None
+        if _meili_api_key_file and os.path.exists(_meili_api_key_file):
+            try:
+                with open(_meili_api_key_file, 'r', encoding='utf-8') as f:
+                    _meili_api_key = f.read().strip()
+            except Exception:
+                pass
+        if not _meili_api_key:
+            _meili_api_key = os.environ.get('MEILISEARCH_API_KEY', None)
+        MEILISEARCH_API_KEY = _meili_api_key
+    else: # SEARCH_ENGINE == 'google'
+       # Google Search CX configuration
+        GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX', None)
+
+        # Read Google API key from Docker secret if available
+        _google_api_key_file = os.environ.get('GOOGLE_SEARCH_API_KEY_FILE')
+        _google_api_key = None
+        if _google_api_key_file and os.path.exists(_google_api_key_file):
+            try:
+                with open(_google_api_key_file, 'r', encoding='utf-8') as f:
+                    _google_api_key = f.read().strip()
+            except Exception:
+                pass
+        if not _google_api_key:
+            _google_api_key = os.environ.get('GOOGLE_SEARCH_API_KEY', None)
+        GOOGLE_SEARCH_API_KEY = _google_api_key
+ 
+
+
+
+
+

@@ -14,6 +14,7 @@ x-database-credentials: &database-credentials
   MYSQL_DATABASE: marketplace_db
   MYSQL_USER: db_user
   MYSQL_PASSWORD_FILE: /run/secrets/mysql_db_user_password
+x-search-engine: &search_engine meili
 
 services:
   frontend-customer:
@@ -47,7 +48,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile-search
       args:
-        SEARCH_ENGINE: meili
+        SEARCH_ENGINE: *search_engine  
     # Search has no a standard port number, so we use 5002 as for host as for its container
     ports:
       - "5002:5002"
@@ -60,12 +61,19 @@ services:
     command: ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]
     environment:
       <<: *database-credentials
-      MEILISEARCH_URL: http://meilisearch:7700
-      # Use Docker secret for Meilisearch API key
-      MEILISEARCH_API_KEY_FILE: /run/secrets/meilisearch_api_key
+      SEARCH_ENGINE: *search_engine
+      if SEARCH_ENGINE == 'meili':
+        MEILISEARCH_URL: http://meilisearch:7700
+        # Use Docker secret for Meilisearch API key
+        MEILISEARCH_API_KEY_FILE: /run/secrets/meilisearch_api_key
+      else: #SEARCH_ENGINE == 'google'
+        GOOGLE_SEARCH_CX: your_google_search_cx_value_here
+        # Use Docker secret for Google Search API key
+        GOOGLE_SEARCH_API_KEY_FILE: /run/secrets/google_search_api_key
     restart: always
     secrets:
       - meilisearch_api_key
+      - google_search_api_key
 
   meilisearch:
     image: getmeili/meilisearch:v1.7
@@ -191,6 +199,8 @@ secrets:
 
   meilisearch_api_key:
     file: ./database/secrets/meilisearch_api_key.txt
+  google_search_api_key:
+    file: ./database/secrets/google_search_api_key.txt
 
 # Define named volumes as persistent storage
 volumes:
