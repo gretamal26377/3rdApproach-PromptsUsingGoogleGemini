@@ -24,6 +24,7 @@ class EntityStatuses(db.Model):
     )
 
     status_id = db.Column(db.Integer, primary_key=True)
+    # e.g., 'active', 'inactive', 'banned'
     status_code = db.Column(db.String(50), nullable=False)
     status_description = db.Column(db.Text)
 
@@ -248,6 +249,7 @@ class OrderStatuses(db.Model):
     )
 
     status_id = db.Column(db.Integer, primary_key=True)
+    # e.g., 'open', 'pending', 'partial', 'complete', 'shipped', 'delivered', 'canceled'
     status_code = db.Column(db.String(50), nullable=False)
     status_description = db.Column(db.Text)
 
@@ -439,6 +441,7 @@ class Roles(db.Model):
     )
 
     role_id = db.Column(db.Integer, primary_key=True)
+    # e.g., 'admin', 'user', 'guest'
     role_code = db.Column(db.String(50), nullable=False)
     role_description = db.Column(db.Text)
 

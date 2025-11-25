@@ -1,7 +1,8 @@
 from .database import db
-from ..shared.models import User, Store, FeaturedStores, Product, Order, OrderItem, EntityStatuses, OrderStatuses
+from ..shared.models import Customers, Store, FeaturedStores, Product, Order, OrderItem, EntityStatuses, OrderStatuses
 import logging
 from ..shared.auth import generate_token, decode_token
+from werkzeug.security import generate_password_hash, check_password_hash
 import bleach
 from datetime import datetime
 
@@ -9,56 +10,72 @@ from datetime import datetime
 def register_user_logic(data):
     if not data:
         return {'message': 'No data provided'}, 400
-    required_fields = ['username', 'password', 'email']
+    required_fields = ['customer_name', 'customer_password', 'customer_email', 'customer_phone']
     if not all(field in data for field in required_fields):
         return {'message': 'Missing required fields'}, 400
-    # Sanitize username and email
-    username = bleach.clean(data['username'], strip=True)
-    email = bleach.clean(data['email'], strip=True)
-    if User.query.filter_by(username=username).first():
-        return {'message': 'Username already exists'}, 400
-    if User.query.filter_by(email=email).first():
-        return {'message': 'e-mail already exists'}, 400
+    # Sanitize name and email
+    customer_name = bleach.clean(data['customer_name'], strip=True)
+    customer_email = bleach.clean(data['customer_email'], strip=True)
+    customer_phone = bleach.clean(data['customer_phone'], strip=True)
+    # Only allow registration if email is unique and status is active
+    if Customers.query.filter_by(customer_email=customer_email).first():
+        return {'message': 'Email already exists'}, 400
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        return {'message': 'Active status not found'}, 500
     try:
-        new_user = User(username=username, email=email) # type: ignore
-        new_user.set_password(data['password'])
-        db.session.add(new_user)
+    
+        password_hash = generate_password_hash(data['customer_password'])
+        new_customer = Customers(
+            customer_name=customer_name,
+            customer_email=customer_email,
+            customer_password_hash=password_hash,
+            customer_phone=customer_phone,
+            customer_status_id=active_status.status_id
+        )
+        db.session.add(new_customer)
         db.session.commit()
-        token = generate_token(new_user)
-        return {'message': 'User created successfully', 'token': token}, 201
+        token = generate_token({'customer_id': new_customer.customer_id, 'customer_email': new_customer.customer_email})
+        return {'message': 'Customer created successfully', 'token': token}, 201
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error creating user: {e}")
-        return {'message': 'Failed to create user'}, 500
+        logging.error(f"Error creating Customer: {e}")
+        return {'message': 'Failed to create Customer'}, 500
 
 def login_user_logic(data):
     if not data:
         return {'message': 'No data provided'}, 400
-    required_fields = ['username', 'password']
+    required_fields = ['customer_email', 'customer_password']
     if not all(field in data for field in required_fields):
         return {'message': 'Missing required fields'}, 400
-    user = User.query.filter_by(username=data['username']).first()
-    if not user or not user.check_password(data['password']):
+    customer = Customers.query.filter_by(customer_email=data['customer_email']).first()
+    if not customer:
         return {'message': 'Invalid credentials'}, 401
-    token = generate_token(user)
+    # Check status is active
+    if not customer.customer_status or customer.customer_status.status_code != 'active':
+        return {'message': 'Customer is not Active'}, 403
+    if not check_password_hash(customer.customer_password_hash, data['customer_password']):
+        return {'message': 'Invalid credentials'}, 401
+    token = generate_token({'customer_id': customer.customer_id, 'customer_email': customer.customer_email})
     return {'message': 'Login successful', 'token': token}, 200
 
 def decode_user_logic(data):
     if not data or 'token' not in data:
         return {'message': 'No token provided'}, 400
     token = data['token']
-    user_id = decode_token(token)
-    if user_id:
-        user = User.query.get(user_id)
-        if user:
-            user_data = {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email
+    decoded = decode_token(token)
+    if decoded and 'customer_id' in decoded:
+        customer = Customers.query.get(decoded['customer_id'])
+        if customer and customer.customer_status and customer.customer_status.status_code == 'active':
+            customer_data = {
+                'customer_id': customer.customer_id,
+                'customer_name': customer.customer_name,
+                'customer_email': customer.customer_email,
+                'customer_phone': customer.customer_phone
             }
-            return {'message': 'Token decoded successfully', 'user': user_data}, 200
+            return {'message': 'Token decoded successfully', 'customer': customer_data}, 200
         else:
-            return {'message': 'User not found for this token'}, 404
+            return {'message': 'Customer not found or Inactive'}, 404
     else:
         return {'message': 'Invalid or expired token'}, 401
 
