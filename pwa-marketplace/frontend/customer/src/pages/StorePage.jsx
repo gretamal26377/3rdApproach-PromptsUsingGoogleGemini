@@ -39,6 +39,13 @@ const StorePage = ({ addToCart }) => {
     <div className="container mx-auto p-4 space-y-6">
       <div className="bg-white shadow-md rounded-lg p-6">
         <h1 className="text-3xl font-bold">{store.name}</h1>
+        {store.store_pic_path && (
+          <img
+            src={store.store_pic_path}
+            alt={store.name}
+            className="w-full h-40 object-cover rounded mb-4"
+          />
+        )}
         <p className="text-gray-600">{store.description}</p>
       </div>
 

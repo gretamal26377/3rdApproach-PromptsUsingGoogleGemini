@@ -3,7 +3,7 @@ from ..shared.auth import token_required
 # Issue: Missing logics (update_order_logic)
 from .customer_management import (
     register_user_logic, login_user_logic, decode_user_logic,
-    create_store_logic, update_store_logic, delete_store_logic,
+    get_featured_stores_logic, create_store_logic, update_store_logic, delete_store_logic,
     create_product_logic, update_product_logic, delete_product_logic,
     get_stores_logic, get_store_logic, get_products_logic, get_product_logic,
     create_order_logic, get_orders_logic, get_order_logic, delete_order_logic
@@ -35,6 +35,11 @@ curl -X POST -H "Content-Type: application/json" -d '{"token": "your_token_here"
 def decode_user():
     data = request.get_json()
     result, status = decode_user_logic(data)
+    return jsonify(result), status
+
+@customer_bp.route('/featured-stores', methods=['GET'])
+def get_featured_stores():
+    result, status = get_featured_stores_logic()
     return jsonify(result), status
 
 @customer_bp.route('/stores', methods=['POST'])

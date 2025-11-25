@@ -16,6 +16,13 @@ const StoreCard = ({ store }) => {
         <CardTitle className="text-2xl font-bold">{store.name}</CardTitle>
       </CardHeader>
       <CardContent>
+        {store.store_pic_path && (
+          <img
+            src={store.store_pic_path}
+            alt={store.name}
+            className="w-full h-32 object-cover rounded mb-2"
+          />
+        )}
         <p className="text-gray-700 mb-4">{store.description}</p>
         <Link to={`/stores/${store.id}`}>
           <Button className="w-full bg-blue-500 text-white hover:bg-blue-600 transition-colors">

@@ -1,5 +1,5 @@
 from .database import db
-from ..shared.models import User, Store, FeaturedStores, Product, Order, OrderItem, EntityStatuses, OrderStatuses
+from ..shared.models import User, Store, FeaturedStores, Product, Order, OrderItem, EntityStatuses
 import logging
 from ..shared.auth import generate_token, decode_token
 import bleach
@@ -97,36 +97,17 @@ def get_featured_stores_logic():
         return {'message': 'Failed to fetch Featured Stores'}, 500
 
 def get_stores_logic():
-    # Only return stores with active status
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    stores = Store.query.filter_by(store_status_id=active_status_id).all()
-    stores_data = [
-        {
-            'id': store.store_id,
-            'name': store.store_name,
-            'description': store.store_description,
-            'picture_path': store.store_pic_path,
-            'email': store.store_email,
-            'phone': store.store_phone,
-            'address': store.store_address,
-        }
-        for store in stores
-    ]
+    stores = Store.query.all()
+    stores_data = [{'id': store.id, 'name': store.name, 'description': store.description, 'owner_id': store.owner_id} for store in stores]
     return stores_data, 200
 
 def get_store_logic(store_id):
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    store = Store.query.filter_by(store_id=store_id, store_status_id=active_status_id).first()
-    if not store:
-        return {'message': 'Store not found or Inactive'}, 404
+    store = Store.query.get_or_404(store_id)
     store_data = {
-        'id': store.store_id,
-        'name': store.store_name,
-        'description': store.store_description,
-        'picture_path': store.store_pic_path,
-        'email': store.store_email,
-        'phone': store.store_phone,
-        'address': store.store_address,
+        'id': store.id,
+        'name': store.name,
+        'description': store.description,
+        'owner_id': store.owner_id
     }
     return store_data, 200
 
@@ -177,38 +158,18 @@ def delete_store_logic(current_user, store_id):
         return {'message': 'Failed to delete store'}, 500
 
 def get_products_logic():
-    # Only return products with active status and from active stores
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    products = Product.query.join(Store, Product.store_id == Store.store_id)
-    products = products.filter(
-        Product.product_status_id == active_status_id,
-        Store.store_status_id == active_status_id
-    ).all()
-    products_data = [
-        {
-            'id': product.product_id,
-            'name': product.product_name,
-            'description': product.product_description,
-            'price': float(product.product_price),
-            'store_id': product.store_id,
-            'picture_path': product.product_pic_path,
-        }
-        for product in products
-    ]
+    products = Product.query.all()
+    products_data = [{'id': product.id, 'name': product.name, 'description': product.description, 'price': product.price, 'store_id': product.store_id} for product in products]
     return products_data, 200
 
 def get_product_logic(product_id):
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    product = Product.query.filter_by(product_id=product_id, product_status_id=active_status_id).first()
-    if not product:
-        return {'message': 'Product not found or Inactive'}, 404
+    product = Product.query.get_or_404(product_id)
     product_data = {
-        'id': product.product_id,
-        'name': product.product_name,
-        'description': product.product_description,
-        'price': float(product.product_price),
-        'store_id': product.store_id,
-        'picture_path': product.product_pic_path,
+        'id': product.id,
+        'name': product.name,
+        'description': product.description,
+        'price': product.price,
+        'store_id': product.store_id
     }
     return product_data, 200
 
@@ -268,57 +229,26 @@ def delete_product_logic(current_user, product_id):
         return {'message': 'Failed to delete product'}, 500
 
 def get_orders_logic(current_user):
-    # Only return orders with relevant order_statuses.status_code
-    valid_statuses = ['open', 'pending', 'partial', 'complete', 'shipped', 'delivered', 'canceled']
-    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_statuses)).all()]
-    orders = Order.query.filter(
-        Order.customer_id == current_user.customer_id,
-        Order.order_status_id.in_(status_ids)
-    ).all()
-    orders_data = [
-        {
-            'id': order.order_id,
-            'customer_id': order.customer_id,
-            'order_date': order.order_date,
-            'total_quantity': order.order_tot_quantity,
-            'total_price': float(order.order_tot_price),
-            'status': order.order_status.status_code if order.order_status else None,
-            'items': [
-                {
-                    'store_product_service_id': item.store_product_service_id,
-                    'quantity': item.product_service_quantity,
-                    'price': float(item.product_service_price)
-                } for item in order.order_details
-            ]
-        }
-        for order in orders
-    ]
+    orders = Order.query.filter_by(user_id=current_user.id).all()
+    orders_data = [{
+        'id': order.id,
+        'user_id': order.user_id,
+        'order_date': order.order_date,
+        'total_amount': order.total_amount,
+        'items': [{'product_id': item.product_id, 'quantity': item.quantity} for item in order.items]
+    } for order in orders]
     return orders_data, 200
 
 def get_order_logic(current_user, order_id):
-    valid_statuses = ['open', 'pending', 'partial', 'complete', 'shipped', 'delivered', 'canceled']
-    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_statuses)).all()]
-    order = Order.query.filter(
-        Order.order_id == order_id,
-        Order.customer_id == current_user.customer_id,
-        Order.order_status_id.in_(status_ids)
-    ).first()
-    if not order:
-        return {'message': 'Order not found or unauthorized'}, 404
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id:
+        return {'message': 'Unauthorized'}, 403
     order_data = {
-        'id': order.order_id,
-        'customer_id': order.customer_id,
+        'id': order.id,
+        'user_id': order.user_id,
         'order_date': order.order_date,
-        'total_quantity': order.order_tot_quantity,
-        'total_price': float(order.order_tot_price),
-        'status': order.order_status.status_code if order.order_status else None,
-        'items': [
-            {
-                'store_product_service_id': item.store_product_service_id,
-                'quantity': item.product_service_quantity,
-                'price': float(item.product_service_price)
-            } for item in order.order_details
-        ]
+        'total_amount': order.total_amount,
+        'items': [{'product_id': item.product_id, 'quantity': item.quantity} for item in order.items]
     }
     return order_data, 200
 

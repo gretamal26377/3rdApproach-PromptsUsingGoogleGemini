@@ -11,38 +11,7 @@ import { Store, ShoppingBag, ChevronRight } from "lucide-react";
 import { SearchBar } from "shared-lib";
 
 // Mock data for stores and products (replace with actual API calls)
-const mockStores = [
-  {
-    id: 1,
-    name: "Electronics Store",
-    description: "Your one-stop shop for the latest electronics.",
-  },
-  {
-    id: 2,
-    name: "Fashion Hub",
-    description: "Trendy clothing and accessories for all styles.",
-  },
-  {
-    id: 3,
-    name: "Home & Garden",
-    description: "Find everything you need for your home and garden.",
-  },
-  {
-    id: 4,
-    name: "Bookstore",
-    description: "A wide selection of books for every reader.",
-  },
-  {
-    id: 5,
-    name: "Sports Center",
-    description: "Gear up for your favorite sports and activities.",
-  },
-  {
-    id: 6,
-    name: "Grocery Market",
-    description: "Fresh produce, pantry staples, and more.",
-  },
-];
+
 
 const mockProducts = [
   {
@@ -132,17 +101,24 @@ const mockProducts = [
   },
 ];
 
+
 const HomePage = () => {
-  const [stores, setStores] = useState(mockStores);
+  const [stores, setStores] = useState([]);
   const [products, setProducts] = useState(mockProducts);
-  const [featuredStores, setFeaturedStores] = useState(mockStores.slice(0, 3));
+  const [featuredStores, setFeaturedStores] = useState([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setStores(mockStores);
-      setProducts(mockProducts);
-    }, 500);
-    return () => clearTimeout(timer);
+    // Fetch featured stores from backend using generic get()
+    api.get('customer/featured-stores')
+      .then((data) => {
+        setFeaturedStores(data);
+      })
+      .catch((err) => {
+        setFeaturedStores([]);
+      });
+    // Optionally: fetch all stores/products here as well
+    // setStores([]); // If you want to fetch all stores, implement a real API call
+    setProducts(mockProducts); // Keep mock for products for now
   }, []);
 
   const navigate = useNavigate();
@@ -154,10 +130,10 @@ const HomePage = () => {
       {/* Hero Section */}
       <div className="text-center">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-800 dark:text-text-dark mb-4">
-          Discover Amazing Products and Stores
+          Discover Amazing Products/Services and Stores
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-200 mb-8">
-          Explore a wide variety of products from trusted stores
+          Explore a wide variety of Products/Services from trusted Stores
         </p>
       </div>
 
@@ -166,7 +142,7 @@ const HomePage = () => {
         <div className="w-full max-w-md relative">
           <SearchBar
             onSelect={handleSelect}
-            placeholder="Search for products/services, stores or categories..."
+            placeholder="Search for Products/Services, Stores and Categories..."
           />
         </div>
       </div>
@@ -191,6 +167,13 @@ const HomePage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {store.store_pic_path && (
+                      <img
+                        src={store.store_pic_path}
+                        alt={store.name}
+                        className="w-full h-32 object-cover rounded mb-2"
+                      />
+                    )}
                     <p className="text-gray-700 dark:text-gray-200">
                       {store.description}
                     </p>
