@@ -1,5 +1,7 @@
 from .database import db
-from ..shared.models import Customers, Store, FeaturedStores, Product, Order, OrderItem, EntityStatuses, OrderStatuses
+from ..shared.models import (
+    Customers, Stores, FeaturedStores, ProductsServices, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
+)
 import logging
 from ..shared.auth import generate_token, decode_token
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -229,99 +231,143 @@ def get_product_logic(product_id):
     }
     return product_data, 200
 
-def create_product_logic(current_user, data):
-    required_fields = ['name', 'description', 'price', 'store_id']
+def create_product_logic(current_customer, data):
+    required_fields = ['product_service_name', 'product_service_description', 'product_service_category_id', 'product_service_pic_path', 'store_id', 'price', 'stock']
     if not all(field in data for field in required_fields):
         return {'message': 'Missing required fields'}, 400
     try:
-        store = Store.query.get_or_404(data['store_id'])
-        if store.owner_id != current_user.id:
-            return {'message': 'Unauthorized to add product to this store'}, 403
-        # Sanitize product name and description
-        name = bleach.clean(data['name'], strip=True)
-        description = bleach.clean(data['description'], strip=True)
-        new_product = Product(name=name, description=description, price=data['price'], store_id=data['store_id'])
+        # Sanitize fields
+        name = bleach.clean(data['product_service_name'], strip=True)
+        description = bleach.clean(data['product_service_description'], strip=True)
+        pic_path = bleach.clean(data['product_service_pic_path'], strip=True)
+        active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+        # Check store exists and is active
+        store = Stores.query.filter_by(store_id=data['store_id'], store_status_id=active_status_id).first()
+        if not store:
+            return {'message': 'Store not found or Inactive'}, 404
+        # Create product/service
+        new_product = ProductsServices(
+            product_service_name=name,
+            product_service_description=description,
+            product_service_pic_path=pic_path,
+            product_service_category_id=data['product_service_category_id'],
+            product_service_status_id=active_status_id
+        )
         db.session.add(new_product)
+        db.session.flush()  # Get product_service_id
+        # Create store-product-service link
+        sps = StoreProductsServices(
+            store_id=store.store_id,
+            product_service_id=new_product.product_service_id,
+            price=data['price'],
+            stock=data['stock'],
+            status_id=active_status_id
+        )
+        db.session.add(sps)
         db.session.commit()
-        return {'message': 'Product created successfully', 'product_id': new_product.id}, 201
+        return {'message': 'Product/Service created successfully', 'product_service_id': new_product.product_service_id}, 201
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error creating product: {e}")
-        return {'message': 'Failed to create product'}, 500
+        logging.error(f"Error creating Product/Service: {e}")
+        return {'message': 'Failed to create Product/Service'}, 500
 
-def update_product_logic(current_user, product_id, data):
-    product = Product.query.get_or_404(product_id)
-    store = Store.query.get(product.store_id)
-    if store.owner_id != current_user.id:
-        return {'message': 'Unauthorized'}, 403
+def update_product_logic(current_customer, product_service_id, data):
+    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    product = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status_id).first()
+    if not product:
+        return {'message': 'Product/Service not found or Inactive'}, 404
     try:
-        if 'name' in data:
-            product.name = bleach.clean(data['name'], strip=True)
-        if 'description' in data:
-            product.description = bleach.clean(data['description'], strip=True)
-        if 'price' in data:
-            product.price = data['price']
-        if 'store_id' in data:
-            product.store_id = data['store_id']
+        if 'product_service_name' in data:
+            product.product_service_name = bleach.clean(data['product_service_name'], strip=True)
+        if 'product_service_description' in data:
+            product.product_service_description = bleach.clean(data['product_service_description'], strip=True)
+        if 'product_service_pic_path' in data:
+            product.product_service_pic_path = bleach.clean(data['product_service_pic_path'], strip=True)
+        if 'product_service_category_id' in data:
+            product.product_service_category_id = data['product_service_category_id']
         db.session.commit()
-        return {'message': 'Product updated successfully'}, 200
+        return {'message': 'Product/Service updated successfully'}, 200
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error updating product: {e}")
-        return {'message': 'Failed to update product'}, 500
+        logging.error(f"Error updating Product/Service: {e}")
+        return {'message': 'Failed to update Product/Service'}, 500
 
-def delete_product_logic(current_user, product_id):
-    product = Product.query.get_or_404(product_id)
-    store = Store.query.get(product.store_id)
-    if store.owner_id != current_user.id:
-        return {'message': 'Unauthorized'}, 403
+def delete_product_logic(current_customer, product_service_id):
+    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    product = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status_id).first()
+    if not product:
+        return {'message': 'Product/Service not found or Inactive'}, 404
     try:
         db.session.delete(product)
         db.session.commit()
-        return {'message': 'Product deleted successfully'}, 200
+        return {'message': 'Product/Service Inactivated successfully'}, 200
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error deleting product: {e}")
-        return {'message': 'Failed to delete product'}, 500
+        logging.error(f"Error Inactivating Product/Service: {e}")
+        return {'message': 'Failed to Inactivate Product/Service'}, 500
 
 def get_orders_logic(current_user):
     # Only return orders with relevant order_statuses.status_code
     valid_statuses = ['open', 'pending', 'partial', 'complete', 'shipped', 'delivered', 'canceled']
     status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_statuses)).all()]
-    orders = Order.query.filter(
-        Order.customer_id == current_user.customer_id,
-        Order.order_status_id.in_(status_ids)
-    ).all()
-    orders_data = [
-        {
-            'id': order.order_id,
-            'customer_id': order.customer_id,
-            'order_date': order.order_date,
+
+    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    customer = Customers.query.filter_by(customer_id=current_user.customer_id, customer_status_id=active_status_id).first()
+
+    if not customer:
+        return {'message': 'Customer not found or Inactive'}, 403
+    orders = Orders.query.filter_by(customer_id=current_user.customer_id).all()
+    result = []
+    for order in orders:
+        details = OrderDetails.query.filter_by(order_id=order.order_id).all()
+        items = [
+            {
+                'store_product_service_id': d.store_product_service_id,
+                'quantity': d.product_service_quantity,
+                'price': float(d.product_service_price),
+                'total_price': float(d.product_service_tot_price)
+            }
+            for d in details
+        ]
+        result.append({
+            'order_id': order.order_id,
             'total_quantity': order.order_tot_quantity,
             'total_price': float(order.order_tot_price),
-            'status': order.order_status.status_code if order.order_status else None,
-            'items': [
-                {
-                    'store_product_service_id': item.store_product_service_id,
-                    'quantity': item.product_service_quantity,
-                    'price': float(item.product_service_price)
-                } for item in order.order_details
-            ]
-        }
-        for order in orders
-    ]
-    return orders_data, 200
+            'status_id': order.order_status_id,
+            'items': items,
+            'created_at': order.created_at
+        })
+    return {'orders': result}, 200
 
-def get_order_logic(current_user, order_id):
+def get_order_logic(current_customer, order_id):
+    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
+    if not customer:
+        return {'message': 'Customer not found or Inactive'}, 403
+
+    # order = Orders.query.filter_by(order_id=order_id, customer_id=current_customer.customer_id).first()
+
     valid_statuses = ['open', 'pending', 'partial', 'complete', 'shipped', 'delivered', 'canceled']
     status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_statuses)).all()]
-    order = Order.query.filter(
-        Order.order_id == order_id,
-        Order.customer_id == current_user.customer_id,
-        Order.order_status_id.in_(status_ids)
+    
+    order = Orders.query.filter(
+        Orders.customer_id == current_customer.customer_id,
+        Orders.order_status_id.in_(status_ids)
     ).first()
     if not order:
-        return {'message': 'Order not found or unauthorized'}, 404
+        return {'message': 'Order not found or Inactive'}, 404
+    
+    # order_data = {
+    #    'id': order.order_id,
+    #    'customer_id': order.customer_id,
+
+    # Orders.customer_id == current_user.customer_id,
+    # Orders.order_status_id.in_(status_ids)
+
+
+    # ).first()
+    # if not order:
+    #    return {'message': 'Order not found or unauthorized'}, 404
     order_data = {
         'id': order.order_id,
         'customer_id': order.customer_id,
@@ -339,7 +385,7 @@ def get_order_logic(current_user, order_id):
     }
     return order_data, 200
 
-def create_order_logic(current_user, data):
+def create_order_logic(current_customer, data):
     required_fields = ['items']
     if not all(field in data for field in required_fields):
         return {'message': 'Missing required fields'}, 400
@@ -347,28 +393,58 @@ def create_order_logic(current_user, data):
         return {'message': 'Items must be a list'}, 400
     if not data['items']:
         return {'message': 'Items list cannot be empty'}, 400
-    total_amount = 0
-    order_items = []
+    total_quantity = 0
+    total_price = 0
+    order_details = []
     try:
+        active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+        # Check customer is active
+        customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
+        if not customer:
+            return {'message': 'Customer not found or Inactive'}, 403
         for item in data['items']:
-            if not all(field in item for field in ['product_id', 'quantity']):
-                return {'message': 'Each item must contain product_id and quantity'}, 400
-            product = Product.query.get(item['product_id'])
-            if not product:
-                return {'message': f"Product with id {item['product_id']} not found"}, 400
+            if not all(field in item for field in ['store_product_service_id', 'quantity']):
+                return {'message': 'Each item must contain store_product_service_id and quantity'}, 400
+            sps = StoreProductsServices.query.filter_by(id=item['store_product_service_id'], status_id=active_status_id).first()
+            if not sps:
+                return {'message': f"Store Product/Service with id {item['store_product_service_id']} not found or Inactive"}, 400
             quantity = item['quantity']
             if quantity <= 0:
-                return {'message': f"Quantity for product {item['product_id']} must be greater than zero"}, 400
-            total_amount += product.price * quantity
-            order_items.append(OrderItem(product_id=item['product_id'], quantity=quantity))
-        new_order = Order(user_id=current_user.id, total_amount=total_amount, items=order_items)
+                return {'message': f"Quantity for Store Product/Service {item['store_product_service_id']} must be positive"}, 400
+            price = float(sps.price)
+            total_quantity += quantity
+            total_price += price * quantity
+            order_details.append({'store_product_service_id': sps.id, 'quantity': quantity, 'price': price})
+        # Set initial order status to 'open'
+        open_status = OrderStatuses.query.filter_by(status_code='open').first()
+        if not open_status:
+            return {'message': 'Order Status "Open" not found'}, 500
+        new_order = Orders(
+            order_tot_quantity=total_quantity,
+            order_tot_price=total_price,
+            customer_id=customer.customer_id,
+            order_status_id=open_status.status_id
+        )
         db.session.add(new_order)
+        db.session.flush()  # Get order_id
+        for od in order_details:
+            detail = OrderDetails(
+                order_id=new_order.order_id,
+                store_product_service_id=od['store_product_service_id'],
+                product_service_quantity=od['quantity'],
+                product_service_price=od['price'],
+                product_service_tot_price=od['price'] * od['quantity'],
+                product_service_status_id=open_status.status_id,
+                product_service_filled_quantity=0,
+                product_service_filled_tot_price=0
+            )
+            db.session.add(detail)
         db.session.commit()
-        return {'message': 'Order created successfully', 'order_id': new_order.id}, 201
+        return {'message': 'Order created successfully', 'order_id': new_order.order_id}, 201
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error creating order: {e}")
-        return {'message': 'Failed to create order'}, 500
+        logging.error(f"Error creating Order: {e}")
+        return {'message': 'Failed to Create Order'}, 500
 
 def delete_order_logic(current_user, order_id):
     order = Order.query.get_or_404(order_id)
