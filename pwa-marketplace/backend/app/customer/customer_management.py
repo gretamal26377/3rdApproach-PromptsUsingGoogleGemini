@@ -118,7 +118,7 @@ def get_featured_stores_logic():
 def get_stores_logic():
     # Only return stores with active status
     active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    stores = Store.query.filter_by(store_status_id=active_status_id).all()
+    stores = Stores.query.filter_by(store_status_id=active_status_id).all()
     stores_data = [
         {
             'id': store.store_id,
@@ -135,7 +135,7 @@ def get_stores_logic():
 
 def get_store_logic(store_id):
     active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    store = Store.query.filter_by(store_id=store_id, store_status_id=active_status_id).first()
+    store = Stores.query.filter_by(store_id=store_id, store_status_id=active_status_id).first()
     if not store:
         return {'message': 'Store not found or Inactive'}, 404
     store_data = {
@@ -227,10 +227,10 @@ def get_orders_logic(current_customer):
                 'quantity': d.product_service_quantity,
                 'price': float(d.product_service_price),
                 'total_price': float(d.product_service_tot_price),
-                'filled_quantity': item.product_service_filled_quantity,
-                'filled_total_price': float(item.product_service_filled_tot_price),
-                'status_code': item.product_service_status.status_code if item.product_service_status else None,
-                'created_at': item.product_service_created_at
+                'filled_quantity': d.product_service_filled_quantity,
+                'filled_total_price': float(d.product_service_filled_tot_price),
+                'status_code': d.product_service_status.status_code if d.product_service_status else None,
+                'created_at': d.product_service_created_at
             }
             for d in details
         ]
