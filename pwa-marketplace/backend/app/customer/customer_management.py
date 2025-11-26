@@ -1,4 +1,5 @@
-from .database import db
+from itertools import product
+from ..shared.database import db
 from ..shared.models import (
     Customers, Stores, FeaturedStores, ProductsServices, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
 )
@@ -148,41 +149,63 @@ def get_store_logic(store_id):
     }
     return store_data, 200
 
-def get_products_services_logic():
-    # Only return products/services with active status and from active stores
+def get_store_products_services_logic(store_id):
+    # Return all active products/services for a given store, using StoreProductsServices as join table
     active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    products_services = ProductsServices.query.join(Stores, ProductsServices.store_id == Stores.store_id)
-    products_services = products_services.filter(
-        ProductsServices.product_status_id == active_status_id,
-        Stores.store_status_id == active_status_id
-    ).all()
-    products_services_data = [
-        {
-            'id': product_service.product_service_id,
-            'name': product_service.product_service_name,
-            'description': product_service.product_service_description,
-            'price': float(product_service.product_service_price),
-            'store_id': product_service.store_id,
-            'picture_path': product_service.product_service_pic_path,
-        }
-        for product_service in products_services
-    ]
-    return products_services_data, 200
+    sps_list = StoreProductsServices.query.filter_by(store_id=store_id, status_id=active_status_id).all()
+    store_products_services_data = []
+    for sps in sps_list:
+        ps = sps.product_service
+        # Filter for active product_service as well
+        if ps and ps.product_service_status_id == active_status_id:
+            # Get category info if available
+            category = None
+            if ps.product_service_category:
+                category = {
+                    'id': ps.product_service_category.category_id,
+                    'name': ps.product_service_category.category_name,
+                    'picture_path': ps.product_service_category.category_pic_path
+                }
+            store_products_services_data.append({
+                'id': ps.product_service_id,
+                'name': ps.product_service_name,
+                'description': ps.product_service_description,
+                'price': float(sps.price),
+                'store_id': sps.store_id,
+                'picture_path': ps.product_service_pic_path,
+                'stock': sps.stock,
+                'category': category
+            })
+    return store_products_services_data, 200
 
-def get_product_logic(product_id):
+def get_store_product_service_logic(store_product_service_id):
     active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    product = Product.query.filter_by(product_id=product_id, product_status_id=active_status_id).first()
-    if not product:
-        return {'message': 'Product not found or Inactive'}, 404
-    product_data = {
-        'id': product.product_id,
-        'name': product.product_name,
-        'description': product.product_description,
-        'price': float(product.product_price),
-        'store_id': product.store_id,
-        'picture_path': product.product_pic_path,
+    sps = StoreProductsServices.query.filter_by(id=store_product_service_id, status_id=active_status_id).first()
+    if not sps:
+        return {'message': 'Store Product/Service not found or Inactive'}, 404
+    ps = sps.product_service
+    if not ps or ps.product_service_status_id != active_status_id:
+        return {'message': 'Product/Service not found or Inactive'}, 404
+    # Get category info if available
+    category = None
+    if ps.product_service_category:
+        category = {
+            'id': ps.product_service_category.category_id,
+            'name': ps.product_service_category.category_name,
+            'description': ps.product_service_category.category_description,
+            'picture_path': ps.product_service_category.category_pic_path
+        }
+    store_product_service_data = {
+        'id': ps.product_service_id,
+        'name': ps.product_service_name,
+        'description': ps.product_service_description,
+        'price': float(sps.price),
+        'stock': sps.stock,
+        'store_id': sps.store_id,
+        'picture_path': ps.product_service_pic_path,
+        'category': category
     }
-    return product_data, 200
+    return store_product_service_data, 200
 
 def get_orders_logic(current_customer):
     # Only return orders with relevant order_statuses.status_code
@@ -203,17 +226,22 @@ def get_orders_logic(current_customer):
                 'store_product_service_id': d.store_product_service_id,
                 'quantity': d.product_service_quantity,
                 'price': float(d.product_service_price),
-                'total_price': float(d.product_service_tot_price)
+                'total_price': float(d.product_service_tot_price),
+                'filled_quantity': item.product_service_filled_quantity,
+                'filled_total_price': float(item.product_service_filled_tot_price),
+                'status_code': item.product_service_status.status_code if item.product_service_status else None,
+                'created_at': item.product_service_created_at
             }
             for d in details
         ]
         result.append({
             'order_id': order.order_id,
+            'customer_id': order.customer_id,
             'total_quantity': order.order_tot_quantity,
             'total_price': float(order.order_tot_price),
-            'status_id': order.order_status_id,
+            'order_status_code': order.order_status.status_code if order.order_status else None,
+            'order_created_at': order.order_created_at,
             'items': items,
-            'created_at': order.created_at
         })
     return {'orders': result}, 200
 
@@ -231,23 +259,28 @@ def get_order_logic(current_customer, order_id):
         Orders.order_status_id.in_(status_ids)
         ).first()
     if not order:
-        return {'message': 'Order not found or Inactive'}, 404
+        return {'message': 'Order not found'}, 404
     order_data = {
-        'id': order.order_id,
+        'order_id': order.order_id,
         'customer_id': order.customer_id,
-        'order_date': order.order_date,
         'total_quantity': order.order_tot_quantity,
         'total_price': float(order.order_tot_price),
-        'status': order.order_status.status_code if order.order_status else None,
+        'order_status_code': order.order_status.status_code if order.order_status else None,
+        'order_created_at': order.order_created_at,
         'items': [
             {
                 'store_product_service_id': item.store_product_service_id,
                 'quantity': item.product_service_quantity,
-                'price': float(item.product_service_price)
+                'price': float(item.product_service_price),
+                'total_price': float(item.product_service_tot_price),
+                'filled_quantity': item.product_service_filled_quantity,
+                'filled_total_price': float(item.product_service_filled_tot_price),
+                'status_code': item.product_service_status.status_code if item.product_service_status else None,
+                'created_at': item.product_service_created_at
             } for item in order.order_details
         ]
     }
-    return order_data, 200
+    return {'order': order_data}, 200
 
 def create_order_logic(current_customer, data):
     required_fields = ['items']

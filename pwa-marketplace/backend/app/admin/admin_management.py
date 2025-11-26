@@ -1,4 +1,4 @@
-from .database import db
+from ..shared.database import db
 from ..shared.models import User
 import logging
 # bleach is used to sanitize inputs to prevent XSS attacks

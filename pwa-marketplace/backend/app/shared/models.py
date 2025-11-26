@@ -1,3 +1,4 @@
+from venv import create
 from .database import db
 from sqlalchemy import Index, ForeignKeyConstraint, text
 
@@ -148,6 +149,7 @@ class CustomerAddresses(db.Model):
     google_maps_url = db.Column(db.String(255), nullable=False)
     address_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
     postal_code = db.Column(db.String(20), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     customer = db.relationship('Customers', back_populates='customer_addresses')
     city = db.relationship('Cities', back_populates='customer_addresses')
@@ -166,6 +168,7 @@ class Customers(db.Model):
     customer_password_hash = db.Column(db.String(255), nullable=False)
     customer_phone = db.Column(db.String(20), nullable=False)
     customer_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    customer_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     customer_status = db.relationship('EntityStatuses', back_populates='customers')
     customer_addresses = db.relationship('CustomerAddresses', back_populates='customer')
@@ -236,6 +239,7 @@ class OrderDetails(db.Model):
     product_service_status_id = db.Column(db.Integer, db.ForeignKey('order_statuses.status_id'), nullable=False)
     product_service_filled_quantity = db.Column(db.Integer, nullable=False)
     product_service_filled_tot_price = db.Column(db.Numeric, nullable=False)
+    product_service_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     order = db.relationship('Orders', back_populates='order_details')
     store_product_service = db.relationship('StoreProductsServices', back_populates='order_details')
@@ -267,6 +271,8 @@ class Orders(db.Model):
     order_tot_price = db.Column(db.Numeric, nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.customer_id'), nullable=False)
     order_status_id = db.Column(db.Integer, db.ForeignKey('order_statuses.status_id'), nullable=False)
+    # text(): Ensures that value in parentheses is treated as a literal SQL expression and not as a string
+    order_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     customer = db.relationship('Customers', back_populates='orders')
     order_status = db.relationship('OrderStatuses', back_populates='orders')
@@ -285,6 +291,7 @@ class StoreProductsServices(db.Model):
     price = db.Column(db.Numeric, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     store = db.relationship('Stores', back_populates='store_products_services')
     product_service = db.relationship('ProductsServices', back_populates='store_products_services')
@@ -306,6 +313,7 @@ class Stores(db.Model):
     store_address = db.Column(db.Text, nullable=False)
     store_pic_path = db.Column(db.String(255))
     store_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    store_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     store_status = db.relationship('EntityStatuses', back_populates='stores')
     store_products_services = db.relationship('StoreProductsServices', back_populates='store')

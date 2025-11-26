@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from ..shared.auth import token_required
 # Issue: Missing logics (update_order_logic)
 from .customer_management import (
-    create_customer_logic, login_customer_logic, decode_customer_logic, get_featured_stores_logic,
+    create_customer_logic, get_store_products_services_logic, login_customer_logic, decode_customer_logic, get_featured_stores_logic,
     get_stores_logic, get_store_logic, get_products_services_logic, get_product_service_logic,
     create_order_logic, get_orders_logic, get_order_logic, cancel_order_logic
 )
@@ -50,9 +50,9 @@ def get_store(store_id):
     result, status = get_store_logic(store_id)
     return jsonify(result), status
 
-@customer_bp.route('/products-services', methods=['GET'])
-def get_products_services():
-    result, status = get_products_services_logic()
+@customer_bp.route('/store-products-services/<int:store_id>', methods=['GET'])
+def get_store_products_services(store_id):
+    result, status = get_store_products_services_logic(store_id)
     return jsonify(result), status
 
 @customer_bp.route('/products-services/<int:product_service_id>', methods=['GET'])
