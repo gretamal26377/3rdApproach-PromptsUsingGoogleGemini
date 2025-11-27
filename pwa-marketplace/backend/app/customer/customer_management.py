@@ -1,6 +1,8 @@
 from itertools import product
-from ..shared.database import db
-from ..shared.models import (
+# from ..shared.database import db
+from app.shared.database import db
+# from ..shared.models import (
+from app.shared.models import (
     Customers, Stores, FeaturedStores, ProductsServices, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
 )
 import logging
@@ -24,7 +26,7 @@ def create_customer_logic(data):
         return {'message': 'Email already exists'}, 400
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
-        return {'message': 'Active status not found'}, 500
+        return {'message': 'Active Status not found'}, 500
     try:
     
         password_hash = generate_password_hash(data['customer_password'])
@@ -85,7 +87,10 @@ def decode_customer_logic(data):
 def get_featured_stores_logic():
     try:
         # Get status_id for 'active' status
-        active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        if not active_status:
+            return {'message': 'Active Status not found'}, 500
+        active_status_id = active_status.status_id
         now = datetime.utcnow()
         # Query featured stores with active status and within date range
         featured = (
@@ -209,9 +214,11 @@ def get_store_product_service_logic(store_product_service_id):
 
 def get_orders_logic(current_customer):
     # Only return orders with relevant order_statuses.status_code
-    valid_statuses = ['open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
-                      'delivered', 'partial_delivered', 'canceled', 'partial_canceled', 'returned', 'partial_returned',
-                      'customer_accepted', 'refunded']
+    valid_statuses = [
+        'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+        'delivered', 'partial_delivered', 'canceled', 'partial_canceled', 'returned', 'partial_returned',
+        'customer_accepted', 'refunded'
+    ]
     status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_statuses)).all()]
     active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
@@ -220,7 +227,7 @@ def get_orders_logic(current_customer):
     orders = Orders.query.filter_by(customer_id=current_customer.customer_id).all()
     result = []
     for order in orders:
-        details = OrderDetails.query.filter_by(order_id=order.order_id).all()
+        # Use the relationship for order details
         items = [
             {
                 'store_product_service_id': d.store_product_service_id,
@@ -232,7 +239,7 @@ def get_orders_logic(current_customer):
                 'status_code': d.product_service_status.status_code if d.product_service_status else None,
                 'created_at': d.product_service_created_at
             }
-            for d in details
+            for d in order.order_details
         ]
         result.append({
             'order_id': order.order_id,
@@ -283,7 +290,9 @@ def get_order_logic(current_customer, order_id):
     return {'order': order_data}, 200
 
 def create_order_logic(current_customer, data):
+    # Define an initial list containing the literal 'items'
     required_fields = ['items']
+    # Check if all required fields (this case, just 'items') are present in data
     if not all(field in data for field in required_fields):
         return {'message': 'Missing required fields'}, 400
     if not isinstance(data['items'], list):
@@ -311,6 +320,7 @@ def create_order_logic(current_customer, data):
             price = float(sps.price)
             total_quantity += quantity
             total_price += price * quantity
+            # Add data to order_details list using append method
             order_details.append({'store_product_service_id': sps.id, 'quantity': quantity, 'price': price})
         # Set initial order status to 'open'
         open_status = OrderStatuses.query.filter_by(status_code='open').first()
@@ -333,7 +343,8 @@ def create_order_logic(current_customer, data):
                 product_service_tot_price=od['price'] * od['quantity'],
                 product_service_status_id=open_status.status_id,
                 product_service_filled_quantity=0,
-                product_service_filled_tot_price=0
+                product_service_filled_tot_price=0,
+                product_service_created_at=datetime.utcnow()
             )
             db.session.add(detail)
         db.session.commit()

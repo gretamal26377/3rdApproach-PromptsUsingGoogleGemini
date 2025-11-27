@@ -1,5 +1,6 @@
-from venv import create
-from .database import db
+# from venv import create
+# from .database import db
+from app.shared.database import db
 from sqlalchemy import Index, ForeignKeyConstraint, text
 
 class Categories(db.Model):
