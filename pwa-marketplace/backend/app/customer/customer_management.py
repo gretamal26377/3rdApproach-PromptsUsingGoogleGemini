@@ -1,10 +1,5 @@
-from itertools import product
-# from ..shared.database import db
-from app.shared.database import db
-# from ..shared.models import (
-from app.shared.models import (
-    Customers, Stores, FeaturedStores, ProductsServices, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
-)
+from ..shared.database import db
+from ..shared.models import Customers, Stores, FeaturedStores, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
 import logging
 from ..shared.auth import generate_token, decode_token
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -30,13 +25,13 @@ def create_customer_logic(data):
     try:
     
         password_hash = generate_password_hash(data['customer_password'])
-        new_customer = Customers(
-            customer_name=customer_name,
-            customer_email=customer_email,
-            customer_password_hash=password_hash,
-            customer_phone=customer_phone,
-            customer_status_id=active_status.status_id
-        )
+        # Instantiate without kwargs to avoid constructor signature mismatch, then assign attributes
+        new_customer = Customers()
+        new_customer.customer_name = customer_name
+        new_customer.customer_email = customer_email
+        new_customer.customer_password_hash = password_hash
+        new_customer.customer_phone = customer_phone
+        new_customer.customer_status_id = active_status.status_id
         db.session.add(new_customer)
         db.session.commit()
         token = generate_token({'customer_id': new_customer.customer_id, 'customer_email': new_customer.customer_email})
@@ -122,7 +117,10 @@ def get_featured_stores_logic():
 
 def get_stores_logic():
     # Only return stores with active status
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        return {'message': 'Active Status not found'}, 500
+    active_status_id = active_status.status_id
     stores = Stores.query.filter_by(store_status_id=active_status_id).all()
     stores_data = [
         {
@@ -139,7 +137,10 @@ def get_stores_logic():
     return stores_data, 200
 
 def get_store_logic(store_id):
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        return {'message': 'Active Status not found'}, 500
+    active_status_id = active_status.status_id
     store = Stores.query.filter_by(store_id=store_id, store_status_id=active_status_id).first()
     if not store:
         return {'message': 'Store not found or Inactive'}, 404
@@ -156,7 +157,10 @@ def get_store_logic(store_id):
 
 def get_store_products_services_logic(store_id):
     # Return all active products/services for a given store, using StoreProductsServices as join table
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        return {'message': 'Active Status not found'}, 500
+    active_status_id = active_status.status_id
     sps_list = StoreProductsServices.query.filter_by(store_id=store_id, status_id=active_status_id).all()
     store_products_services_data = []
     for sps in sps_list:
@@ -184,7 +188,10 @@ def get_store_products_services_logic(store_id):
     return store_products_services_data, 200
 
 def get_store_product_service_logic(store_product_service_id):
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        return {'message': 'Active Status not found'}, 500
+    active_status_id = active_status.status_id
     sps = StoreProductsServices.query.filter_by(id=store_product_service_id, status_id=active_status_id).first()
     if not sps:
         return {'message': 'Store Product/Service not found or Inactive'}, 404
@@ -214,17 +221,24 @@ def get_store_product_service_logic(store_product_service_id):
 
 def get_orders_logic(current_customer):
     # Only return orders with relevant order_statuses.status_code
-    valid_statuses = [
+    valid_status_codes = [
         'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
-        'delivered', 'partial_delivered', 'canceled', 'partial_canceled', 'returned', 'partial_returned',
+        'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
         'customer_accepted', 'refunded'
     ]
-    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_statuses)).all()]
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_status_codes)).all()]
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        return {'message': 'Active Status not found'}, 500
+    active_status_id = active_status.status_id
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
     if not customer:
         return {'message': 'Customer not found or Inactive'}, 403
-    orders = Orders.query.filter_by(customer_id=current_customer.customer_id).all()
+    orders = Orders.query.filter(
+        Orders.customer_id == current_customer.customer_id,
+        Orders.order_status_id.in_(status_ids)
+        ).all()
+
     result = []
     for order in orders:
         # Use the relationship for order details
@@ -253,20 +267,23 @@ def get_orders_logic(current_customer):
     return {'orders': result}, 200
 
 def get_order_logic(current_customer, order_id):
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        return {'message': 'Active Status not found'}, 500
+    active_status_id = active_status.status_id
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
     if not customer:
         return {'message': 'Customer not found or Inactive'}, 403
-    valid_statuses = ['open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
-                      'delivered', 'partial_delivered', 'canceled', 'partial_canceled', 'returned', 'partial_returned',
+    valid_status_codes = ['open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+                      'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
                       'customer_accepted', 'refunded']
-    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_statuses)).all()]    
+    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_status_codes)).all()]
     order = Orders.query.filter(
         Orders.customer_id == current_customer.customer_id,
-        Orders.order_status_id.in_(status_ids)
+        Orders.order_status_id.in_(status_ids), Orders.order_id == order_id
         ).first()
     if not order:
-        return {'message': 'Order not found'}, 404
+        return {'message': 'Order not found or does not belong to customer'}, 404
     order_data = {
         'order_id': order.order_id,
         'customer_id': order.customer_id,
@@ -303,7 +320,10 @@ def create_order_logic(current_customer, data):
     total_price = 0
     order_details = []
     try:
-        active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        if not active_status:
+            return {'message': 'Active Status not found'}, 500
+        active_status_id = active_status.status_id
         # Check customer is active
         customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
         if not customer:
@@ -326,26 +346,24 @@ def create_order_logic(current_customer, data):
         open_status = OrderStatuses.query.filter_by(status_code='open').first()
         if not open_status:
             return {'message': 'Order Status "Open" not found'}, 500
-        new_order = Orders(
-            order_tot_quantity=total_quantity,
-            order_tot_price=total_price,
-            customer_id=customer.customer_id,
-            order_status_id=open_status.status_id
-        )
+        new_order = Orders()
+        new_order.order_tot_quantity = total_quantity
+        new_order.order_tot_price = total_price
+        new_order.customer_id = customer.customer_id
+        new_order.order_status_id = open_status.status_id
         db.session.add(new_order)
         db.session.flush()  # Get order_id
         for od in order_details:
-            detail = OrderDetails(
-                order_id=new_order.order_id,
-                store_product_service_id=od['store_product_service_id'],
-                product_service_quantity=od['quantity'],
-                product_service_price=od['price'],
-                product_service_tot_price=od['price'] * od['quantity'],
-                product_service_status_id=open_status.status_id,
-                product_service_filled_quantity=0,
-                product_service_filled_tot_price=0,
-                product_service_created_at=datetime.utcnow()
-            )
+            detail = OrderDetails()
+            detail.order_id = new_order.order_id
+            detail.store_product_service_id = od['store_product_service_id']
+            detail.product_service_quantity = od['quantity']
+            detail.product_service_price = od['price']
+            detail.product_service_tot_price = od['price'] * od['quantity']
+            detail.product_service_status_id = open_status.status_id
+            detail.product_service_filled_quantity = 0
+            detail.product_service_filled_tot_price = 0
+            detail.product_service_created_at = datetime.utcnow()
             db.session.add(detail)
         db.session.commit()
         return {'message': 'Order created successfully', 'order_id': new_order.order_id}, 201
@@ -355,14 +373,29 @@ def create_order_logic(current_customer, data):
         return {'message': 'Failed to Create Order'}, 500
 
 def cancel_order_logic(current_customer, order_id):
+    # Check customer is active
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        return {'message': 'Active Status not found'}, 500
+    active_status_id = active_status.status_id
+    customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
+    if not customer:
+        return {'message': 'Customer not found or Inactive'}, 403
     order = Orders.query.get_or_404(order_id)
     if order.customer_id != current_customer.customer_id:
-        return {'message': 'Unauthorized'}, 403
+        return {'message': 'Order does not belong to Customer'}, 403
+    # Only allow cancellation if order status is in allowed list
+    allowed_status_codes = ['open', 'paid', 'pending', 'filled', 'partial_filled']
+    if not order.order_status or order.order_status.status_code not in allowed_status_codes:
+        return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_code if order.order_status else 'Unknown'}"}, 400
     try:
-        db.session.delete(order)
+        cancelled_status = OrderStatuses.query.filter_by(status_code='cancelled').first()
+        if not cancelled_status:
+            return {'message': 'Order Status "Cancelled" not found'}, 500
+        order.order_status_id = cancelled_status.status_id
         db.session.commit()
-        return {'message': 'Order deleted successfully'}, 200
+        return {'message': 'Order Cancelled successfully'}, 200
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error deleting order: {e}")
-        return {'message': 'Failed to delete order'}, 500
+        logging.error(f"Error Cancelling Order: {e}")
+        return {'message': 'Failed to Cancel Order'}, 500

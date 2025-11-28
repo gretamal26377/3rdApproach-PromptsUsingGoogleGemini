@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS customer_addresses (
 CREATE TABLE IF NOT EXISTS order_statuses (
     status_id INT AUTO_INCREMENT PRIMARY KEY,
     -- eg: 'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
-    --     'delivered', 'partial_delivered', 'canceled', 'partial_canceled', 'returned', 'partial_returned',
+    --     'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
     --     'customer_accepted', 'refunded']
     status_code VARCHAR(50) UNIQUE NOT NULL,
     status_description TEXT
