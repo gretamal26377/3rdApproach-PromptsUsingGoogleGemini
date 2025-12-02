@@ -43,48 +43,6 @@ services:
     restart: always
     command: ["node", "server.js"]
 
-  backend-search:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile-search
-      args:
-        SEARCH_ENGINE: *search_engine  
-    # Search has no a standard port number, so we use 5002 as for host as for its container
-    ports:
-      - "5002:5002"
-    volumes:
-      - ./backend:/pwa-marketplace/backend:/app:ro
-    depends_on:
-      - db
-      - meilisearch
-    working_dir: /pwa-marketplace/backend
-    command: ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]
-    environment:
-      <<: *database-credentials
-      SEARCH_ENGINE: *search_engine
-      if SEARCH_ENGINE == 'meili':
-        MEILISEARCH_URL: http://meilisearch:7700
-        # Use Docker secret for Meilisearch API key
-        MEILISEARCH_API_KEY_FILE: /run/secrets/meilisearch_api_key
-      else: #SEARCH_ENGINE == 'google'
-        GOOGLE_SEARCH_CX: your_google_search_cx_value_here
-        # Use Docker secret for Google Search API key
-        GOOGLE_SEARCH_API_KEY_FILE: /run/secrets/google_search_api_key
-    restart: always
-    secrets:
-      - meilisearch_api_key
-      - google_search_api_key
-
-  meilisearch:
-    image: getmeili/meilisearch:v1.7
-    ports:
-      - "7700:7700"
-    environment:
-      MEILI_NO_ANALYTICS: "true"
-    volumes:
-      - meili_data:/meili_data
-    restart: always
-
   frontend-admin:
     build:
       context: ./frontend
@@ -136,6 +94,58 @@ services:
     # Make the DB user password secret available inside the backend container
     secrets:
       - mysql_db_user_password
+    restart: always
+
+  backend-search:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile-search
+      args:
+        SEARCH_ENGINE: *search_engine  
+    # Search has no a standard port number, so we use 5002 as for host as for its container
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./backend:/pwa-marketplace/backend:/app:ro
+    depends_on:
+      - db
+      - meilisearch
+    working_dir: /pwa-marketplace/backend
+    command: ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]
+    environment:
+      <<: *database-credentials
+      SEARCH_ENGINE: *search_engine
+      if SEARCH_ENGINE == 'meili':
+        MEILISEARCH_URL: http://meilisearch:7700
+        # Use Docker secret for Meilisearch API key
+        MEILISEARCH_API_KEY_FILE: /run/secrets/meilisearch_api_key
+      else: #SEARCH_ENGINE == 'google'
+        GOOGLE_SEARCH_CX: your_google_search_cx_value_here
+        # Use Docker secret for Google Search API key
+        GOOGLE_SEARCH_API_KEY_FILE: /run/secrets/google_search_api_key
+    restart: always
+    secrets:
+      - meilisearch_api_key
+      - google_search_api_key
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.7
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meili_data:/meili_data
+    restart: always
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: temporal
+    ports:
+      - "7233:7233" # Temporal frontend gRPC
+      - "8233:8233" # Temporal Web UI
+    environment:
+      - DB=sqlite
     restart: always
 
   backend-admin:

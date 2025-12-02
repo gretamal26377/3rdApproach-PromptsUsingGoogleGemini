@@ -1,3 +1,6 @@
+from temporalio.client import Client
+import asyncio
+from workflows.order_workflow import OrderWorkflow
 from ..shared.database import db
 from ..shared.models import Customers, Stores, FeaturedStores, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
 import logging
@@ -328,6 +331,7 @@ def create_order_logic(current_customer, data):
         customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
         if not customer:
             return {'message': 'Customer not found or Inactive'}, 403
+        item_ids = []
         for item in data['items']:
             if not all(field in item for field in ['store_product_service_id', 'quantity']):
                 return {'message': 'Each item must contain store_product_service_id and quantity'}, 400
@@ -342,7 +346,8 @@ def create_order_logic(current_customer, data):
             total_price += price * quantity
             # Add data to order_details list using append method
             order_details.append({'store_product_service_id': sps.id, 'quantity': quantity, 'price': price})
-        # Set initial order status to 'open'
+            item_ids.append(sps.id)
+        # Set initial order status to 'open' in DB for reference
         open_status = OrderStatuses.query.filter_by(status_code='open').first()
         if not open_status:
             return {'message': 'Order Status "Open" not found'}, 500
@@ -366,6 +371,11 @@ def create_order_logic(current_customer, data):
             detail.product_service_created_at = datetime.utcnow()
             db.session.add(detail)
         db.session.commit()
+        # Start Temporal workflow for order
+        async def start_order_workflow():
+            client = await Client.connect("localhost:7233")
+            await client.start_workflow(OrderWorkflow.run, new_order.order_id, item_ids, id=f"order-{new_order.order_id}")
+        asyncio.run(start_order_workflow())
         return {'message': 'Order created successfully', 'order_id': new_order.order_id}, 201
     except Exception as e:
         db.session.rollback()
@@ -387,8 +397,15 @@ def cancel_order_logic(current_customer, order_id):
     # Only allow cancellation if order status is in allowed list
     allowed_status_codes = ['open', 'paid', 'pending', 'filled', 'partial_filled']
     if not order.order_status or order.order_status.status_code not in allowed_status_codes:
-        return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_code if order.order_status else 'Unknown'}"}, 400
+        return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
     try:
+        # Signal Temporal workflow to cancel order
+        async def cancel_order_workflow():
+            client = await Client.connect("localhost:7233")
+            handle = client.get_workflow_handle(f"order-{order_id}")
+            await handle.signal("cancel_order")
+        asyncio.run(cancel_order_workflow())
+        # Optionally update DB status for reference
         cancelled_status = OrderStatuses.query.filter_by(status_code='cancelled').first()
         if not cancelled_status:
             return {'message': 'Order Status "Cancelled" not found'}, 500

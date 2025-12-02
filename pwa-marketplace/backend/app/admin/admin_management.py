@@ -1,6 +1,13 @@
 from ..shared.database import db
-from ..shared.models import User
+from ..shared.models import (
+    Users, Stores, ProductsServices, StoreProductsServices, 
+    EntityStatuses, Orders, OrderStatuses # Added Orders, OrderStatuses for workflow integration
+)
 import logging
+from temporalio.client import Client
+import asyncio
+from workflows.order_workflow import OrderWorkflow
+from workflows.item_workflow import ItemWorkflow
 # bleach is used to sanitize inputs to prevent XSS attacks
 import bleach
 
@@ -169,3 +176,78 @@ def delete_product_logic(current_customer, product_service_id):
         logging.error(f"Error Inactivating Product/Service: {e}")
         return {'message': 'Failed to Inactivate Product/Service'}, 500
 
+def mark_order_shipped_logic(order_id):
+    """
+    Admin function to signal the OrderWorkflow that the order has been shipped
+    """
+    try:
+        order = Orders.query.get(order_id)
+        if not order:
+            return {'message': 'Order not found'}, 404
+
+        # Admin check: Ensure order is in a state ready to be shipped
+        allowed_status_codes = ['paid', 'filled', 'partial_filled']
+        if not order.order_status or order.order_status.status_code not in allowed_status_codes:
+            return {'message': f"Order status is {order.order_status.status_code}. Cannot mark as shipped."}, 400
+
+        # 1. Signal Temporal workflow
+        async def ship_order_workflow():
+            client = await Client.connect("localhost:7233")
+            handle = client.get_workflow_handle(f"order-{order_id}")
+            # Assume a signal named 'ship_order' is defined in OrderWorkflow
+            await handle.signal("ship_order")
+
+        asyncio.run(ship_order_workflow())
+
+        # 2. Update DB status for administrative confirmation/reference
+        shipped_status = OrderStatuses.query.filter_by(status_code='shipped').first()
+        if not shipped_status:
+            return {'message': 'Order Status "shipped" not found'}, 500
+
+        order.order_status_id = shipped_status.status_id
+        db.session.commit()
+
+        return {'message': f'Order {order_id} signalled for shipping and status updated to shipped.'}, 200
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error marking Order {order_id} as shipped: {e}")
+        return {'message': 'Failed to signal order shipment'}, 500
+
+def refund_order_logic(order_id):
+    """
+    Admin function to signal the OrderWorkflow to initiate a refund process.
+    """
+    try:
+        order = Orders.query.get(order_id)
+        if not order:
+            return {'message': 'Order not found'}, 404
+
+        # Admin check: Ensure order is in a state eligible for refund
+        allowed_status_codes = ['paid', 'delivered', 'partial_delivered', 'returned', 'partial_returned']
+        if not order.order_status or order.order_status.status_code not in allowed_status_codes:
+            return {'message': f"Order status is {order.order_status.status_code}. Cannot initiate refund."}, 400
+
+        # 1. Signal Temporal workflow
+        async def refund_order_workflow():
+            client = await Client.connect("localhost:7233")
+            handle = client.get_workflow_handle(f"order-{order_id}")
+            # Assume a signal named 'refund_order' is defined in OrderWorkflow
+            await handle.signal("refund_order")
+
+        asyncio.run(refund_order_workflow())
+
+        # 2. Update DB status for administrative confirmation/reference
+        refunded_status = OrderStatuses.query.filter_by(status_code='refunded').first()
+        if not refunded_status:
+            return {'message': 'Order Status "refunded" not found'}, 500
+
+        order.order_status_id = refunded_status.status_id
+        db.session.commit()
+
+        return {'message': f'Order {order_id} signalled for refund and status updated to refunded.'}, 200
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error refunding Order {order_id}: {e}")
+        return {'message': 'Failed to signal order refund'}, 500

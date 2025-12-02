@@ -28,6 +28,7 @@ class EntityStatuses(db.Model):
     status_id = db.Column(db.Integer, primary_key=True)
     # e.g., 'active', 'inactive', 'banned'
     status_code = db.Column(db.String(50), nullable=False)
+    status_display = db.Column(db.String(100), nullable=False)
     status_description = db.Column(db.Text)
 
     categories = db.relationship('Categories', back_populates='category_status')
@@ -258,6 +259,7 @@ class OrderStatuses(db.Model):
     #     'delivered', 'partial_delivered', 'canceled', 'partial_canceled', 'returned', 'partial_returned',
     #     'customer_accepted', 'refunded']
     status_code = db.Column(db.String(50), nullable=False)
+    status_display = db.Column(db.String(100), nullable=False)
     status_description = db.Column(db.Text)
 
     order_details = db.relationship('OrderDetails', back_populates='product_service_status')

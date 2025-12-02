@@ -3,7 +3,8 @@ from ..shared.auth import token_required, admin_required
 from .admin_management import (
     get_users_logic, get_user_logic, update_user_logic, delete_user_logic,
     create_store_logic, update_store_logic, delete_store_logic,
-    create_product_logic, update_product_logic, delete_product_logic
+    create_product_logic, update_product_logic, delete_product_logic,
+    mark_order_shipped_logic, refund_order_logic
 )
 
 
@@ -78,3 +79,18 @@ def delete_product(current_user, product_id):
     result, status = delete_product_logic(current_user, product_id)
     return jsonify(result), status
 
+@admin_bp.route('/orders/<int:order_id>/ship', methods=['PATCH'])
+@token_required
+@admin_required
+def mark_order_shipped(current_user, order_id):
+    """Signals the OrderWorkflow to handle shipping"""
+    result, status = mark_order_shipped_logic(order_id)
+    return jsonify(result), status
+
+@admin_bp.route('/orders/<int:order_id>/refund', methods=['PATCH'])
+@token_required
+@admin_required
+def refund_order(current_user, order_id):
+    """Signals the OrderWorkflow to initiate a refund"""
+    result, status = refund_order_logic(order_id)
+    return jsonify(result), status
