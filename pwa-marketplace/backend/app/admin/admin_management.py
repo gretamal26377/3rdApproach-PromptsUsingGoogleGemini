@@ -188,7 +188,7 @@ def mark_order_shipped_logic(order_id):
         # Admin check: Ensure order is in a state ready to be shipped
         allowed_status_codes = ['paid', 'filled', 'partial_filled']
         if not order.order_status or order.order_status.status_code not in allowed_status_codes:
-            return {'message': f"Order status is {order.order_status.status_code}. Cannot mark as shipped."}, 400
+            return {'message': f"Order status is {order.order_status.status_code}. Cannot mark as shipped"}, 400
 
         # 1. Signal Temporal workflow
         async def ship_order_workflow():
@@ -207,7 +207,7 @@ def mark_order_shipped_logic(order_id):
         order.order_status_id = shipped_status.status_id
         db.session.commit()
 
-        return {'message': f'Order {order_id} signalled for shipping and status updated to shipped.'}, 200
+        return {'message': f'Order {order_id} signalled for shipping and status updated to shipped'}, 200
 
     except Exception as e:
         db.session.rollback()
@@ -216,7 +216,7 @@ def mark_order_shipped_logic(order_id):
 
 def refund_order_logic(order_id):
     """
-    Admin function to signal the OrderWorkflow to initiate a refund process.
+    Admin function to signal the OrderWorkflow to initiate a refund process
     """
     try:
         order = Orders.query.get(order_id)
@@ -226,7 +226,7 @@ def refund_order_logic(order_id):
         # Admin check: Ensure order is in a state eligible for refund
         allowed_status_codes = ['paid', 'delivered', 'partial_delivered', 'returned', 'partial_returned']
         if not order.order_status or order.order_status.status_code not in allowed_status_codes:
-            return {'message': f"Order status is {order.order_status.status_code}. Cannot initiate refund."}, 400
+            return {'message': f"Order status is {order.order_status.status_code}. Cannot initiate refund"}, 400
 
         # 1. Signal Temporal workflow
         async def refund_order_workflow():
@@ -245,7 +245,7 @@ def refund_order_logic(order_id):
         order.order_status_id = refunded_status.status_id
         db.session.commit()
 
-        return {'message': f'Order {order_id} signalled for refund and status updated to refunded.'}, 200
+        return {'message': f'Order {order_id} signalled for refund and status updated to refunded'}, 200
 
     except Exception as e:
         db.session.rollback()
