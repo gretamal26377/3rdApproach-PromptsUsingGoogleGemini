@@ -1,4 +1,5 @@
 import asyncio
+import os
 from temporalio.worker import Worker
 from temporalio.client import Client
 
@@ -9,7 +10,7 @@ from .order_activities import update_order_status_in_db  # Example Activity
 # from .item_activities import ... # Add Item Activities here later
 
 TASK_QUEUE_NAME = "default-task-queue"
-TEMPORAL_HOST = "temporal-server:7233" # Use the service name from docker-compose
+TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST') # Use the service name from docker-compose env var
 
 async def run_worker():
     # Connect to the Temporal Server

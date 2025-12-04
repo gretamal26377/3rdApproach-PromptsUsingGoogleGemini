@@ -11,9 +11,11 @@ from datetime import datetime
 
 def create_customer_logic(data):
     if not data:
+        logging.warning("No data provided during create_customer_logic")
         return {'message': 'No data provided'}, 400
     required_fields = ['customer_name', 'customer_password', 'customer_email', 'customer_phone']
     if not all(field in data for field in required_fields):
+        logging.warning("Missing required fields during create_customer_logic")
         return {'message': 'Missing required fields'}, 400
     # Sanitize name and email
     customer_name = bleach.clean(data['customer_name'], strip=True)
@@ -24,6 +26,7 @@ def create_customer_logic(data):
         return {'message': 'Email already exists'}, 400
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
+        logging.error("Active Status not found during create_customer_logic")
         return {'message': 'Active Status not found'}, 500
     try:
     
@@ -46,9 +49,11 @@ def create_customer_logic(data):
 
 def login_customer_logic(data):
     if not data:
+        logging.warning("No data provided during login_customer_logic")
         return {'message': 'No data provided'}, 400
     required_fields = ['customer_email', 'customer_password']
     if not all(field in data for field in required_fields):
+        logging.warning("Missing required fields during login_customer_logic")
         return {'message': 'Missing required fields'}, 400
     customer = Customers.query.filter_by(customer_email=data['customer_email']).first()
     if not customer:
@@ -87,6 +92,7 @@ def get_featured_stores_logic():
         # Get status_id for 'active' status
         active_status = EntityStatuses.query.filter_by(status_code='active').first()
         if not active_status:
+            logging.error("Active Status not found during get_featured_stores_logic")
             return {'message': 'Active Status not found'}, 500
         active_status_id = active_status.status_id
         now = datetime.utcnow()
@@ -114,7 +120,6 @@ def get_featured_stores_logic():
             })
         return result, 200
     except Exception as e:
-        import logging
         logging.error(f"Error fetching Featured Stores: {e}")
         return {'message': 'Failed to fetch Featured Stores'}, 500
 
@@ -122,6 +127,7 @@ def get_stores_logic():
     # Only return stores with active status
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
+        logging.error("Active Status not found during get_stores_logic")
         return {'message': 'Active Status not found'}, 500
     active_status_id = active_status.status_id
     stores = Stores.query.filter_by(store_status_id=active_status_id).all()
@@ -142,6 +148,7 @@ def get_stores_logic():
 def get_store_logic(store_id):
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
+        logging.error("Active Status not found during get_store_logic")
         return {'message': 'Active Status not found'}, 500
     active_status_id = active_status.status_id
     store = Stores.query.filter_by(store_id=store_id, store_status_id=active_status_id).first()
@@ -162,6 +169,7 @@ def get_store_products_services_logic(store_id):
     # Return all active products/services for a given store, using StoreProductsServices as join table
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
+        logging.error("Active Status not found during get_store_products_services_logic")
         return {'message': 'Active Status not found'}, 500
     active_status_id = active_status.status_id
     sps_list = StoreProductsServices.query.filter_by(store_id=store_id, status_id=active_status_id).all()
@@ -193,6 +201,7 @@ def get_store_products_services_logic(store_id):
 def get_store_product_service_logic(store_product_service_id):
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
+        logging.error("Active Status not found during get_store_product_service_logic")
         return {'message': 'Active Status not found'}, 500
     active_status_id = active_status.status_id
     sps = StoreProductsServices.query.filter_by(id=store_product_service_id, status_id=active_status_id).first()
@@ -232,6 +241,7 @@ def get_orders_logic(current_customer):
     status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_status_codes)).all()]
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
+        logging.error("Active Status not found during get_orders_logic")
         return {'message': 'Active Status not found'}, 500
     active_status_id = active_status.status_id
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
@@ -272,6 +282,7 @@ def get_orders_logic(current_customer):
 def get_order_logic(current_customer, order_id):
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
+        logging.error("Active Status not found during get_order_logic")
         return {'message': 'Active Status not found'}, 500
     active_status_id = active_status.status_id
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
@@ -286,6 +297,7 @@ def get_order_logic(current_customer, order_id):
         Orders.order_status_id.in_(status_ids), Orders.order_id == order_id
         ).first()
     if not order:
+        logging.warning(f"Order {order_id} not found or does not belong to customer")
         return {'message': 'Order not found or does not belong to customer'}, 404
     order_data = {
         'order_id': order.order_id,
@@ -314,10 +326,13 @@ def create_order_logic(current_customer, data):
     required_fields = ['items']
     # Check if all required fields (this case, just 'items') are present in data
     if not all(field in data for field in required_fields):
+        logging.warning("Missing required fields during create_order_logic")
         return {'message': 'Missing required fields'}, 400
     if not isinstance(data['items'], list):
+        logging.warning("Items must be a list during create_order_logic")
         return {'message': 'Items must be a list'}, 400
     if not data['items']:
+        logging.warning("Items list cannot be empty during create_order_logic")
         return {'message': 'Items list cannot be empty'}, 400
     total_quantity = 0
     total_price = 0
@@ -325,6 +340,7 @@ def create_order_logic(current_customer, data):
     try:
         active_status = EntityStatuses.query.filter_by(status_code='active').first()
         if not active_status:
+            logging.error("Active Status not found during create_order_logic")
             return {'message': 'Active Status not found'}, 500
         active_status_id = active_status.status_id
         # Check customer is active
@@ -334,12 +350,14 @@ def create_order_logic(current_customer, data):
         item_ids = []
         for item in data['items']:
             if not all(field in item for field in ['store_product_service_id', 'quantity']):
+                logging.warning("Missing required fields during create_order_logic")
                 return {'message': 'Each item must contain store_product_service_id and quantity'}, 400
             sps = StoreProductsServices.query.filter_by(id=item['store_product_service_id'], status_id=active_status_id).first()
             if not sps:
                 return {'message': f"Store Product/Service with id {item['store_product_service_id']} not found or Inactive"}, 400
             quantity = item['quantity']
             if quantity <= 0:
+                logging.warning(f"Quantity for Store Product/Service {item['store_product_service_id']} must be positive")
                 return {'message': f"Quantity for Store Product/Service {item['store_product_service_id']} must be positive"}, 400
             price = float(sps.price)
             total_quantity += quantity
@@ -350,6 +368,7 @@ def create_order_logic(current_customer, data):
         # Set initial order status to 'open' in DB for reference
         open_status = OrderStatuses.query.filter_by(status_code='open').first()
         if not open_status:
+            logging.error("Order Status 'Open' not found during create_order_logic")
             return {'message': 'Order Status "Open" not found'}, 500
         new_order = Orders()
         new_order.order_tot_quantity = total_quantity
@@ -386,6 +405,7 @@ def cancel_order_logic(current_customer, order_id):
     # Check customer is active
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
+        logging.error("Active Status not found during cancel_order_logic")
         return {'message': 'Active Status not found'}, 500
     active_status_id = active_status.status_id
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
@@ -393,6 +413,7 @@ def cancel_order_logic(current_customer, order_id):
         return {'message': 'Customer not found or Inactive'}, 403
     order = Orders.query.get_or_404(order_id)
     if order.customer_id != current_customer.customer_id:
+        logging.warning("Order does not belong to Customer during cancel_order_logic")
         return {'message': 'Order does not belong to Customer'}, 403
     # Only allow cancellation if order status is in allowed list
     allowed_status_codes = ['open', 'paid', 'pending', 'filled', 'partial_filled']

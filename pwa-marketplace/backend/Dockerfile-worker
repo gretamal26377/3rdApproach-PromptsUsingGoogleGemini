@@ -1,0 +1,15 @@
+# Stage 1: Build from the existing 'base' stage defined in Dockerfile
+# This includes Python 3.9, requirements.txt installed, and shared files/scripts copied
+FROM backend:base AS temporal-worker-base 
+
+# Note: You may need to replace 'backend:base' with 'python:3.9-slim-buster AS base' 
+# if your docker-compose doesn't recognize the named stage, 
+# but using the named stage is the best practice
+
+# Copy the specific code needed by the Temporal Worker
+# The 'workflows' directory contains worker_runner.py, workflows, and activities
+COPY ./workflows ./workflows
+
+# Set the default CMD, needed if this file is run/executed in isolation with "docker build..." & "docker run..."
+# This will be overridden by if docker-compose.yml command is defined
+CMD ["python", "workflows/worker_runner.py"]

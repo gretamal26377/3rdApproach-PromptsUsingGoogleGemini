@@ -160,15 +160,16 @@ services:
   # Temporal Worker Service - Runs the Python Workflows and Activities
   temporal-worker:
     # Assuming you have a base Python image or building from a dedicated Dockerfile
-    # If using a dedicated Dockerfile for the worker, update the build context.
     # For simplicity, let's use the backend container's environment (if it installs Temporal SDK)
     build:
       context: ./backend 
-      dockerfile: Dockerfile # Use your main backend Dockerfile
+      dockerfile: Dockerfile-worker
     image: backend-temporal-worker # Give it a descriptive name
     environment:
       # Use the same environment variables needed to access the DB (if Activities need it)
       <<: *database-credentials
+      # Temporal Host is temporal-server:7233
+      TEMPORAL_HOST: temporal-server:7233
     secrets:
       - mysql_db_user_password
     command: ["python", "workflows/worker_runner.py"] # Command to execute the startup file

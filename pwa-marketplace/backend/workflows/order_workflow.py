@@ -1,6 +1,8 @@
 # Order Workflow definition for Temporal
 from temporalio import workflow
 from typing import List
+# Relative import to pull in the activities file in the same directory
+from . import order_activities
 
 ORDER_STATES = [
     "open", "pending", "paid", "filled", "partial_filled", "shipped", "partial_shipped",
@@ -10,6 +12,9 @@ ORDER_STATES = [
 
 @workflow.defn
 class OrderWorkflow:
+    def __init__(self):
+        # This registers the activities with the workflow
+        self.activities = workflow.get_external_activities(order_activities)
     @workflow.run
     async def run(self, order_id: int, item_ids: List[int]):
         # TODO: Implement order workflow logic, spawn item workflows, aggregate item states
