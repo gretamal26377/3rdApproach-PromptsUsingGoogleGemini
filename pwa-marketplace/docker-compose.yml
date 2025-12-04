@@ -138,14 +138,46 @@ services:
       - meili_data:/meili_data
     restart: always
 
-  temporal:
+  temporal-server:
     image: temporalio/auto-setup:latest
-    container_name: temporal
+    # container_name: temporal-server
     ports:
       - "7233:7233" # Temporal frontend gRPC
       - "8233:8233" # Temporal Web UI
     environment:
-      - DB=sqlite
+      # 1. Use the anchor to get all standard credentials (MYSQL_USER, MYSQL_DATABASE, etc.)
+      <<: *database-credentials
+      # 2. Add the Temporal-specific configuration necessary for durability:
+      DB: mysql           # Tells Temporal to use a MySQL/MariaDB database
+      DB_HOST: db         # Tells Temporal the hostname of the database service
+    depends_on:
+      - db
+    # The secrets must be explicitly listed to mount the files, even if the env vars come from the anchor
+    secrets:
+      - mysql_db_user_password
+    restart: always
+
+  # Temporal Worker Service - Runs the Python Workflows and Activities
+  temporal-worker:
+    # Assuming you have a base Python image or building from a dedicated Dockerfile
+    # If using a dedicated Dockerfile for the worker, update the build context.
+    # For simplicity, let's use the backend container's environment (if it installs Temporal SDK)
+    build:
+      context: ./backend 
+      dockerfile: Dockerfile # Use your main backend Dockerfile
+    image: backend-temporal-worker # Give it a descriptive name
+    environment:
+      # Use the same environment variables needed to access the DB (if Activities need it)
+      <<: *database-credentials
+    secrets:
+      - mysql_db_user_password
+    command: ["python", "workflows/worker_runner.py"] # Command to execute the startup file
+    depends_on:
+      # Must start after the Temporal Server is ready
+      - temporal-server
+    # Ensure this worker has access to the Temporal Server network
+    networks:
+      - default # Or your defined backend network
     restart: always
 
   backend-admin:
