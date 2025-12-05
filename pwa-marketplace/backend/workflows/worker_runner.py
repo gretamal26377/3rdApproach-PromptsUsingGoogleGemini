@@ -14,8 +14,10 @@ TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST') # Use the service name from dock
 
 async def run_worker():
     # Connect to the Temporal Server
-    client = await Client.connect(TEMPORAL_HOST)
-    
+    if TEMPORAL_HOST:
+        client = await Client.connect(TEMPORAL_HOST)
+    else:
+        client = await Client.connect("temporal-server:7233")
     # Create the Worker and define what code it will run
     worker = Worker(
         client,

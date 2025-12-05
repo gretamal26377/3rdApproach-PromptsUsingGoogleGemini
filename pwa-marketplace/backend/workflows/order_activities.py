@@ -13,6 +13,8 @@ class UpdateOrderStatusResult(BaseModel):
     success: bool = True
 
 @activity.defn
+# This function definition uses type hints (a standard feature in modern Python) to communicate expected input and output types.
+# UpdateOrderStatusResult is a Pydantic model defined above to structure the output result
 def update_order_status_in_db(order_id: int, new_status_code: str) -> UpdateOrderStatusResult:
     """
     Activity that updates an order's status in the DB using full Temporal best practices:

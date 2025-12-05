@@ -38,8 +38,8 @@ class OrderWorkflow:
         result = await workflow.execute_activity(
             self.activities.update_order_status_in_db,
             self.order_id,
-            new_status,
-            schedule_to_close_timeout=timedelta(seconds=30),
+            'cancelled',
+            schedule_to_close_timeout=timedelta(seconds=10),
         )
         workflow.logger.info(f"Updated order: {result.order_id} → {result.new_status}")
         # 3. Add compensation/inventory logic here...
@@ -50,6 +50,6 @@ class OrderWorkflow:
             self.activities.update_order_status_in_db,
             self.order_id,
             'shipped',
-            start_to_close_timeout=timedelta(seconds=10)
+            schedule_to_close_timeout=timedelta(seconds=10),
     )
 
