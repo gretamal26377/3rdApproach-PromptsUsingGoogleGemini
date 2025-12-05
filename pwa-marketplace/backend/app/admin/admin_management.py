@@ -194,25 +194,14 @@ def mark_order_shipped_logic(order_id):
         async def ship_order_workflow():
             client = await Client.connect("localhost:7233")
             handle = client.get_workflow_handle(f"order-{order_id}")
-            # Assume a signal named 'ship_order' is defined in OrderWorkflow
+            # Ensure your signal name matches the one in order_workflow.py
             await handle.signal("ship_order")
-
         asyncio.run(ship_order_workflow())
-
-        # 2. Update DB status for administrative confirmation/reference
-        shipped_status = OrderStatuses.query.filter_by(status_code='shipped').first()
-        if not shipped_status:
-            return {'message': 'Order Status "shipped" not found'}, 500
-
-        order.order_status_id = shipped_status.status_id
-        db.session.commit()
-
-        return {'message': f'Order {order_id} signalled for shipping and status updated to shipped'}, 200
-
+        # --- The DB update is handled by the Activity in order_activities.py ---
+        return {'message': f'Order {order_id} shipment initiated. Status update pending workflow execution.'}, 202
     except Exception as e:
-        db.session.rollback()
-        logging.error(f"Error marking Order {order_id} as shipped: {e}")
-        return {'message': 'Failed to signal order shipment'}, 500
+        logging.error(f"Error signalling order shipment: {e}")
+        return {'message': 'Failed to Signal Order Shipment'}, 500
 
 def refund_order_logic(order_id):
     """

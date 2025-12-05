@@ -9,7 +9,7 @@ from .item_workflow import ItemWorkflow
 from .order_activities import update_order_status_in_db  # Example Activity
 # from .item_activities import ... # Add Item Activities here later
 
-TASK_QUEUE_NAME = "default-task-queue"
+TASK_QUEUE_NAME = "order-task-queue"
 TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST') # Use the service name from docker-compose env var
 
 async def run_worker():

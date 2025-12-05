@@ -424,16 +424,11 @@ def cancel_order_logic(current_customer, order_id):
         async def cancel_order_workflow():
             client = await Client.connect("localhost:7233")
             handle = client.get_workflow_handle(f"order-{order_id}")
+            # Ensure your signal name matches the one in order_workflow.py
             await handle.signal("cancel_order")
         asyncio.run(cancel_order_workflow())
-        # Optionally update DB status for reference
-        cancelled_status = OrderStatuses.query.filter_by(status_code='cancelled').first()
-        if not cancelled_status:
-            return {'message': 'Order Status "Cancelled" not found'}, 500
-        order.order_status_id = cancelled_status.status_id
-        db.session.commit()
-        return {'message': 'Order Cancelled successfully'}, 200
+        # --- The DB update is handled by the Activity in order_activities.py ---
+        return {'message': 'Order Cancellation initiated successfully. Status Update pending workflow execution.'}, 202 # Use 202 Accepted
     except Exception as e:
-        db.session.rollback()
-        logging.error(f"Error Cancelling Order: {e}")
-        return {'message': 'Failed to Cancel Order'}, 500
+        logging.error(f"Error signalling order cancellation: {e}")
+        return {'message': 'Failed to Signal Order Cancellation'}, 500

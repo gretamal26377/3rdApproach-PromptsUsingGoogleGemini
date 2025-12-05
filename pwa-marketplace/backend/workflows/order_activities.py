@@ -1,15 +1,15 @@
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 from pydantic import BaseModel
-from ...app.shared.database import db
-from ...app.shared.models import Orders, OrderStatuses
-from datetime import datetime
+from ..app.shared.database import db
+from ..app.shared.models import Orders, OrderStatuses
+# from datetime import datetime
 import logging
 
 class UpdateOrderStatusResult(BaseModel):
     order_id: int
     new_status: str
-    updated_at: datetime
+    # updated_at: datetime
     success: bool = True
 
 @activity.defn
@@ -34,7 +34,7 @@ def update_order_status_in_db(order_id: int, new_status_code: str) -> UpdateOrde
             )
 
         # 2. Load Status
-        new_status = OrderStatus.query.filter_by(status_code=new_status_code).first()
+        new_status = OrderStatuses.query.filter_by(status_code=new_status_code).first()
         if not new_status:
             logging.error(f"Invalid status code: {new_status_code}")
             # Non-retryable business failure
