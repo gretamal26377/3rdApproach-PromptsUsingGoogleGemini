@@ -1,6 +1,6 @@
 from temporalio.client import Client
 import asyncio
-from workflows.order_workflow import OrderWorkflow
+from ...workflows.order_workflow import OrderWorkflow
 from ..shared.database import db
 from ..shared.models import Customers, Stores, FeaturedStores, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
 import logging
@@ -393,7 +393,8 @@ def create_order_logic(current_customer, data):
         # Start Temporal workflow for order
         async def start_order_workflow():
             client = await Client.connect("localhost:7233")
-            await client.start_workflow(OrderWorkflow.run, new_order.order_id, item_ids, id=f"order-{new_order.order_id}")
+            # await client.start_workflow(OrderWorkflow.run, new_order.order_id, item_ids, id=f"order-{new_order.order_id}")
+            await client.start_workflow(OrderWorkflow.run, new_order.order_id, item_ids, total_price)
         asyncio.run(start_order_workflow())
         return {'message': 'Order created successfully', 'order_id': new_order.order_id}, 201
     except Exception as e:

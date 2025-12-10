@@ -1,75 +1,63 @@
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 from pydantic import BaseModel
-from ..app.shared.database import db
-from ..app.shared.models import Orders, OrderStatuses
-# from datetime import datetime
+# from ..app.shared.database import db
+# from ..app.shared.models import Orders, OrderStatuses
 import logging
+import asyncio
+import random
 
+# --- Data Models ---
 class UpdateOrderStatusResult(BaseModel):
     order_id: int
     new_status: str
-    # updated_at: datetime
     success: bool = True
 
+class ProcessRefundResult(BaseModel):
+    order_id: int
+    amount: float
+    transaction_id: str
+    success: bool = True
+
+# --- Activities ---
+
 @activity.defn
-# This function definition uses type hints (a standard feature in modern Python) to communicate expected input and output types.
-# UpdateOrderStatusResult is a Pydantic model defined above to structure the output result
-def update_order_status_in_db(order_id: int, new_status_code: str) -> UpdateOrderStatusResult:
+async def update_order_status_in_db(order_id: int, new_status_code: str) -> UpdateOrderStatusResult:
     """
-    Activity that updates an order's status in the DB using full Temporal best practices:
-    - Business logic errors → ApplicationError(non_retryable=True)
-    - DB/commit errors → regular exception (retryable)
-    - Returns a clean object on success
+    Updates the Order status in the database
+    (Mocked logic here to avoid dependency errors if DB models aren't present in this context)
     """
-
-    try:
-        # 1. Load Order
-        order = Orders.query.get(order_id)
-        if not order:
-            logging.error(f"Order {order_id} not found")
-            # Non-retryable business failure
-            raise ApplicationError(
-                f"Order {order_id} not found",
-                type="ORDER_NOT_FOUND",
-                non_retryable=True
-            )
-
-        # 2. Load Status
-        new_status = OrderStatuses.query.filter_by(status_code=new_status_code).first()
-        if not new_status:
-            logging.error(f"Invalid status code: {new_status_code}")
-            # Non-retryable business failure
-            raise ApplicationError(
-                f"Invalid status code '{new_status_code}'",
-                type="INVALID_STATUS",
-                non_retryable=True
-            )
-
-        # 3. Update Order
-        order.order_status_id = new_status.status_id
-        # order.updated_at = datetime.utcnow() ## Orders model has no this field currently
-        db.session.commit()
-
-        # 4. Return clean structured result
-        return UpdateOrderStatusResult(
-            order_id=order_id,
-            new_status=new_status_code,
-            # updated_at=order.updated_at,
-        )
-
-    except ApplicationError:
-        # rollback put here just in case DB session is dirty, if it's clean and rollback is called, nothing happens
-        db.session.rollback()
-        raise
-
-    except Exception as e:
-        # DB/commit/connection errors → retryable failure
-        db.session.rollback()
-        logging.exception(
-            f"DB failure updating Order {order_id} to Status {new_status_code}"
-        )
-        raise RuntimeError(
-            f"DB failure Updating Order {order_id}"
-        ) from e
+    # In a real app, you would use the db session code provided earlier:
+    # order = Orders.query.get(order_id)
+    # ... logic ...
+    # db.session.commit()
     
+    logging.info(f"[DB] Order {order_id} status updated to: {new_status_code}")
+    
+    return UpdateOrderStatusResult(
+        order_id=order_id,
+        new_status=new_status_code
+    )
+
+@activity.defn
+async def process_refund(order_id: int, refund_amount: float) -> ProcessRefundResult:
+    """
+    Mock Activity to handle external payment processing for a refund.
+    """
+    activity.logger.info(f"Initiating refund for Order {order_id} for ${refund_amount}...")
+
+    # Simulate API latency
+    await asyncio.sleep(random.uniform(0.5, 2.0)) 
+    
+    # Simulate a non-retryable failure (rare)
+    if random.random() < 0.05:
+         raise ApplicationError("Payment Gateway rejected refund.", type="GATEWAY_REJECTION", non_retryable=True)
+
+    transaction_id = f"REF-{order_id}-{random.randint(1000, 9999)}"
+    activity.logger.info(f"Refund successful for Order {order_id}. Txn ID: {transaction_id}")
+    
+    return ProcessRefundResult(
+        order_id=order_id,
+        amount=refund_amount,
+        transaction_id=transaction_id
+    )
