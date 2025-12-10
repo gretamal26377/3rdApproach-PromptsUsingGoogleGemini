@@ -236,7 +236,7 @@ def get_orders_logic(current_customer):
     valid_status_codes = [
         'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
         'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
-        'customer_accepted', 'refunded'
+        'refunded', 'partial_refunded', 'customer_accepted'
     ]
     status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_status_codes)).all()]
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
@@ -288,9 +288,11 @@ def get_order_logic(current_customer, order_id):
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
     if not customer:
         return {'message': 'Customer not found or Inactive'}, 403
-    valid_status_codes = ['open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
-                      'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
-                      'customer_accepted', 'refunded']
+    valid_status_codes = [
+        'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+        'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
+        'refunded', 'partial_refunded', 'customer_accepted'
+    ]
     status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_status_codes)).all()]
     order = Orders.query.filter(
         Orders.customer_id == current_customer.customer_id,

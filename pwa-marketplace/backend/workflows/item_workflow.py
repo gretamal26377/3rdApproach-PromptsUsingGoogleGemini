@@ -2,12 +2,11 @@
 from temporalio import workflow
 from datetime import timedelta
 
-ITEM_STATES = [
-    "open", "pending", "paid", "filled", "partial_filled", "shipped", "partial_shipped",
-    "delivered", "partial_delivered", "cancelled", "partial_cancelled", "returned", "partial_returned",
-    "customer_accepted", "refunded"
+ITEM_STATUS_CODES = [
+        'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+        'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
+        'refunded', 'partial_refunded', 'customer_accepted'
 ]
-
 @workflow.defn
 class ItemWorkflow:
     def __init__(self):
@@ -17,12 +16,12 @@ class ItemWorkflow:
     @workflow.run
     async def run(self, item_id: int):
         self.item_id = item_id
-        workflow.logger.info(f"Item Workflow {item_id} started.")
+        workflow.logger.info(f"Item Workflow {item_id} started")
         
         # MOCK: Simulate item processing lifecycle for demonstration
         # In reality, this would wait for signals like "picked", "shipped", etc.
         
-        # Wait until the item reaches a final state
+        # Wait until the item reaches a final status
         await workflow.wait_condition(lambda: self.current_status in ["delivered", "cancelled", "returned", "refunded"])
         
         workflow.logger.info(f"Item Workflow {item_id} finished with status: {self.current_status}")
@@ -32,7 +31,7 @@ class ItemWorkflow:
     def get_status(self) -> str:
         return self.current_status
 
-    # --- SIGNALS (Parent calls these to change state) ---
+    # --- SIGNALS (Parent calls these to change status) ---
     @workflow.signal
     async def cancel_item(self):
         # Add logic here: e.g., if already shipped, cannot cancel easily
