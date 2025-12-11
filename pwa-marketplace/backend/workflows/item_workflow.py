@@ -35,8 +35,8 @@ class ItemWorkflow:
         await workflow.sleep(5)
         await self.set_status("shipped")
 
-        # Wait until the item reaches a final state
-        await workflow.wait_condition(lambda: self.current_status in ["delivered", "cancelled", "returned", "refunded"])
+        # Wait until the item reaches the final state
+        await workflow.wait_condition(lambda: self.current_status == "customer_accepted")
         
         workflow.logger.info(f"Item Workflow {item_id} finished with status: {self.current_status}")
 
