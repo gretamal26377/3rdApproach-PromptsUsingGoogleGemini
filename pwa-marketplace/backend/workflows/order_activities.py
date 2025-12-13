@@ -6,11 +6,13 @@ from pydantic import BaseModel
 import logging
 import asyncio
 import random
+from datetime import datetime
+
 
 # --- Data Models ---
 class UpdateOrderStatusResult(BaseModel):
     order_id: int
-    new_status: str
+    new_status_code: str
     success: bool = True
 
 class ProcessRefundResult(BaseModel):
@@ -25,6 +27,7 @@ class ProcessRefundResult(BaseModel):
 async def update_order_status_in_db(order_id: int, new_status_code: str) -> UpdateOrderStatusResult:
     """
     Updates the Order status in the database
+    This activity is triggered by the Parent Workflow upon receiving a status signal
     (Mocked logic here to avoid dependency errors if DB models aren't present in this context)
     """
     # In a real app, you would use the db session code provided earlier:
@@ -32,17 +35,24 @@ async def update_order_status_in_db(order_id: int, new_status_code: str) -> Upda
     # ... logic ...
     # db.session.commit()
     
-    logging.info(f"[DB] Order {order_id} status updated to: {new_status_code}")
+    logging.info(f"DB Activity: Updating Order {order_id} status to {new_status_code}")
+
+    # Mocking successful DB update
+    if order_id <= 0:
+        raise ApplicationError("Invalid Order ID provided", type="INVALID_INPUT", non_retryable=True)
+        
+    activity.logger.info(f"DB Activity: Order {order_id} Status updated successfully in the Database")
+
     
     return UpdateOrderStatusResult(
         order_id=order_id,
-        new_status=new_status_code
+        new_status_code=new_status_code
     )
 
 @activity.defn
 async def process_refund(order_id: int, refund_amount: float) -> ProcessRefundResult:
     """
-    Mock Activity to handle external payment processing for a refund.
+    Mock Activity to handle external payment processing for a refund
     """
     activity.logger.info(f"Initiating refund for Order {order_id} for ${refund_amount}...")
 

@@ -42,4 +42,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(run_worker())
     except KeyboardInterrupt:
-        print("Worker stopped.")
+        print("Worker stopped")

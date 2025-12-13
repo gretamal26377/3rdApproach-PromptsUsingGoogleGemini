@@ -59,6 +59,22 @@ class OrderWorkflow:
 
         workflow.logger.info(f"Order {order_id} finished with final status code: {self.current_status_code}")
 
+        # Wait for all child workflows to confirm termination (optional but clean)
+        await asyncio.gather(*[handle.result() for handle in self.child_handles], return_exceptions=True)
+
+
+    # --- QUERIES
+    @workflow.query
+    def get_status(self) -> str:
+        """Public query to check the aggregated Order Status"""
+        return self.current_status_code
+
+    @workflow.query
+    def get_item_statuses(self) -> Dict[int, str]:
+        """Public query to check the status of all component Items"""
+        return self.item_status_codes
+    
+
     # --- SIGNAL HANDLER (Push Model) ---
     # This decorator is needed to register the signal with Temporal and it also allows defining overriding args such as retry_policy, etc.
     @workflow.signal
