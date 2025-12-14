@@ -234,7 +234,7 @@ def get_store_product_service_logic(store_product_service_id):
 def get_orders_logic(current_customer):
     # Only return orders with relevant order_statuses.status_code
     valid_status_codes = [
-        'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+        'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
         'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
         'refunded', 'partial_refunded', 'customer_accepted'
     ]
@@ -289,7 +289,7 @@ def get_order_logic(current_customer, order_id):
     if not customer:
         return {'message': 'Customer not found or Inactive'}, 403
     valid_status_codes = [
-        'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+        'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
         'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
         'refunded', 'partial_refunded', 'customer_accepted'
     ]

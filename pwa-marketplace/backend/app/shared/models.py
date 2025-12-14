@@ -255,7 +255,7 @@ class OrderStatuses(db.Model):
     )
 
     status_id = db.Column(db.Integer, primary_key=True)
-    # eg: 'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+    # eg: 'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
     #     'delivered', 'partial_delivered', 'canceled', 'partial_canceled', 'returned', 'partial_returned',
     #     'refunded', 'partial_refunded', 'customer_accepted'
     status_code = db.Column(db.String(50), nullable=False)

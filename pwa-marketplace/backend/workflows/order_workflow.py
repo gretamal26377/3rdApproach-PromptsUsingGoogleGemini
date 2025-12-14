@@ -6,9 +6,9 @@ from . import order_activities
 from .item_workflow import ItemWorkflow 
 
 # ORDER_STATUS_CODES = [
-#    "open", "pending", "paid", "filled", "partial_filled", "shipped", "partial_shipped",
-#    "delivered", "partial_delivered", "cancelled", "partial_cancelled", "returned", "partial_returned",
-#    "customer_accepted", "refunded"
+#    'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+#    'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
+#    'refunded', 'partial_refunded', 'customer_accepted'
 # ]
 
 # Declares a class as a Temporal Workflow

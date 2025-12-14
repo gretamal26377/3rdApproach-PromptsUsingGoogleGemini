@@ -7,7 +7,7 @@ from typing import Optional # New: Required for type hinting the external handle
 from . import item_activities # Import the new activities file
 
 # ITEM_STATUS_CODES = [
-#        'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+#        'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
 #        'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
 #        'refunded', 'partial_refunded', 'customer_accepted'
 # ]
