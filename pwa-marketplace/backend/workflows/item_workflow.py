@@ -58,17 +58,17 @@ class ItemWorkflow:
 
     # --- BATCH PHASE HANDLERS (Called by Parent in the batch) ---
     @workflow.signal
-    async def fulfill_item_batch(self):
+    async def fill_item_batch(self):
         """
-        Triggered by the Parent Order Workflow to perform the fulfillment batch.
-        This runs the fulfillment Activity and updates its internal status
+        Triggered by the Parent Order Workflow to perform the filling batch.
+        This runs the Filling Activity and updates its internal status
         """
         if self.current_status_code == "paid":
             workflow.logger.info(f"Item {self.item_id} executing fulfillment Activity")
 
-            # Execute the Activity for fulfillment
+            # Execute the Activity for filling
             result: item_activities.ItemActivityOutput = await workflow.execute_activity(
-                item_activities.perform_item_fulfillment,
+                item_activities.perform_item_fill,
                 item_activities.ItemActivityInput(item_id=self.item_id, status_code=self.current_status_code),
                 start_to_close_timeout=timedelta(minutes=5),
             )
@@ -127,7 +127,7 @@ class ItemWorkflow:
     @workflow.signal
     async def cancel_item(self):
         """Signal from Parent or external system to cancel this Item"""
-        if self.current_status_code not in ["open", "paid", "filled"]:
+        if self.current_status_code not in ["open", "paid", "filled", "partial_filled", "pending", "partial_pending"]:
             await self.set_status("cancelled") 
             self._keep_running = False # End the Item workflow
         else:

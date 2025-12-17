@@ -1,5 +1,6 @@
 # Expose workflows and activities for easier importing
 # Instead of doing "from .order_activities import update_order_status_in_db", it allows doing "from . import activities"
+# GRL: Outdated
 from .order_workflow import OrderWorkflow
 from .item_workflow import ItemWorkflow
 from .order_activities import update_order_status_in_db, process_refund

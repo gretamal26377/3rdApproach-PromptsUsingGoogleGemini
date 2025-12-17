@@ -38,7 +38,7 @@ class OrderWorkflow:
         # Initialise the status code map based on the input item list, setting all to "open"
         self.item_status_codes = {item_id: "open" for item_id in item_ids}
 
-        # To work in Payment Processing phase
+        # Issue: To work in Payment Processing phase
         # Status update and DB sync
         await self._update_db_status_if_changed("paid")
 
@@ -99,7 +99,7 @@ class OrderWorkflow:
     # --- BATCH PHASE INITIATORS (Triggered by external systems) ---
     # This decorator is needed to register the signal with Temporal and it also allows defining overriding args such as retry_policy, etc.    
     @workflow.signal
-    async def start_filling(self):
+    async def start_fill(self):
         """Initiates the Batch Filling Process for all Items"""
         if self.is_busy:
             workflow.logger.warning("Workflow is busy processing another batch. Filling aborted")

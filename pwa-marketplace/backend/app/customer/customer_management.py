@@ -1,3 +1,4 @@
+import os
 from temporalio.client import Client
 import asyncio
 from ...workflows.order_workflow import OrderWorkflow
@@ -8,6 +9,14 @@ from ..shared.auth import generate_token, decode_token
 from werkzeug.security import generate_password_hash, check_password_hash
 import bleach
 from datetime import datetime
+
+TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
+
+
+# Temporary Temporal Client connection helper
+async def get_temporal_client():
+    # Note: Using localhost for dev. In production, use environment variables.
+    return await Client.connect(TEMPORAL_HOST)
 
 def create_customer_logic(data):
     if not data:
@@ -405,6 +414,10 @@ def create_order_logic(current_customer, data):
         return {'message': 'Failed to Create Order'}, 500
 
 def cancel_order_logic(current_customer, order_id):
+    """
+    Allows the customer to request order cancellation (pre-shipment only).
+    The Order Workflow handles the status check and propagation
+    """
     # Check customer is active
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
@@ -419,19 +432,53 @@ def cancel_order_logic(current_customer, order_id):
         logging.warning("Order does not belong to Customer during cancel_order_logic")
         return {'message': 'Order does not belong to Customer'}, 403
     # Only allow cancellation if order status is in allowed list
-    allowed_status_codes = ['open', 'paid', 'pending', 'filled', 'partial_filled']
-    if not order.order_status or order.order_status.status_code not in allowed_status_codes:
-        return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
+    # allowed_status_codes = ['open', 'paid', 'pending', 'filled', 'partial_filled']
+    # if not order.order_status or order.order_status.status_code not in allowed_status_codes:
+    #    return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
     try:
         # Signal Temporal workflow to cancel order
         async def cancel_order_workflow():
-            client = await Client.connect("localhost:7233")
+            client = await get_temporal_client()
             handle = client.get_workflow_handle(f"order-{order_id}")
-            # Ensure your signal name matches the one in order_workflow.py
+            # handle = client.get_workflow_handle(f"order-{order_id}", workflow_id=f"order-{order_id}")
+            # Ensure your signal name matches the one in order_workflow.py/Parent Workflow
             await handle.signal("cancel_order")
         asyncio.run(cancel_order_workflow())
+        # Issue: Order Cancellation might fail cause Order Status is far from cancellable
         # --- The DB update is handled by the Activity in order_activities.py ---
-        return {'message': 'Order Cancellation initiated successfully. Status Update pending workflow execution.'}, 202 # Use 202 Accepted
+        return {'message': 'Order Cancellation initiated successfully. Status Update pending workflow execution'}, 202 # Use 202 Accepted
     except Exception as e:
         logging.error(f"Error signalling order cancellation: {e}")
         return {'message': 'Failed to Signal Order Cancellation'}, 500
+    
+def return_item_logic(order_id, item_id, current_customer):
+    """
+    Allows the customer to request a return for a specific item (post-delivery only).
+    The Order Workflow handles the item-level signaling and the 10-day window check
+    """
+    # Issue: Check customer is active
+    if not current_customer:
+        return {'message': 'Customer not found or Inactive'}, 403
+    order = Orders.query.get_or_404(order_id)
+    if order.customer_id != current_customer.customer_id:
+        logging.warning("Order does not belong to Customer during return_item_logic")
+        return {'message': 'Order does not belong to Customer'}, 403
+    
+    # Check if item exists in order (simple check, full check is in the workflow)
+    if not OrderDetails.query.filter_by(order_id=order_id, item_id=item_id).first():
+         return {'message': f'Item {item_id} not found in Order {order_id}.'}, 404
+    try:
+        # Signal Temporal workflow to initiate item return
+        async def return_item_workflow():
+            client = await get_temporal_client()
+            handle = client.get_workflow_handle(f"order-{order_id}")
+            # handle = client.get_workflow_handle(f"order-{order_id}", workflow_id=f"order-{order_id}")
+            # Signal the parent workflow, which propagates the signal to the specific item
+            await handle.signal("initiate_return", item_id)
+        
+        asyncio.run(return_item_workflow())
+        
+        return {'message': f'Return initiated successfully for Item {item_id}. Status Update pending workflow execution.'}, 202
+    except Exception as e:
+        logging.error(f"Error signalling Item Return for {order_id}/{item_id}: {e}")
+        return {'message': 'Failed to Signal Item Return'}, 500

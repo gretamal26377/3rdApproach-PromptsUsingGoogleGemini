@@ -13,7 +13,7 @@ from . import order_activities
 from . import item_activities
 
 TASK_QUEUE_NAME = "order-task-queue"
-TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "temporal-server:7233")
+TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
 
 async def run_worker():
     # Connect to the Temporal Server
@@ -30,7 +30,9 @@ async def run_worker():
         activities=[
             order_activities.update_order_status_in_db,
             order_activities.process_refund,
-            item_activities.process_item_shipment 
+            item_activities.process_item_shipment,
+            item_activities.perform_item_fill,
+            item_activities.perform_item_delivery, 
         ]
     )
     
@@ -41,5 +43,6 @@ async def run_worker():
 if __name__ == "__main__":
     try:
         asyncio.run(run_worker())
+    # KeyboardInterrupt allows graceful shutdown on Ctrl+C, without it Python shows a stack trace
     except KeyboardInterrupt:
         print("Worker stopped")
