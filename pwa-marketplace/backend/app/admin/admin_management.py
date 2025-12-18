@@ -1,7 +1,8 @@
+import os
 from ..shared.database import db
 from ..shared.models import (
     Users, Stores, ProductsServices, StoreProductsServices, 
-    EntityStatuses, Orders, OrderStatuses # Added Orders, OrderStatuses for workflow integration
+    EntityStatuses, Orders, OrderStatuses
 )
 import logging
 from temporalio.client import Client
@@ -10,6 +11,8 @@ from workflows.order_workflow import OrderWorkflow
 from workflows.item_workflow import ItemWorkflow
 # bleach is used to sanitize inputs to prevent XSS attacks
 import bleach
+
+TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
 
 def get_users_logic():
     users = User.query.all()
@@ -179,6 +182,7 @@ def delete_product_logic(current_customer, product_service_id):
 def mark_order_shipped_logic(order_id):
     """
     Admin function to signal the OrderWorkflow that the order has been shipped
+    GRL: Outdated
     """
     try:
         order = Orders.query.get(order_id)
@@ -190,22 +194,23 @@ def mark_order_shipped_logic(order_id):
         if not order.order_status or order.order_status.status_code not in allowed_status_codes:
             return {'message': f"Order status is {order.order_status.status_code}. Cannot mark as shipped"}, 400
 
-        # 1. Signal Temporal workflow
+        # Signal Temporal workflow
         async def ship_order_workflow():
-            client = await Client.connect("localhost:7233")
+            client = await Client.connect(TEMPORAL_HOST)
             handle = client.get_workflow_handle(f"order-{order_id}")
             # Ensure your signal name matches the one in order_workflow.py
             await handle.signal("ship_order")
         asyncio.run(ship_order_workflow())
         # --- The DB update is handled by the Activity in order_activities.py ---
-        return {'message': f'Order {order_id} shipment initiated. Status update pending workflow execution.'}, 202
+        return {'message': f'Order {order_id} shipment initiated. Process pending workflow execution'}, 202
     except Exception as e:
-        logging.error(f"Error signalling order shipment: {e}")
+        logging.error(f"Error signalling Order Shipment: {e}")
         return {'message': 'Failed to Signal Order Shipment'}, 500
 
 def refund_order_logic(order_id):
     """
     Admin function to signal the OrderWorkflow to initiate a refund process
+    GRL: Outdated
     """
     try:
         order = Orders.query.get(order_id)
@@ -213,30 +218,48 @@ def refund_order_logic(order_id):
             return {'message': 'Order not found'}, 404
 
         # Admin check: Ensure order is in a state eligible for refund
-        allowed_status_codes = ['paid', 'delivered', 'partial_delivered', 'returned', 'partial_returned']
+        allowed_status_codes = ['cancelled', 'partial_cancelled', 'returned', 'partial_returned']
         if not order.order_status or order.order_status.status_code not in allowed_status_codes:
             return {'message': f"Order status is {order.order_status.status_code}. Cannot initiate refund"}, 400
 
-        # 1. Signal Temporal workflow
+        # Signal Temporal workflow
         async def refund_order_workflow():
-            client = await Client.connect("localhost:7233")
+            client = await Client.connect(TEMPORAL_HOST)
             handle = client.get_workflow_handle(f"order-{order_id}")
             # Assume a signal named 'refund_order' is defined in OrderWorkflow
             await handle.signal("refund_order")
-
         asyncio.run(refund_order_workflow())
-
-        # 2. Update DB status for administrative confirmation/reference
-        refunded_status = OrderStatuses.query.filter_by(status_code='refunded').first()
-        if not refunded_status:
-            return {'message': 'Order Status "refunded" not found'}, 500
-
-        order.order_status_id = refunded_status.status_id
-        db.session.commit()
-
-        return {'message': f'Order {order_id} signalled for refund and status updated to refunded'}, 200
+        # --- The DB update is handled by the Activity in order_activities.py ---
+        return {'message': f'Order {order_id} refund process initiated. Process pending workflow execution'}, 202
 
     except Exception as e:
-        db.session.rollback()
-        logging.error(f"Error refunding Order {order_id}: {e}")
-        return {'message': 'Failed to signal order refund'}, 500
+        logging.error(f"Error signalling Order Refund: {e}")
+        return {'message': 'Failed to signal Order Refund'}, 500
+    
+# --- LOGIC FOR BULK ORDER'S ITEM SHIPMENT ---
+def bulk_ship_items_logic(order_id, items_to_update: dict):
+    """Logic for Bulk Shipment of Order's Items"""
+
+    if not items_to_update:
+        return {'message': 'No items provided for update'}, 400
+        
+    logging.info(f"Initiating Bulk Status Update for Order {order_id}: {items_to_update}")
+
+    # Input Validation (Simplified)
+    # In a real app, you would check if the order exists and if the items belong to it
+    
+    try:
+        # Signal Temporal Workflow
+        async def bulk_update_workflow():
+            client = await Client.connect(TEMPORAL_HOST)
+            handle = client.get_workflow_handle(f"order-{order_id}")
+
+            # Note: We signal the Parent Order Workflow, not the individual Item Workflows
+            await handle.signal(OrderWorkflow.start_shipping)
+        asyncio.run(bulk_update_workflow())
+        # --- The DB update is handled by the Activity in order_activities.py ---
+        return {'message': f'Order {order_id} Bulk Shipment Process initiated. Process pending workflow execution'}, 202
+
+    except Exception as e:
+        logging.error(f"Error signalling Order Bulk Shipment: {e}")
+        return {'message': 'Failed to signal Order Bulk Shipment'}, 500

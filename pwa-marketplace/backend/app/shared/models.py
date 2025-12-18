@@ -1,6 +1,5 @@
 # from venv import create
-# from .database import db
-from app.shared.database import db
+from .database import db
 from sqlalchemy import Index, ForeignKeyConstraint, text
 
 class Categories(db.Model):
@@ -232,6 +231,11 @@ class EntityStatusesHistory(db.Model):
 
 class OrderDetails(db.Model):
     __tablename__ = 'order_details'
+    __table_args__ = (
+        Index('product_service_status_id', 'product_service_status_id'),
+        # Add index for Temporal Item Workflow ID
+        Index('temporal_workflow_id', 'temporal_workflow_id', unique=True),
+    )
 
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), primary_key=True)
     store_product_service_id = db.Column(db.Integer, db.ForeignKey('store_products_services.id'), primary_key=True)
@@ -242,6 +246,7 @@ class OrderDetails(db.Model):
     product_service_filled_quantity = db.Column(db.Integer, nullable=False)
     product_service_filled_tot_price = db.Column(db.Numeric, nullable=False)
     product_service_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
+    temporal_workflow_id = db.Column(db.String(100), nullable=False, unique=True)  # Field for Temporal Item Workflow ID
 
     order = db.relationship('Orders', back_populates='order_details')
     store_product_service = db.relationship('StoreProductsServices', back_populates='order_details')
@@ -268,6 +273,12 @@ class OrderStatuses(db.Model):
 
 class Orders(db.Model):
     __tablename__ = 'orders'
+    __table_args__ = (
+        Index('customer_id', 'customer_id'),
+        Index('order_status_id', 'order_status_id'),
+        # Add index for Temporal Workflow ID for efficient lookups
+        Index('temporal_workflow_id', 'temporal_workflow_id', unique=True),
+    )
 
     order_id = db.Column(db.Integer, primary_key=True)
     order_tot_quantity = db.Column(db.Integer, nullable=False)
@@ -276,6 +287,7 @@ class Orders(db.Model):
     order_status_id = db.Column(db.Integer, db.ForeignKey('order_statuses.status_id'), nullable=False)
     # text(): Ensures that value in parentheses is treated as a literal SQL expression and not as a string
     order_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
+    temporal_workflow_id = db.Column(db.String(100), nullable=False, unique=True)  # Field for Temporal Workflow ID
 
     customer = db.relationship('Customers', back_populates='orders')
     order_status = db.relationship('OrderStatuses', back_populates='orders')

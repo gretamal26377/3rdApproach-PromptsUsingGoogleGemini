@@ -12,7 +12,6 @@ from datetime import datetime
 
 TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
 
-
 # Temporary Temporal Client connection helper
 async def get_temporal_client():
     # Note: Using localhost for dev. In production, use environment variables.
