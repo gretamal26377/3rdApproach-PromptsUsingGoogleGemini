@@ -29,9 +29,7 @@ class ItemWorkflow:
         # self.parent_workflow_id = parent_workflow_id
         
         # Get the external handle of the Parent Workflow (needed for the cancel signal)
-        self._parent_handle = workflow.get_external_workflow_handle[
-            "OrderWorkflow"
-        ](parent_workflow_id)
+        self._parent_handle = workflow.get_external_workflow_handle(parent_workflow_id)
 
         # Initial status set: OrderWorkflow handles the initial status transition
         await self.set_status("paid")

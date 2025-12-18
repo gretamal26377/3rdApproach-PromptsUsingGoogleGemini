@@ -102,13 +102,12 @@ class OrderWorkflow:
     async def start_fill(self):
         """Initiates the Batch Filling Process for all Items"""
         if self.is_busy:
-            workflow.logger.warning("Workflow is busy processing another batch. Filling aborted")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Filling Batch aborted")
             return
 
         if self.current_status_code == "paid":
             await self._run_batch_phase(
-                item_signal_name="fill_item_batch",
-                target_status_code="filled"
+                item_signal_name="fill_item_batch"
             )
         else:
             workflow.logger.warning(f"Cannot start filling. Order is {self.current_status_code}")
@@ -117,14 +116,13 @@ class OrderWorkflow:
     async def start_shipping(self):
         """Initiates the Batch Shipping Process for all Items that are filled"""
         if self.is_busy:
-            workflow.logger.warning("Workflow is busy processing a batch. Shipping skipped")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Shipping Batch aborted")
             return
 
         # Allowed statuses include 'filled' or 'partial_filled' (which is the aggregate status)
         if self.current_status_code in ["filled", "partial_filled"]:
             await self._run_batch_phase(
-                item_signal_name="ship_item_batch",
-                target_status_code="shipped"
+                item_signal_name="ship_item_batch"
             )
         else:
             workflow.logger.warning(f"Cannot start shipping. Order is {self.current_status_code}")
@@ -133,20 +131,19 @@ class OrderWorkflow:
     async def start_delivery(self):
         """Initiates the Batch Delivery Process for all Items that are shipped"""
         if self.is_busy:
-            workflow.logger.warning("Workflow is busy processing a batch. Delivery skipped")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Delivery Batch aborted")
             return
             
         if self.current_status_code in ["shipped", "partial_shipped"]:
             await self._run_batch_phase(
-                item_signal_name="deliver_item_batch",
-                target_status_code="delivered"
+                item_signal_name="deliver_item_batch"
             )
         else:
             workflow.logger.warning(f"Cannot start delivery. Order is {self.current_status_code}")
 
     
     # --- CORE BATCH EXECUTION LOGIC ---
-    async def _run_batch_phase(self, item_signal_name: str, target_status_code: str):
+    async def _run_batch_phase(self, item_signal_name: str):
         """
         Signals all Child Item Workflows to execute a phase activity concurrently,
         then waits for all to complete before aggregating the Order Status
@@ -180,7 +177,7 @@ class OrderWorkflow:
 
     async def _query_and_aggregate_status(self):
         """
-        Queries all Item Workflows for their current status and performs the aggregate update
+        Queries all Item Workflows for their current status and calls the aggregate update function
         """
         new_status_codes = {}
         query_tasks = []
