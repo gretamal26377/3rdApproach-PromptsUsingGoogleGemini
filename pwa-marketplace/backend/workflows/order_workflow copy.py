@@ -3,7 +3,7 @@ from datetime import timedelta
 from temporalio import workflow
 from typing import List, Dict # Imported Dict for self.item_status_codes
 from . import order_activities 
-from .item_workflow import ItemWorkflow
+from . import item_workflow 
 
 # ORDER_STATUS_CODES = [
 #    'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
@@ -51,7 +51,6 @@ class OrderWorkflow:
             child_handle = await workflow.start_child_workflow(
                 ItemWorkflow.run,
                 item_id,
-                self.order_id,
                 # CRITICAL: Pass the Parent's Workflow ID so the Child can signal back
                 workflow.info().workflow_id,
                 # This is a Temporal Execution ID different from previous one, it ensures if parent restarts, it restarts the same child

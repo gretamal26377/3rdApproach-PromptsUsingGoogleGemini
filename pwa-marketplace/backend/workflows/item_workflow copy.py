@@ -16,7 +16,6 @@ from . import item_activities # Import the activities file
 class ItemWorkflow:
     def __init__(self) -> None:
         self.item_id: int | None = None
-        self.order_id: int | None = None
         self.current_status_code = "open"
         # The parent handle is now only used for emergency signals (like full cancellation), 
         # NOT for real-time status updates after every step
@@ -25,9 +24,9 @@ class ItemWorkflow:
         self._keep_running = True
 
     @workflow.run
-    async def run(self, item_id: int, order_id: int, parent_workflow_id: str):
+    async def run(self, item_id: int, parent_workflow_id: str): # New: Added parent_workflow_id
         self.item_id = item_id
-        self.order_id = order_id
+        # self.parent_workflow_id = parent_workflow_id
         
         # Get the external handle of the Parent Workflow (needed for the cancel signal)
         self._parent_handle = workflow.get_external_workflow_handle(parent_workflow_id)
@@ -69,7 +68,7 @@ class ItemWorkflow:
             # Execute the Activity for filling
             result: item_activities.ItemActivityOutput = await workflow.execute_activity(
                 item_activities.perform_item_fill,
-                item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
+                item_activities.ItemActivityInput(item_id=self.item_id, status_code=self.current_status_code),
                 start_to_close_timeout=timedelta(minutes=5),
             )
 
@@ -92,7 +91,7 @@ class ItemWorkflow:
             # Execute the Activity for shipment
             result: item_activities.ItemShipmentResult = await workflow.execute_activity(
                 item_activities.perform_item_shipment,
-                item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
+                item_activities.ItemActivityInput(item_id=self.item_id, status_code=self.current_status_code),
                 start_to_close_timeout=timedelta(minutes=5),
             )
             # The result contains the new status (filled or former status if not processable)
@@ -114,7 +113,7 @@ class ItemWorkflow:
             # Execute the Activity for delivery
             result: item_activities.ItemActivityOutput = await workflow.execute_activity(
                 item_activities.perform_item_delivery,
-                item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
+                item_activities.ItemActivityInput(item_id=self.item_id, status_code=self.current_status_code),
                 start_to_close_timeout=timedelta(minutes=5),
             )
 

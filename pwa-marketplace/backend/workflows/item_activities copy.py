@@ -1,13 +1,9 @@
 from temporalio import activity, exceptions
 from pydantic import BaseModel
-from ..app.shared.database import db
-from ..app.shared.models import OrderDetails, OrderStatuses
 import asyncio
 import random
-import logging
 
 class ItemActivityInput(BaseModel):
-    order_id: int
     item_id: int
     status_code: str
 
@@ -46,15 +42,14 @@ async def perform_item_fill(item_data: ItemActivityInput) -> ItemActivityOutput:
             new_item_status_code=failure_status
         )
     
-    success_status_code = "filled"
-    # Issue?: Should this log line be after the status update?
+    success_status = "filled"
     activity.logger.info(f"Activity: Item {item_data.item_id} successfully filled")
-    _update_item_status(item_data.order_id, item_data.item_id, success_status_code)
+    # Issue: Item Status Update never performed in DB (same for other activities)
     return ItemActivityOutput(
         item_id=item_data.item_id,
         success=True,
         message=f"Item {item_data.item_id} filled and ready for shipment",
-        new_item_status_code=success_status_code
+        new_item_status_code=success_status
     )
 
 @activity.defn
@@ -70,8 +65,6 @@ async def perform_item_shipment(item_data: ItemActivityInput) -> ItemShipmentRes
     tracking_number = f"TRK-{item_data.item_id}-{random.randint(10000, 99999)}"
 
     activity.logger.info(f"Item {item_data.item_id} shipped. Tracking: {tracking_number}")
-
-    _update_item_status(item_data.order_id, item_data.item_id, "shipped")
 
     return ItemShipmentResult(
         item_id=item_data.item_id,
@@ -99,44 +92,11 @@ async def perform_item_delivery(item_data: ItemActivityInput) -> ItemActivityOut
             new_item_status_code=failure_status 
         )
 
-    success_status_code = "delivered"
+    success_status = "delivered"
     activity.logger.info(f"Activity: Item {item_data.item_id} successfully delivered")
-    _update_item_status(item_data.order_id, item_data.item_id, success_status_code)
     return ItemActivityOutput(
         item_id=item_data.item_id,
         success=True,
         message=f"Item {item_data.item_id} delivered",
-        new_item_status_code=success_status_code
+        new_item_status_code=success_status
     )
-
-
-def _update_item_status(order_id: int, item_id: int, new_status_code: str) -> None:
-    """Update OrderDetails status with retry semantics and Temporal Best Practices"""
-    try:
-        status = OrderStatuses.query.filter_by(status_code=new_status_code).first()
-        if not status:
-            raise exceptions.ApplicationError(
-                f"Order Status '{new_status_code}' not found",
-                type="INVALID_STATUS",
-                non_retryable=True,
-            )
-
-        detail = OrderDetails.query.filter_by(order_id=order_id, store_product_service_id=item_id).first()
-        if not detail:
-            raise exceptions.ApplicationError(
-                f"OrderDetail not found for order_id={order_id}, item_id={item_id}",
-                type="DETAIL_NOT_FOUND",
-                non_retryable=True,
-            )
-
-        detail.product_service_status_id = status.status_id
-        db.session.commit()
-    except exceptions.ApplicationError:
-        # rollback put here just in case DB session is dirty, if it's clean and rollback is called, nothing happens
-        db.session.rollback()
-        raise
-    except Exception as e:
-        # DB/commit/connection errors → retryable failure
-        db.session.rollback()
-        logging.error(f"DB error updating item status for order_id={order_id}, item_id={item_id}: {e}")
-        raise

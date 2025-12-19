@@ -26,45 +26,28 @@ async def update_order_status_in_db(order_id: int, new_status_code: str) -> Upda
     """
     Updates the Order status in the database
     This activity is triggered by the Parent Workflow ONLY after all Item Workflows
-    have completed a specific batch phase (e.g., filling) and the new 
-    Order Aggregate Status has been calculated
+    have completed a specific batch phase (e.g., fulfillment) and the new 
+    aggregate status has been calculated
     (Mocked logic here)
     """
+    # In a real app, you would use the db session code provided earlier:
+    # order = Orders.query.get(order_id)
+    # ... logic ...
+    # db.session.commit()
     
     logging.info(f"DB Activity: Updating Order {order_id} status to {new_status_code}")
 
-    try:
-        status = OrderStatuses.query.filter_by(status_code=new_status_code).first()
-        if not status:
-            raise exceptions.ApplicationError(
-                f"Order Status '{new_status_code}' not found",
-                type="INVALID_STATUS",
-                non_retryable=True,
-            )
+    # Mocking successful DB update
+    if order_id <= 0:
+        raise exceptions.ApplicationError("Invalid Order ID provided", type="INVALID_INPUT", non_retryable=True)
+        
+    activity.logger.info(f"DB Activity: Order {order_id} Status updated successfully in the Database")
 
-        order = Orders.query.filter_by(order_id=order_id).first()
-        if not order:
-            raise exceptions.ApplicationError(
-                f"Order {order_id} not found",
-                type="ORDER_NOT_FOUND",
-                non_retryable=True,
-            )
-
-        order.order_status_id = status.status_id
-        db.session.commit()
-
-        activity.logger.info(f"DB Activity: Order {order_id} Status updated successfully in the Database")
-        return UpdateOrderStatusResult(order_id=order_id, new_status_code=new_status_code)
-
-    except exceptions.ApplicationError:
-        # rollback put here just in case DB session is dirty, if it's clean and rollback is called, nothing happens
-        db.session.rollback()
-        raise
-    except Exception as e:
-        # DB/commit/connection errors → retryable failure
-        db.session.rollback()
-        logging.error(f"DB error updating Order {order_id} to {new_status_code}: {e}")
-        raise
+    
+    return UpdateOrderStatusResult(
+        order_id=order_id,
+        new_status_code=new_status_code
+    )
 
 @activity.defn
 async def process_refund(order_id: int, refund_amount: float) -> ProcessRefundResult:
