@@ -18,14 +18,15 @@ class ItemShipmentResult(BaseModel):
     item_id: int
     tracking_number: str
     success: bool = True
+    new_item_status_code: str
 
 @activity.defn
 async def perform_item_fill(item_data: ItemActivityInput) -> ItemActivityOutput:
     """
-    Activity to handle physical Item Filling tasks (e.g., picking, packing)
+    Mock Activity to handle physical Item Filling tasks (e.g., picking, packing)
     Simulates a chance of failure (e.g., lack of stock)
     """
-    activity.logger.info(f"Activity: Starting fulfillment for Item {item_data.item_id}")
+    activity.logger.info(f"Activity: Starting Filling for Item {item_data.item_id}")
 
     # Simulate external system interaction and latency
     await asyncio.sleep(random.uniform(0.5, 2.0))
@@ -52,22 +53,24 @@ async def perform_item_fill(item_data: ItemActivityInput) -> ItemActivityOutput:
     )
 
 @activity.defn
-async def process_item_shipment(item_id: int) -> ItemShipmentResult:
+async def perform_item_shipment(item_data: ItemActivityInput) -> ItemShipmentResult:
     """
-    Mock activity to simulate shipping a single Item
+    Mock Activity to handle Item Shipping tasks
     """
-    activity.logger.info(f"Processing shipment for Item {item_id}...")
+    activity.logger.info(f"Activity: Starting shipment for Item {item_data.item_id}")
     
     # Simulate external API call
     await asyncio.sleep(1) 
-    
-    tracking_number = f"TRK-{item_id}-{random.randint(10000, 99999)}"
-    
-    activity.logger.info(f"Item {item_id} shipped. Tracking: {tracking_number}")
-    
+
+    tracking_number = f"TRK-{item_data.item_id}-{random.randint(10000, 99999)}"
+
+    activity.logger.info(f"Item {item_data.item_id} shipped. Tracking: {tracking_number}")
+
     return ItemShipmentResult(
-        item_id=item_id,
-        tracking_number=tracking_number
+        item_id=item_data.item_id,
+        tracking_number=tracking_number,
+        success=True,
+        new_item_status_code="shipped"
     )
 
 @activity.defn

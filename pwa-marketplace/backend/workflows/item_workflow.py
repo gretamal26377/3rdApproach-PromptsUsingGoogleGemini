@@ -14,8 +14,8 @@ from . import item_activities # Import the activities file
 
 @workflow.defn
 class ItemWorkflow:
-    def __init__(self):
-        self.item_id = None
+    def __init__(self) -> None:
+        self.item_id: int | None = None
         self.current_status_code = "open"
         # The parent handle is now only used for emergency signals (like full cancellation), 
         # NOT for real-time status updates after every step
@@ -56,13 +56,14 @@ class ItemWorkflow:
 
     # --- BATCH PHASE HANDLERS (Called by Parent in the batch) ---
     @workflow.signal
-    async def fill_item_batch(self):
+    async def fill_item_batch(self) -> None:
         """
         Triggered by the Parent Order Workflow to perform the filling batch.
         This runs the Filling Activity and updates its internal status
         """
         if self.current_status_code == "paid":
             workflow.logger.info(f"Item {self.item_id} executing fulfillment Activity")
+            assert self.item_id is not None
 
             # Execute the Activity for filling
             result: item_activities.ItemActivityOutput = await workflow.execute_activity(
@@ -75,37 +76,39 @@ class ItemWorkflow:
             await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
-                f"Item {self.item_id} skipped fulfillment, Status Code is {self.current_status_code}"
+                f"Item {self.item_id} skipped filling, Status Code is {self.current_status_code}"
             )
 
     @workflow.signal
-    async def ship_item_batch(self):
+    async def ship_item_batch(self) -> None:
         """
         Triggered by the Parent Order Workflow to perform the shipping batch
         """
         if self.current_status_code == "filled":
             workflow.logger.info(f"Item {self.item_id} executing shipment Activity")
+            assert self.item_id is not None
 
             # Execute the Activity for shipment
-            await workflow.execute_activity(
-                item_activities.process_item_shipment,
-                self.item_id,
+            result: item_activities.ItemShipmentResult = await workflow.execute_activity(
+                item_activities.perform_item_shipment,
+                item_activities.ItemActivityInput(item_id=self.item_id, status_code=self.current_status_code),
                 start_to_close_timeout=timedelta(minutes=5),
             )
-            # Shipment activity is assumed successful if it returns. Update status
-            await self.set_status("shipped")
+            # The result contains the new status (filled or former status if not processable)
+            await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
-                f"Item {self.item_id} skipped shipping, status is {self.current_status_code}"
+                f"Item {self.item_id} skipped shipping, Status Code is {self.current_status_code}"
             )
 
     @workflow.signal
-    async def deliver_item_batch(self):
+    async def deliver_item_batch(self) -> None:
         """
         Triggered by the Parent Order Workflow to perform the delivery batch
         """
         if self.current_status_code == "shipped":
             workflow.logger.info(f"Item {self.item_id} executing delivery Activity")
+            assert self.item_id is not None
 
             # Execute the Activity for delivery
             result: item_activities.ItemActivityOutput = await workflow.execute_activity(

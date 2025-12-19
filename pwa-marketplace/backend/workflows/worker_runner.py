@@ -30,7 +30,7 @@ async def run_worker():
         activities=[
             order_activities.update_order_status_in_db,
             order_activities.process_refund,
-            item_activities.process_item_shipment,
+            item_activities.perform_item_shipment,
             item_activities.perform_item_fill,
             item_activities.perform_item_delivery, 
         ]
