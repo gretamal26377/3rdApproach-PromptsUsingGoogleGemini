@@ -14,7 +14,6 @@ TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
 
 # Temporary Temporal Client connection helper
 async def get_temporal_client():
-    # Note: Using localhost for dev. In production, use environment variables.
     return await Client.connect(TEMPORAL_HOST)
 
 def create_customer_logic(data):
@@ -344,9 +343,6 @@ def create_order_logic(current_customer, data):
     if not data['items']:
         logging.warning("Items list cannot be empty during create_order_logic")
         return {'message': 'Items list cannot be empty'}, 400
-    total_quantity = 0
-    total_price = 0
-    order_details = []
     try:
         active_status = EntityStatuses.query.filter_by(status_code='active').first()
         if not active_status:
@@ -357,7 +353,8 @@ def create_order_logic(current_customer, data):
         customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
         if not customer:
             return {'message': 'Customer not found or Inactive'}, 403
-        item_ids = []
+        # Validate and collect all item info
+        order_items = []
         for item in data['items']:
             if not all(field in item for field in ['store_product_service_id', 'quantity']):
                 logging.warning("Missing required fields during create_order_logic")
@@ -369,46 +366,40 @@ def create_order_logic(current_customer, data):
             if quantity <= 0:
                 logging.warning(f"Quantity for Store Product/Service {item['store_product_service_id']} must be positive")
                 return {'message': f"Quantity for Store Product/Service {item['store_product_service_id']} must be positive"}, 400
-            price = float(sps.price)
-            total_quantity += quantity
-            total_price += price * quantity
-            # Add data to order_details list using append method
-            order_details.append({'store_product_service_id': sps.id, 'quantity': quantity, 'price': price})
-            item_ids.append(sps.id)
-        # Set initial order status to 'open' in DB for reference
-        open_status = OrderStatuses.query.filter_by(status_code='open').first()
-        if not open_status:
-            logging.error("Order Status 'Open' not found during create_order_logic")
-            return {'message': 'Order Status "Open" not found'}, 500
-        new_order = Orders()
-        new_order.order_tot_quantity = total_quantity
-        new_order.order_tot_price = total_price
-        new_order.customer_id = customer.customer_id
-        new_order.order_status_id = open_status.status_id
-        db.session.add(new_order)
-        db.session.flush()  # Get order_id
-        for od in order_details:
-            detail = OrderDetails()
-            detail.order_id = new_order.order_id
-            detail.store_product_service_id = od['store_product_service_id']
-            detail.product_service_quantity = od['quantity']
-            detail.product_service_price = od['price']
-            detail.product_service_tot_price = od['price'] * od['quantity']
-            detail.product_service_status_id = open_status.status_id
-            detail.product_service_filled_quantity = 0
-            detail.product_service_filled_tot_price = 0
-            detail.product_service_created_at = datetime.utcnow()
-            db.session.add(detail)
-        db.session.commit()
-        # Start Temporal workflow for order
-        async def start_order_workflow():
-            client = await Client.connect("localhost:7233")
-            # await client.start_workflow(OrderWorkflow.run, new_order.order_id, item_ids, id=f"order-{new_order.order_id}")
-            await client.start_workflow(OrderWorkflow.run, new_order.order_id, item_ids, total_price)
-        asyncio.run(start_order_workflow())
-        return {'message': 'Order created successfully', 'order_id': new_order.order_id}, 201
+            # Collect all fields needed for OrderDetails
+            order_items.append({
+                'store_product_service_id': sps.id,
+                'product_service_quantity': quantity,
+                'product_service_price': float(sps.price),
+                'product_service_tot_price': float(sps.price) * quantity,
+                'product_service_status_id': None,  # Will be set in activity
+                'product_service_filled_quantity': 0,
+                'product_service_filled_tot_price': 0,
+                'product_service_created_at': datetime.utcnow(),
+                # Add any additional fields from OrderDetails model as needed
+            })
+        # Prepare a single input dict for the workflow containing all order and order_details data
+        order_input = {
+            'customer_id': customer.customer_id,
+            'order_tot_quantity': sum(i['product_service_quantity'] for i in order_items),
+            'order_tot_price': sum(i['product_service_tot_price'] for i in order_items),
+            'order_created_at': datetime.utcnow().isoformat(),
+            # Add any additional Orders fields as needed
+            'items': order_items
+        }
+        async def create_order_via_activity():
+            client = await get_temporal_client()
+            # Start the workflow, passing all order data as a single input
+            result = await client.start_workflow(
+                OrderWorkflow.run,
+                order_input,
+                id=None
+            )
+            return result
+        workflow_result = asyncio.run(create_order_via_activity())
+        # Expect workflow_result to contain order_id (if returned by workflow)
+        return {'message': 'Order created successfully', 'order_id': getattr(workflow_result, 'order_id', None)}, 201
     except Exception as e:
-        db.session.rollback()
         logging.error(f"Error creating Order: {e}")
         return {'message': 'Failed to Create Order'}, 500
 
@@ -431,9 +422,11 @@ def cancel_order_logic(current_customer, order_id):
         logging.warning("Order does not belong to Customer during cancel_order_logic")
         return {'message': 'Order does not belong to Customer'}, 403
     # Only allow cancellation if order status is in allowed list
-    # allowed_status_codes = ['open', 'paid', 'pending', 'filled', 'partial_filled']
-    # if not order.order_status or order.order_status.status_code not in allowed_status_codes:
-    #    return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
+    allowed_status_codes = ['open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled',
+                            'partial_shipped', 'partial_cancelled', 'partial_delivered', 'partial_returned',
+                            'partial_refunded']
+    if not order.order_status or order.order_status.status_code not in allowed_status_codes:
+        return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
     try:
         # Signal Temporal workflow to cancel order
         async def cancel_order_workflow():
@@ -455,7 +448,9 @@ def return_item_logic(order_id, item_id, current_customer):
     Allows the customer to request a return for a specific item (post-delivery only).
     The Order Workflow handles the item-level signaling and the 10-day window check
     """
-    # Issue: Check customer is active
+    # Issue: Return process should be a Bulk process triggered by Customer
+    # Issue: Check if Order Status is in possible status to return
+    # Issue: Check if Customer is active
     if not current_customer:
         return {'message': 'Customer not found or Inactive'}, 403
     order = Orders.query.get_or_404(order_id)

@@ -1,7 +1,7 @@
 import asyncio
 from datetime import timedelta
 from temporalio import workflow
-from typing import List, Dict # Imported Dict for self.item_status_codes
+from typing import List, Dict   # Imported Dict for self.item_status_codes
 from . import order_activities 
 from .item_workflow import ItemWorkflow
 
@@ -16,12 +16,12 @@ from .item_workflow import ItemWorkflow
 class OrderWorkflow:
     # init runs when a new instance of the workflow is created before @workflow.run
     # self refers to the specific class/object instance being created
-    def __init__(self):
+    def __init__(self) -> None:
         # Initialize internal status variables
         self.order_id: int | None = None    # placeholder; real value always assigned in run()
         self.current_status_code = "open"
         # Stores item IDs and their corresponding ItemWorkflowHandles
-        self.item_handles: Dict[int, workflow.ExternalWorkflowHandle] = {}
+        self.item_handles: Dict[int, workflow.ExternalWorkflowHandle[ItemWorkflow]] = {}
         # Dictionary to store item status codes (key: item_id, value: status_code)
         self.item_status_codes: Dict[int, str] = {}
         # Control flag to prevent other phase signals (like cancellation) during a batch run
@@ -29,33 +29,49 @@ class OrderWorkflow:
         self._keep_running = True
 
     @workflow.run
-    async def run(self, order_id: int, item_ids: List[int], total_amount: float):
-        self.order_id = order_id
-        # assert self.order_id is not None
+    async def run(self, order_input: dict):
+        """
+        order_input: dict with keys:
+            - customer_id
+            - order_tot_quantity
+            - order_tot_price
+            - order_created_at
+            - items: list of dicts (all OrderDetails fields)
+        """
+        from datetime import timedelta
+        # Persist Orders row and get order_id
+        order_data = {k: v for k, v in order_input.items() if k != 'items'}
+        self.order_id = await workflow.execute_activity(
+            order_activities.create_order_in_db,
+            order_data,
+            start_to_close_timeout=timedelta(seconds=20),
+        )
+        workflow.logger.info(f"Order {self.order_id} created and persisted via activity")
 
-        workflow.logger.info(f"Order {order_id} started with {len(item_ids)} items")
-
-        # Initialise the status code map based on the input item list, setting all to "open"
+        # Set up item status codes
+        items = order_input.get('items', [])
+        item_ids = [item['store_product_service_id'] for item in items]
         self.item_status_codes = {item_id: "open" for item_id in item_ids}
 
-        # Issue: To work in Payment Processing phase
+        # Issue: Payment Processing phase should be triggered by signal through a Bulk Process, not here
         # Status update and DB sync
         await self._update_db_status_if_changed("paid")
 
-        # Spawn Child Workflows for each Item
+        # Spawn Child Workflows for each Item, passing item data and order_id
         # We start them asynchronously so they run in parallel
-        for item_id in item_ids:
+        for item in items:
             # Arg number matches ItemWorkflow.run's definition, because Temporal Python SDK can distinguish by position between args and kwargs (keyword args) that
             # are used to configure the Workflow execution (like id)
             # By default, child workflows run on the same task queue as the parent, which was defined in worker_runner.py
-            child_handle = await workflow.start_child_workflow(
+            item_id = item['store_product_service_id']
+            child_handle = await workflow.start_child_workflow( # type: ignore[call-overload]    
                 ItemWorkflow.run,
-                item_id,
+                item,
                 self.order_id,
                 # CRITICAL: Pass the Parent's Workflow ID so the Child can signal back
                 workflow.info().workflow_id,
                 # This is a Temporal Execution ID different from previous one, it ensures if parent restarts, it restarts the same child
-                id=f"order-{order_id}-item-{item_id}",
+                id=f"order-{self.order_id}-item-{item_id}",
                 parent_close_policy=workflow.ParentClosePolicy.REQUEST_CANCEL, # If parent dies, cancel children
             )
             self.item_handles[item_id] = child_handle
@@ -68,11 +84,12 @@ class OrderWorkflow:
         # Summary: this line is the "sentinel" that keeps workflow process alive, durable, and ready to receive signals
         # until order reaches a final, resolved status code
         await workflow.wait_condition(lambda: not self._keep_running)
-        workflow.logger.info(f"Order {order_id} finished with final status code: {self.current_status_code}")
-
+        
         # Wait for all child workflows to confirm termination (optional but clean)
         # await asyncio.gather(*[handle.result() for handle in self.child_handles], return_exceptions=True)
 
+        workflow.logger.info(f"Order {self.order_id} finished with final status code: {self.current_status_code}")
+    
     # Helper function to trigger the Activity if the status has changed
     async def _update_db_status_if_changed(self, new_status_code: str):
         """
@@ -85,7 +102,7 @@ class OrderWorkflow:
             self.current_status_code = new_status_code
 
             # Schedule the Activity to reliably synchronize/update the DB status code
-            await workflow.execute_activity(
+            await workflow.execute_activity(  # type: ignore
                 order_activities.update_order_status_in_db,
                 self.order_id,
                 self.current_status_code,
@@ -188,7 +205,7 @@ class OrderWorkflow:
         # self.item_handles is a Dict then .items() returns (key, value) pairs, 
         # where item_id gets the key and handle gets the value
         for item_id, handle in self.item_handles.items():
-            query_tasks.append(handle.query(ItemWorkflow.get_status))
+            query_tasks.append(handle.query(ItemWorkflow.get_status))   # type: ignore[attr-defined]
 
         # Gather all query results
         results = await asyncio.gather(*query_tasks)
