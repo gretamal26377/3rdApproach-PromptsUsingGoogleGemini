@@ -1,4 +1,6 @@
-from sys import exception
+
+# --- Imports ---
+from typing import Dict
 from temporalio import activity, exceptions
 from pydantic import BaseModel
 from ..app.shared.database import db
@@ -21,6 +23,25 @@ class ProcessRefundResult(BaseModel):
     success: bool = True
 
 # --- Activities ---
+@activity.defn
+async def create_order_in_db(order_data: Dict) -> int:
+    """
+    Persists a new Order in DB using all provided fields.
+    Returns the new order_id
+    """
+    try:
+        new_order = Orders()
+        for k, v in order_data.items():
+            setattr(new_order, k, v)
+        db.session.add(new_order)
+        db.session.commit()
+        logging.info(f"Order Activity: Created Order {new_order.order_id} in DB")
+        return new_order.order_id
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Order Activity: Failed to create Order: {e}")
+        raise exceptions.ApplicationError(f"Failed to create Order: {e}", non_retryable=False)
+
 @activity.defn
 async def update_order_status_in_db(order_id: int, new_status_code: str) -> UpdateOrderStatusResult:
     """

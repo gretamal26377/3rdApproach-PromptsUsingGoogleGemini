@@ -25,23 +25,38 @@ class ItemWorkflow:
         self._keep_running = True
 
     @workflow.run
-    async def run(self, item_id: int, order_id: int, parent_workflow_id: str):
-        self.item_id = item_id
+    async def run(self, item_data: dict, order_id: int, parent_workflow_id: str):
+        """
+        item_data: dict with all OrderDetails fields except order_id (which is provided separately)
+        order_id: int, parent_workflow_id: str
+        """
         self.order_id = order_id
+        self.item_id = item_data.get('store_product_service_id')
         
         # Get the external handle of the Parent Workflow (needed for the cancel signal)
         self._parent_handle = workflow.get_external_workflow_handle(parent_workflow_id)
 
-        # Initial status set: OrderWorkflow handles the initial status transition
+        # Persist OrderDetails row via Item Activity
+        detail_data = dict(item_data)
+        detail_data['order_id'] = order_id
+        await workflow.execute_activity(
+            item_activities.create_order_detail_in_db,
+            detail_data,
+            start_to_close_timeout=timedelta(seconds=10),
+        )
+        workflow.logger.info(f"Item Workflow {self.item_id} started with status: {self.current_status_code}")
+        workflow.logger.info(f"ItemWorkflow: Created OrderDetail for item {self.item_id} in DB")
+
+        # Paid Status Set: OrderWorkflow handles this status transition
         await self.set_status("paid")
-        workflow.logger.info(f"Item Workflow {item_id} started with status: {self.current_status_code}")
+        workflow.logger.info(f"Item Workflow {self.item_id} moved to status: {self.current_status_code}")
 
         # The workflow now waits indefinitely for signals to start a Batch Process 
         # or for a final cancellation
         await workflow.wait_condition(lambda: not self._keep_running)
         
         workflow.logger.info(
-            f"Item Workflow {item_id} finished with status: {self.current_status_code}"
+            f"Item Workflow {self.item_id} finished with status: {self.current_status_code}"
         )
 
     # Centralized method for internal and external status changes
@@ -59,12 +74,12 @@ class ItemWorkflow:
     @workflow.signal
     async def fill_item_batch(self) -> None:
         """
-        Triggered by the Parent Order Workflow to perform the filling batch.
+        Triggered by the Parent Order Workflow to perform the Filling Batch.
         This runs the Filling Activity and updates its internal status
         """
         if self.current_status_code == "paid":
-            workflow.logger.info(f"Item {self.item_id} executing fulfillment Activity")
-            assert self.item_id is not None
+            workflow.logger.info(f"Item {self.item_id} queuing Filling Activity to be executed")
+            assert self.order_id is not None and self.item_id is not None
 
             # Execute the Activity for filling
             result: item_activities.ItemActivityOutput = await workflow.execute_activity(
@@ -73,7 +88,7 @@ class ItemWorkflow:
                 start_to_close_timeout=timedelta(minutes=5),
             )
 
-            # The result contains the new status (filled or former status if not processable)
+            # The result contains the new status (filled or keeps the same paid if it couldn't be processed)
             await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
@@ -83,11 +98,11 @@ class ItemWorkflow:
     @workflow.signal
     async def ship_item_batch(self) -> None:
         """
-        Triggered by the Parent Order Workflow to perform the shipping batch
+        Triggered by the Parent Order Workflow to perform the Shipping Batch
         """
         if self.current_status_code == "filled":
-            workflow.logger.info(f"Item {self.item_id} executing shipment Activity")
-            assert self.item_id is not None
+            workflow.logger.info(f"Item {self.item_id} queuing Shipping Activity to be executed")
+            assert self.order_id is not None and self.item_id is not None
 
             # Execute the Activity for shipment
             result: item_activities.ItemShipmentResult = await workflow.execute_activity(
@@ -95,7 +110,7 @@ class ItemWorkflow:
                 item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
                 start_to_close_timeout=timedelta(minutes=5),
             )
-            # The result contains the new status (filled or former status if not processable)
+            # The result contains the new status (filled or keeps the same filled if it couldn't be processed)
             await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
@@ -105,11 +120,11 @@ class ItemWorkflow:
     @workflow.signal
     async def deliver_item_batch(self) -> None:
         """
-        Triggered by the Parent Order Workflow to perform the delivery batch
+        Triggered by the Parent Order Workflow to perform the Delivery Batch
         """
         if self.current_status_code == "shipped":
-            workflow.logger.info(f"Item {self.item_id} executing delivery Activity")
-            assert self.item_id is not None
+            workflow.logger.info(f"Item {self.item_id} queuing Delivery Activity to be executed")
+            assert self.order_id is not None and self.item_id is not None
 
             # Execute the Activity for delivery
             result: item_activities.ItemActivityOutput = await workflow.execute_activity(
@@ -118,12 +133,79 @@ class ItemWorkflow:
                 start_to_close_timeout=timedelta(minutes=5),
             )
 
-            # The result contains the new status (delivered or former status if not processable)
+            # The result contains the new status (delivered or keeps the same shipped if it couldn't be processed)
             await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
                 f"Item {self.item_id} skipped delivery, status is {self.current_status_code}"
             )
+
+    @workflow.signal
+    async def return_item_batch(self):
+        """Triggered by the Parent Order Workflow to perform the Return Batch"""
+        if self.current_status_code == "delivered":
+            workflow.logger.info(f"Item {self.item_id} queuing Return Activity to be executed")
+            assert self.order_id is not None and self.item_id is not None
+
+            # Execute the Activity for return
+            result: item_activities.ItemActivityOutput = await workflow.execute_activity(
+                item_activities.perform_item_return,
+                item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
+                start_to_close_timeout=timedelta(minutes=5),
+            )
+
+            # The result contains the new status (returned or keeps the same if it couldn't be processed)
+            await self.set_status(result.new_item_status_code)
+        else:
+            workflow.logger.warning(
+                f"Item {self.item_id} skipped return, status is {self.current_status_code}"
+            )
+
+    @workflow.signal
+    async def refund_item_batch(self):
+        """Triggered by the Parent Order Workflow to perform the Refund Batch"""
+        if self.current_status_code in ["returned", "cancelled"]:
+            workflow.logger.info(f"Item {self.item_id} queuing Refund Activity to be executed")
+            assert self.order_id is not None and self.item_id is not None
+
+             # Execute the Activity for refund
+            result: item_activities.ItemActivityOutput = await workflow.execute_activity(
+                item_activities.perform_item_refund,
+                item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
+                start_to_close_timeout=timedelta(minutes=5),
+            )
+
+            # The result contains the new status (delivered or keeps the same if it couldn't be processed)
+            await self.set_status(result.new_item_status_code)           # Refund is terminal for the item
+        else:
+            workflow.logger.warning(
+                f"Item {self.item_id} skipped refund, status is {self.current_status_code}"
+            )
+
+    @workflow.signal
+    async def accept_item_batch(self):
+        """Triggered by the Parent Order Workflow to perform the Acceptance Batch"""
+        if self.current_status_code in ["delivered", "refunded"]:
+            workflow.logger.info(f"Item {self.item_id} queuing Acceptance Activity to be executed")
+            assert self.order_id is not None and self.item_id is not None
+
+            # Execute the Activity for acceptance
+            result: item_activities.ItemActivityOutput = await workflow.execute_activity(
+                item_activities.perform_item_acceptance,
+                item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
+                start_to_close_timeout=timedelta(minutes=5),
+            )
+
+            # The result contains the new status (customer_accepted or keeps the same if it couldn't be processed)
+            await self.set_status(result.new_item_status_code)
+
+            # Acceptance is terminal for the Item
+            self._keep_running = False
+        else:
+            workflow.logger.warning(
+                f"Item {self.item_id} skipped acceptance, status is {self.current_status_code}"
+            )
+
 
     # --- CANCEL STATUS ---
     @workflow.signal

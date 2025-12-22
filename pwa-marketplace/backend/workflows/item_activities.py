@@ -1,3 +1,6 @@
+
+# --- Imports ---
+from typing import Dict, Tuple
 from temporalio import activity, exceptions
 from pydantic import BaseModel
 from ..app.shared.database import db
@@ -24,11 +27,32 @@ class ItemShipmentResult(BaseModel):
     success: bool = True
     new_item_status_code: str
 
+# --- Activity to persist OrderDetails row and return composite key ---
+@activity.defn
+async def create_order_detail_in_db(detail_data: Dict) -> Tuple[int, int]:
+    """
+    Persists a new OrderDetails row in DB using all provided fields.
+    Returns the composite primary key (order_id, store_product_service_id)
+    """
+    try:
+        new_detail = OrderDetails()
+        for k, v in detail_data.items():
+            setattr(new_detail, k, v)
+        db.session.add(new_detail)
+        db.session.commit()
+        logging.info(f"Item Activity: Created OrderDetail (order_id={new_detail.order_id}, store_product_service_id={new_detail.store_product_service_id}) in DB")
+        return (new_detail.order_id, new_detail.store_product_service_id)
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Item Activity: Failed to create OrderDetail: {e}")
+        raise exceptions.ApplicationError(f"Failed to create OrderDetail: {e}", non_retryable=False)
+
 @activity.defn
 async def perform_item_fill(item_data: ItemActivityInput) -> ItemActivityOutput:
     """
-    Mock Activity to handle physical Item Filling tasks (e.g., picking, packing)
-    Simulates a chance of failure (e.g., lack of stock)
+    Simulates an external integration for physical Item Filling (e.g., warehouse picking/packing).
+    This activity does NOT call a real external service; it simulates latency and random failure.
+    Replace with a real API call to a warehouse management system for production use
     """
     activity.logger.info(f"Activity: Starting Filling for Item {item_data.item_id}")
 
@@ -47,9 +71,8 @@ async def perform_item_fill(item_data: ItemActivityInput) -> ItemActivityOutput:
         )
     
     success_status_code = "filled"
-    # Issue?: Should this log line be after the status update?
-    activity.logger.info(f"Activity: Item {item_data.item_id} successfully filled")
     _update_item_status(item_data.order_id, item_data.item_id, success_status_code)
+    activity.logger.info(f"Activity: Item {item_data.item_id} successfully filled")
     return ItemActivityOutput(
         item_id=item_data.item_id,
         success=True,
@@ -60,7 +83,9 @@ async def perform_item_fill(item_data: ItemActivityInput) -> ItemActivityOutput:
 @activity.defn
 async def perform_item_shipment(item_data: ItemActivityInput) -> ItemShipmentResult:
     """
-    Mock Activity to handle Item Shipping tasks
+    Simulates an external integration for Item Shipping (e.g., carrier handoff, label generation).
+    This activity does NOT call a real shipping API; it simulates latency and generates a fake tracking number.
+    Replace with a real carrier/shipping API call for production use
     """
     activity.logger.info(f"Activity: Starting shipment for Item {item_data.item_id}")
     
@@ -83,7 +108,9 @@ async def perform_item_shipment(item_data: ItemActivityInput) -> ItemShipmentRes
 @activity.defn
 async def perform_item_delivery(item_data: ItemActivityInput) -> ItemActivityOutput:
     """
-    Activity to simulate final delivery to Customer
+    Simulates an external integration for final delivery to the customer.
+    This activity does NOT call a real delivery service; it simulates delivery time and random failure.
+    Replace with a real delivery confirmation API call for production use
     """
     activity.logger.info(f"Activity: Attempting delivery for Item {item_data.item_id}")
     await asyncio.sleep(random.uniform(1.0, 3.0)) # Simulate delivery time

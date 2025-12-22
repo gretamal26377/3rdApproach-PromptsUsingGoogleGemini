@@ -1,12 +1,13 @@
 import asyncio
 from datetime import timedelta
+from turtle import pen
 from temporalio import workflow
 from typing import List, Dict   # Imported Dict for self.item_status_codes
 from . import order_activities 
 from .item_workflow import ItemWorkflow
 
 # ORDER_STATUS_CODES = [
-#    'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+#    'open', 'paid', 'pending' (means Order's paused, needs manual intervention), 'filled', 'partial_filled', 'shipped', 'partial_shipped',
 #    'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
 #    'refunded', 'partial_refunded', 'customer_accepted'
 # ]
@@ -38,7 +39,7 @@ class OrderWorkflow:
             - order_created_at
             - items: list of dicts (all OrderDetails fields)
         """
-        from datetime import timedelta
+        # Issue: Order's Data missing to persists in DB such as Order's Current Status id
         # Persist Orders row and get order_id
         order_data = {k: v for k, v in order_input.items() if k != 'items'}
         self.order_id = await workflow.execute_activity(
@@ -49,12 +50,13 @@ class OrderWorkflow:
         workflow.logger.info(f"Order {self.order_id} created and persisted via activity")
 
         # Set up item status codes
+        # items: List[Dict]
         items = order_input.get('items', [])
         item_ids = [item['store_product_service_id'] for item in items]
         self.item_status_codes = {item_id: "open" for item_id in item_ids}
 
         # Issue: Payment Processing phase should be triggered by signal through a Bulk Process, not here
-        # Status update and DB sync
+        # Order Status Update to "paid", but Items remain "open" to be persisted in DB
         await self._update_db_status_if_changed("paid")
 
         # Spawn Child Workflows for each Item, passing item data and order_id
@@ -75,6 +77,7 @@ class OrderWorkflow:
                 parent_close_policy=workflow.ParentClosePolicy.REQUEST_CANCEL, # If parent dies, cancel children
             )
             self.item_handles[item_id] = child_handle
+            
             # If Order Status was moved to "paid", then move Item internal status map to "paid"
             self.item_status_codes[item_id] = "paid"
         
@@ -159,6 +162,48 @@ class OrderWorkflow:
         else:
             workflow.logger.warning(f"Cannot start delivery. Order is {self.current_status_code}")
 
+    @workflow.signal
+    async def start_return(self):
+        """Initiates the Batch Return Process for all Order's Items"""
+        if self.is_busy:
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Return Batch aborted")
+            return
+
+        if self.current_status_code in ["delivered", "partial_delivered", "partial_returned"]:
+            await self._run_batch_phase(
+                item_signal_name="return_item_batch"
+            )
+        else:
+            workflow.logger.warning(f"Cannot start return. Order is {self.current_status_code}")
+
+    @workflow.signal
+    async def start_refund(self):
+        """Initiates the Batch Refund Process for all Order's Items"""
+        if self.is_busy:
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Refund Batch aborted")
+            return
+        
+        if self.current_status_code in ["cancelled", "partial_cancelled", "returned", "partial_returned", "partial_refunded"]:
+            await self._run_batch_phase(
+                item_signal_name="refund_item_batch"
+            )
+        else:
+            workflow.logger.warning(f"Cannot start refund. Order is {self.current_status_code}")
+
+    @workflow.signal
+    async def start_acceptance(self):
+        """Initiates the Batch Acceptance Process for all Order's Items"""
+        if self.is_busy:
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Acceptance Batch aborted")
+            return
+
+        if self.current_status_code in ["delivered", "refunded", "partial_delivered", "partial_refunded"]:
+            await self._run_batch_phase(
+                item_signal_name="accept_item_batch"
+            )
+        else:
+            workflow.logger.warning(f"Cannot start acceptance. Order is {self.current_status_code}")
+
     
     # --- CORE BATCH EXECUTION LOGIC ---
     async def _run_batch_phase(self, item_signal_name: str):
@@ -239,56 +284,60 @@ class OrderWorkflow:
         
         # Define statuses based on their progress level (highest possible status first)
         accepted = counts.get("customer_accepted", 0)
+        refunded = counts.get("refunded", 0)
+        returned = counts.get("returned", 0)
         delivered = counts.get("delivered", 0)
         shipped = counts.get("shipped", 0)
+        cancelled = counts.get("cancelled", 0)
         filled = counts.get("filled", 0)
         paid = counts.get("paid", 0)
-        cancelled = counts.get("cancelled", 0)
+        open = counts.get("open", 0)
+        pending = counts.get("pending", 0)
         
-        # Issue: 'pending', 'partial_pending', 'returned', 'partial_returned', 'refunded', 'partial_refunded' are missing
-
-        # TERMINAL STATUSES (Order is done)
-        if accepted + delivered + shipped + filled + paid + cancelled == total:
+        # QUICK STATUSES TO COMPUTE
+        if accepted + refunded + returned + delivered + shipped + cancelled + filled + paid + open + pending == total:
             # Full Successful Completion
             if accepted == total:
                 return "customer_accepted"
-            if delivered + accepted == total:
+            if refunded == total:
+                return "refunded"
+            if returned == total:
+                return "returned"
+            if delivered == total:
                 return "delivered"
-            # Full Failure
+            if shipped == total:
+                return "shipped"
+            # Full Order Cancellation
             if cancelled == total:
                 return "cancelled"
+            if filled == total:
+                return "filled"
+            if paid == total:
+                return "paid"
+            if open == total:
+                return "open"
+            else :
+                return "pending" # Fallback: There's no other choice if we're inside this block
 
         # PROGRESS/PARTIAL STATUSES (Order is in progress)
-        # Is anything in the Shipping or Delivery phase?
-        in_shipping_or_further = accepted + delivered + shipped
-        if in_shipping_or_further > 0:
-            # Issue: "partial_delivered" status missing
-            if in_shipping_or_further == total - cancelled: # All non-cancelled items are shipped/delivered
-                return "shipped" # All shipped (or delivered but not yet accepted)
-            else:
-                # Some are shipped others are still being processed (paid/filled)
-                return "partial_shipped"
+        if refunded > 0:
+            return "partial_refunded"
+        if returned > 0:
+            return "partial_returned"
+        if delivered > 0:
+            return "partial_delivered"
+        if shipped > 0:
+            return "partial_shipped"
+        if cancelled > 0:
+            return "partial_cancelled"
+        if filled > 0:
+            return "partial_filled"
+        if pending > 0:
+            return "partial_pending"
+        else:
+            return "pending" # Fallback case that needs manual review
 
-        # Issue: "partial_cancelled" status missing
-        
-        # Is anything in Filling phase?
-        in_filling = filled
-        if in_filling > 0:
-            if in_filling == total:
-                 return "filled"
-            else:
-                # Some are filled, others are still paid/pending
-                return "partial_filled"
-
-        # Is anything in Paid phase?
-        if paid > 0:
-             return "paid"
-
-        # Fallback to current or "open" if aggregation fails to find a higher status
-        # if self.current_status_code is falsy (None or empty), return "open"
-        return self.current_status_code or "open"
-
-
+    
     # --- EXTERNAL SIGNALS (Must be guarded by self.is_busy) ---
     @workflow.signal
     async def cancel_order(self):
