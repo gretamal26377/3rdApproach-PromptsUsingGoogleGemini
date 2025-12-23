@@ -7,7 +7,7 @@ from typing import Optional # Required for type hinting the external handle
 from . import item_activities # Import the activities file
 
 # ITEM_STATUS_CODES = [
-#        'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+#        'open', 'paid', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
 #        'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
 #        'refunded', 'partial_refunded', 'customer_accepted'
 # ]
@@ -18,11 +18,13 @@ class ItemWorkflow:
         self.item_id: int | None = None
         self.order_id: int | None = None
         self.current_status_code = "open"
-        # The parent handle is now only used for emergency signals (like full cancellation), 
+        # The parent handle is now only used for emergency signals (like full cancellation),
         # NOT for real-time status updates after every step
         self._parent_handle: Optional[workflow.ExternalWorkflowHandle] = None # Store the Parent's external handle
         # This keeps the workflow alive indefinitely until Order Completion or Cancellation
         self._keep_running = True
+        # Acceptance timer tracking
+        self._acceptance_timer_started = False
 
     @workflow.run
     async def run(self, item_data: dict, order_id: int, parent_workflow_id: str):
@@ -65,6 +67,7 @@ class ItemWorkflow:
         if self.current_status_code != new_status_code:
             workflow.logger.info(f"Item {self.item_id} status internally changed to: {new_status_code}")
             self.current_status_code = new_status_code
+            await self._maybe_schedule_acceptance_timer(new_status_code)
             
             # Note: We do NOT signal the parent here. The Parent will QUERY or receive 
             # the status after the Batch Process is complete
@@ -141,7 +144,7 @@ class ItemWorkflow:
             )
 
     @workflow.signal
-    async def return_item_batch(self):
+    async def return_item_batch(self) -> None:
         """Triggered by the Parent Order Workflow to perform the Return Batch"""
         if self.current_status_code == "delivered":
             workflow.logger.info(f"Item {self.item_id} queuing Return Activity to be executed")
@@ -162,7 +165,7 @@ class ItemWorkflow:
             )
 
     @workflow.signal
-    async def refund_item_batch(self):
+    async def refund_item_batch(self) -> None:
         """Triggered by the Parent Order Workflow to perform the Refund Batch"""
         if self.current_status_code in ["returned", "cancelled"]:
             workflow.logger.info(f"Item {self.item_id} queuing Refund Activity to be executed")
@@ -183,7 +186,7 @@ class ItemWorkflow:
             )
 
     @workflow.signal
-    async def accept_item_batch(self):
+    async def accept_item_batch(self) -> None:
         """Triggered by the Parent Order Workflow to perform the Acceptance Batch"""
         if self.current_status_code in ["delivered", "refunded"]:
             workflow.logger.info(f"Item {self.item_id} queuing Acceptance Activity to be executed")
@@ -205,6 +208,43 @@ class ItemWorkflow:
             workflow.logger.warning(
                 f"Item {self.item_id} skipped acceptance, status is {self.current_status_code}"
             )
+
+    # --- INTERNAL: Schedule Acceptance after 10 days of Delivered/Refunded ---
+    async def _maybe_schedule_acceptance_timer(self, status_code: str):
+        """
+        When the Item reaches delivered/refunded status code, start a one-time 10-day timer.
+        After it fires, if still eligible and workflow alive, signal Parent start_acceptance
+        """
+        if status_code not in ["delivered", "refunded"]:
+            return
+        if self._acceptance_timer_started:
+            return
+        if not self._parent_handle:
+            workflow.logger.warning(f"Item {self.item_id} cannot schedule Acceptance Timer: Missing Parent Handle")
+            return
+
+        self._acceptance_timer_started = True
+        deadline = workflow.now() + timedelta(days=10)
+        handle = self._parent_handle
+
+        async def _timer_task():
+            # Sleep until deadline; Temporal timers are durable
+            delay = (deadline - workflow.now()).total_seconds()
+            if delay > 0:
+                await workflow.sleep(delay)
+            # Re-check eligibility and liveness
+            if not self._keep_running:
+                return
+            if self.current_status_code not in ["delivered", "refunded"]:
+                return
+            try:
+                workflow.logger.info(f"Item {self.item_id} timer elapsed; signaling Parent for Acceptance")
+                await handle.signal("start_acceptance")
+            except Exception as e:
+                workflow.logger.warning(f"Item {self.item_id} Acceptance Signal failed after Timer reached deadline: {e}")
+
+        # Fire-and-forget timer task
+        asyncio.create_task(_timer_task())  # type: ignore[attr-defined]
 
 
     # --- CANCEL STATUS ---

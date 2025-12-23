@@ -198,9 +198,11 @@ class OrderWorkflow:
             return
 
         if self.current_status_code in ["delivered", "refunded", "partial_delivered", "partial_refunded"]:
-            await self._run_batch_phase(
-                item_signal_name="accept_item_batch"
-            )
+            #await self._run_batch_phase(
+            #    item_signal_name="accept_item_batch"
+            #)
+            await self._query_and_aggregate_status()
+
         else:
             workflow.logger.warning(f"Cannot start acceptance. Order is {self.current_status_code}")
 
@@ -316,9 +318,13 @@ class OrderWorkflow:
                 return "paid"
             if open == total:
                 return "open"
-            else :
-                return "pending" # Fallback: There's no other choice if we're inside this block
+            # else :
+            #    return "pending" # Fallback: There's no other choice if we're inside this block
 
+        # MIXED/COMPLEX STATUSES
+        if delivered + refunded == total:
+            return "customer_accepted"
+            
         # PROGRESS/PARTIAL STATUSES (Order is in progress)
         if refunded > 0:
             return "partial_refunded"

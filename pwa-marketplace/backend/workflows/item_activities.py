@@ -136,8 +136,61 @@ async def perform_item_delivery(item_data: ItemActivityInput) -> ItemActivityOut
         new_item_status_code=success_status_code
     )
 
+@activity.defn
+async def perform_item_return(item_data: ItemActivityInput) -> ItemActivityOutput:
+    """
+    Simulates processing a return (eg: Return Material Authorization --RMA-- generation). Marks returned in DB
+    """
+    activity.logger.info(f"Activity: Starting return for Item {item_data.item_id}")
 
-def _update_item_status(order_id: int, item_id: int, new_status_code: str) -> None:
+    await asyncio.sleep(0.5)
+
+    success_status_code = "returned"
+    _update_DB_item_status(item_data.order_id, item_data.item_id, success_status_code)
+    return ItemActivityOutput(
+        item_id=item_data.item_id,
+        success=True,
+        message=f"Item {item_data.item_id} returned",
+        new_item_status_code=success_status_code,
+    )
+
+@activity.defn
+async def perform_item_refund(item_data: ItemActivityInput) -> ItemActivityOutput:
+    """
+    Simulates processing a refund. Marks refunded in DB
+    """
+    activity.logger.info(f"Activity: Starting refund for Item {item_data.item_id}")
+
+    await asyncio.sleep(0.5)
+
+    success_status_code = "refunded"
+    _update_DB_item_status(item_data.order_id, item_data.item_id, success_status_code)
+    return ItemActivityOutput(
+        item_id=item_data.item_id,
+        success=True,
+        message=f"Item {item_data.item_id} refunded",
+        new_item_status_code=success_status_code,
+    )
+
+@activity.defn
+async def perform_item_acceptance(item_data: ItemActivityInput) -> ItemActivityOutput:
+    """
+    Records Item Customer Acceptance after delivery/refund (Item Status Terminal)
+    """
+    activity.logger.info(f"Activity: Recording acceptance for Item {item_data.item_id}")
+
+    await asyncio.sleep(0.2)
+
+    success_status_code = "customer_accepted"
+    _update_DB_item_status(item_data.order_id, item_data.item_id, success_status_code)
+    return ItemActivityOutput(
+        item_id=item_data.item_id,
+        success=True,
+        message=f"Item {item_data.item_id} accepted by Customer",
+        new_item_status_code=success_status_code,
+    )
+
+def _update_DB_item_status(order_id: int, item_id: int, new_status_code: str) -> None:
     """Update OrderDetails status with retry semantics and Temporal Best Practices"""
     try:
         status = OrderStatuses.query.filter_by(status_code=new_status_code).first()
