@@ -1,8 +1,8 @@
 import os
 from ..shared.database import db
 from ..shared.models import (
-    Users, Stores, ProductsServices, StoreProductsServices, 
-    EntityStatuses, Orders, OrderStatuses
+    Users, Stores, ProductsServices, StoreProductsServices,
+    EntityStatuses, Orders
 )
 import logging
 from temporalio.client import Client
@@ -15,12 +15,12 @@ import bleach
 TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
 
 def get_users_logic():
-    users = User.query.all()
+    users = Users.query.all()
     users_data = [{'id': user.id, 'username': user.username, 'email': user.email, 'is_admin': user.is_admin} for user in users]
     return users_data, 200
 
 def get_user_logic(user_id):
-    user = User.query.get_or_404(user_id)
+    user = Users.query.get_or_404(user_id)
     user_data = {
         'id': user.id,
         'username': user.username,
@@ -30,7 +30,7 @@ def get_user_logic(user_id):
     return user_data, 200
 
 def update_user_logic(user_id, data):
-    user = User.query.get_or_404(user_id)
+    user = Users.query.get_or_404(user_id)
     if not data:
         return {'message': 'No data provided'}, 400
     try:
@@ -47,43 +47,66 @@ def update_user_logic(user_id, data):
         logging.error(f"Error updating user: {e}")
         return {'message': 'Failed to update user'}, 500
 
-def delete_user_logic(user_id):
-    user = User.query.get_or_404(user_id)
+def inactivate_user_logic(user_id):
+    user = Users.query.get_or_404(user_id)
     try:
-        db.session.delete(user)
+        inactive = EntityStatuses.query.filter_by(status_code='inactive').first()
+        if not inactive:
+            logging.error("Inactive status not found")
+            return {'message': 'Inactive status not configured'}, 500
+        user.user_status_id = inactive.status_id
         db.session.commit()
-        return {'message': 'User deleted successfully'}, 200
+        return {'message': 'User Inactivated successfully'}, 200
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error deleting user: {e}")
-        return {'message': 'Failed to delete user'}, 500
+        logging.error(f"Error Inactivating User: {e}")
+        return {'message': 'Failed to Inactivate User'}, 500
 
 def create_store_logic(current_user, data):
-    required_fields = ['name', 'description']
+    required_fields = ['name', 'description', 'store_email', 'store_address']
     if not all(field in data for field in required_fields):
         return {'message': 'Missing required fields'}, 400
     try:
         # Sanitize store name and description
         name = bleach.clean(data['name'], strip=True)
         description = bleach.clean(data['description'], strip=True)
-        new_store = Store(name=name, description=description, owner_id=current_user.id)
+        store_email = bleach.clean(data['store_email'], strip=True)
+        store_address = bleach.clean(data['store_address'], strip=True)
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        if not active_status:
+            logging.error("Active status not found")
+            return {'message': 'Active status not configured'}, 500
+        new_store = Stores()
+        # Map to model fields; fill required columns with provided data where possible
+        new_store.store_name = name
+        new_store.store_description = description
+        new_store.store_email = store_email
+        new_store.store_address = store_address
+        new_store.store_status_id = active_status.status_id
+        if 'store_phone' in data:
+            new_store.store_phone = bleach.clean(data['store_phone'], strip=True)
+        if 'store_pic_path' in data:
+            new_store.store_pic_path = bleach.clean(data['store_pic_path'], strip=True)
         db.session.add(new_store)
         db.session.commit()
-        return {'message': 'Store created successfully', 'store_id': new_store.id}, 201
+        return {'message': 'Store created successfully', 'store_id': new_store.store_id}, 201
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error creating store: {e}")
         return {'message': 'Failed to create store'}, 500
 
 def update_store_logic(current_user, store_id, data):
-    store = Store.query.get_or_404(store_id)
-    if store.owner_id != current_user.id:
-        return {'message': 'Unauthorized'}, 403
+    store = Stores.query.get_or_404(store_id)
     try:
-        if 'name' in data:
-            store.name = bleach.clean(data['name'], strip=True)
+        
+        store.store_name = bleach.clean(data['name'], strip=True)
         if 'description' in data:
-            store.description = bleach.clean(data['description'], strip=True)
+            store.store_description = bleach.clean(data['description'], strip=True)
+        store.store_email = bleach.clean(data['store_email'], strip=True)
+        store.store_address = bleach.clean(data['store_address'], strip=True)
+        store.store_phone = bleach.clean(data['store_phone'], strip=True)
+        if 'store_pic_path' in data:
+            store.store_pic_path = bleach.clean(data['store_pic_path'], strip=True)
         db.session.commit()
         return {'message': 'Store updated successfully'}, 200
     except Exception as e:
@@ -91,18 +114,23 @@ def update_store_logic(current_user, store_id, data):
         logging.error(f"Error updating store: {e}")
         return {'message': 'Failed to update store'}, 500
 
-def delete_store_logic(current_user, store_id):
-    store = Store.query.get_or_404(store_id)
-    if store.owner_id != current_user.id:
-        return {'message': 'Unauthorized'}, 403
+def inactivate_store_logic(current_user, store_id):
+    store = Stores.query.get_or_404(store_id)
     try:
-        db.session.delete(store)
+        inactive = EntityStatuses.query.filter_by(status_code='inactive').first()
+        if not inactive:
+            logging.error("Inactive Status not found")
+            return {'message': 'Inactive Status not configured'}, 500
+        store.store_status_id = inactive.status_id
+        # Also inactivate linked store_products_services
+        StoreProductsServices.query.filter_by(store_id=store_id).update({'status_id': inactive.status_id})
+        # Issue?: Shouldn't we also inactivate Store User Roles
         db.session.commit()
-        return {'message': 'Store deleted successfully'}, 200
+        return {'message': 'Store Inactivated successfully'}, 200
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error deleting store: {e}")
-        return {'message': 'Failed to delete store'}, 500
+        logging.error(f"Error Inactivating Store: {e}")
+        return {'message': 'Failed to Inactivate Store'}, 500
 
 def create_product_logic(current_customer, data):
     required_fields = ['product_service_name', 'product_service_description', 'product_service_category_id', 'product_service_pic_path', 'store_id', 'price', 'stock']
@@ -113,29 +141,33 @@ def create_product_logic(current_customer, data):
         name = bleach.clean(data['product_service_name'], strip=True)
         description = bleach.clean(data['product_service_description'], strip=True)
         pic_path = bleach.clean(data['product_service_pic_path'], strip=True)
-        active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        if not active_status:
+            logging.error("Active Status not found")
+            return {'message': 'Active Status not configured'}, 500
+        active_status_id = active_status.status_id
         # Check store exists and is active
         store = Stores.query.filter_by(store_id=data['store_id'], store_status_id=active_status_id).first()
         if not store:
             return {'message': 'Store not found or Inactive'}, 404
         # Create product/service
-        new_product = ProductsServices(
-            product_service_name=name,
-            product_service_description=description,
-            product_service_pic_path=pic_path,
-            product_service_category_id=data['product_service_category_id'],
-            product_service_status_id=active_status_id
-        )
+        new_product = ProductsServices()
+        new_product.product_service_name = name
+        new_product.product_service_description = description
+        new_product.product_service_pic_path = pic_path
+        new_product.product_service_category_id = data['product_service_category_id']
+        new_product.product_service_status_id = active_status_id
         db.session.add(new_product)
         db.session.flush()  # Get product_service_id
+
         # Create store-product-service link
-        sps = StoreProductsServices(
-            store_id=store.store_id,
-            product_service_id=new_product.product_service_id,
-            price=data['price'],
-            stock=data['stock'],
-            status_id=active_status_id
-        )
+        # Issue: There would be another function to handle linking SPS
+        sps = StoreProductsServices()
+        sps.store_id = store.store_id
+        sps.product_service_id = new_product.product_service_id
+        sps.price = data['price']
+        sps.stock = data['stock']
+        sps.status_id = active_status_id
         db.session.add(sps)
         db.session.commit()
         return {'message': 'Product/Service created successfully', 'product_service_id': new_product.product_service_id}, 201
@@ -145,8 +177,11 @@ def create_product_logic(current_customer, data):
         return {'message': 'Failed to create Product/Service'}, 500
 
 def update_product_logic(current_customer, product_service_id, data):
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    product = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status_id).first()
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        logging.error("Active Status not found")
+        return {'message': 'Active Status not configured'}, 500
+    product = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status.status_id).first()
     if not product:
         return {'message': 'Product/Service not found or Inactive'}, 404
     try:
@@ -165,13 +200,22 @@ def update_product_logic(current_customer, product_service_id, data):
         logging.error(f"Error updating Product/Service: {e}")
         return {'message': 'Failed to update Product/Service'}, 500
 
-def delete_product_logic(current_customer, product_service_id):
-    active_status_id = EntityStatuses.query.filter_by(status_code='active').first().status_id
-    product = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status_id).first()
-    if not product:
+def inactivate_product_logic(current_customer, product_service_id):
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        logging.error("Active Status not found")
+        return {'message': 'Active Status not configured'}, 500
+    product_service = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status.status_id).first()
+    if not product_service:
         return {'message': 'Product/Service not found or Inactive'}, 404
     try:
-        db.session.delete(product)
+        inactive = EntityStatuses.query.filter_by(status_code='inactive').first()
+        if not inactive:
+            logging.error("Inactive Status not found")
+            return {'message': 'Inactive Status not configured'}, 500
+        product_service.product_service_status_id = inactive.status_id
+        # Inactivate linked store products/services rows
+        StoreProductsServices.query.filter_by(product_service_id=product_service_id).update({'status_id': inactive.status_id})
         db.session.commit()
         return {'message': 'Product/Service Inactivated successfully'}, 200
     except Exception as e:

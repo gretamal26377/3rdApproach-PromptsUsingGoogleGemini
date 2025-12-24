@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify, request
 from ..shared.auth import token_required, admin_required
 from .admin_management import (
-    get_users_logic, get_user_logic, update_user_logic, delete_user_logic,
-    create_store_logic, update_store_logic, delete_store_logic,
-    create_product_logic, update_product_logic, delete_product_logic,
+    get_users_logic, get_user_logic, update_user_logic, inactivate_user_logic,
+    create_store_logic, update_store_logic, inactivate_store_logic,
+    create_product_logic, update_product_logic, inactivate_product_logic,
     mark_order_shipped_logic, refund_order_logic
 )
 
@@ -35,8 +35,8 @@ def update_user(current_user, user_id):
 @admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
 @token_required
 @admin_required
-def delete_user(current_user, user_id):
-    result, status = delete_user_logic(user_id)
+def inactivate_user(current_user, user_id):
+    result, status = inactivate_user_logic(user_id)
     return jsonify(result), status
 
 @admin_bp.route('/stores', methods=['POST'])
@@ -56,7 +56,7 @@ def update_store(current_user, store_id):
 @admin_bp.route('/stores/<int:store_id>', methods=['DELETE'])
 @token_required
 def delete_store(current_user, store_id):
-    result, status = delete_store_logic(current_user, store_id)
+    result, status = inactivate_store_logic(current_user, store_id)
     return jsonify(result), status
 
 @admin_bp.route('/products', methods=['POST'])
@@ -76,7 +76,7 @@ def update_product(current_user, product_id):
 @admin_bp.route('/products/<int:product_id>', methods=['DELETE'])
 @token_required
 def delete_product(current_user, product_id):
-    result, status = delete_product_logic(current_user, product_id)
+    result, status = inactivate_product_logic(current_user, product_id)
     return jsonify(result), status
 
 @admin_bp.route('/orders/<int:order_id>/ship', methods=['PATCH'])
