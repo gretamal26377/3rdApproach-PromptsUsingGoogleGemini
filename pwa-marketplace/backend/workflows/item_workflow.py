@@ -251,7 +251,7 @@ class ItemWorkflow:
     @workflow.signal
     async def cancel_item(self):
         """Signal from Parent or external system to cancel this Item"""
-        if self.current_status_code not in ["open", "paid", "filled", "partial_filled", "pending", "partial_pending"]:
+        if self.current_status_code not in ["open", "paid", "filled", "partial_filled"]:
             await self.set_status("cancelled") 
             self._keep_running = False # End the Item workflow
         else:

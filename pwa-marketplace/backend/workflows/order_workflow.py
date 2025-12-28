@@ -28,6 +28,8 @@ class OrderWorkflow:
         # Control flag to prevent other phase signals (like cancellation) during a batch run
         self.is_busy = False 
         self._keep_running = True
+        # Tracks the background refund timer task after a return is completed/requested
+        self._refund_timer_task: asyncio.Task | None = None
 
     @workflow.run
     async def run(self, order_input: dict):
@@ -116,6 +118,10 @@ class OrderWorkflow:
             if new_status_code == "customer_accepted":
                 self._keep_running = False # This ends the workflow loop in run()
 
+            # When a return is completed/requested, arm a 7-day timer to auto-trigger refund
+            if new_status_code in ["returned", "partial_returned"] and not self._refund_timer_task:
+                self._refund_timer_task = asyncio.create_task(self._auto_refund_after_return())
+
 
     # --- BATCH PHASE INITIATORS (Triggered by external systems) ---
     # This decorator is needed to register the signal with Temporal and it also allows defining overriding args such as retry_policy, etc.    
@@ -161,20 +167,6 @@ class OrderWorkflow:
             )
         else:
             workflow.logger.warning(f"Cannot start delivery. Order is {self.current_status_code}")
-
-    @workflow.signal
-    async def start_return(self):
-        """Initiates the Batch Return Process for all Order's Items"""
-        if self.is_busy:
-            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Return Batch aborted")
-            return
-
-        if self.current_status_code in ["delivered", "partial_delivered", "partial_returned"]:
-            await self._run_batch_phase(
-                item_signal_name="return_item_batch"
-            )
-        else:
-            workflow.logger.warning(f"Cannot start return. Order is {self.current_status_code}")
 
     @workflow.signal
     async def start_refund(self):
@@ -240,6 +232,27 @@ class OrderWorkflow:
         self.is_busy = False
         workflow.logger.info(f"BATCH Phase {item_signal_name} Completed")
 
+    async def _auto_refund_after_return(self):
+        """
+        Wait 7 days after an Order Return, then automatically trigger a Refund Batch
+        if the order is still in a returned/partial_returned state
+        """
+        await workflow.sleep(timedelta(days=7))
+
+        # If already refunded or accepted, skip
+        if self.current_status_code in ["refunded", "partial_refunded", "customer_accepted"]:
+            return
+
+        # Only proceed if still returned/partial_returned
+        if self.current_status_code not in ["returned", "partial_returned"]:
+            return
+
+        # Wait if a batch is in progress
+        while self.is_busy:
+            await workflow.sleep(timedelta(seconds=1))
+
+        await self._run_batch_phase(item_signal_name="refund_item_batch")
+
     async def _query_and_aggregate_status(self):
         """
         Queries all Item Workflows for their current status and calls the aggregate update function
@@ -281,7 +294,7 @@ class OrderWorkflow:
         if total == 0:
             return "open"
         
-        # Count occurrences of each item status codes and counts is the type Dict[str, int] (eg: delivered: 3, shipped:2, open:1)
+        # Count occurrences of each Item Status Codes and counts is the type Dict[str, int] (eg: delivered: 3, shipped:2, open:1)
         counts = {s: status_codes.count(s) for s in set(status_codes)}
         
         # Define statuses based on their progress level (highest possible status first)
@@ -294,10 +307,10 @@ class OrderWorkflow:
         filled = counts.get("filled", 0)
         paid = counts.get("paid", 0)
         open = counts.get("open", 0)
-        pending = counts.get("pending", 0)
+        # pending = counts.get("pending", 0)
         
         # QUICK STATUSES TO COMPUTE
-        if accepted + refunded + returned + delivered + shipped + cancelled + filled + paid + open + pending == total:
+        if accepted + refunded + returned + delivered + shipped + cancelled + filled + paid + open == total:
             # Full Successful Completion
             if accepted == total:
                 return "customer_accepted"
@@ -318,8 +331,8 @@ class OrderWorkflow:
                 return "paid"
             if open == total:
                 return "open"
-            # else :
-            #    return "pending" # Fallback: There's no other choice if we're inside this block
+            else:
+                return "pending" # Fallback choice just in case
 
         # MIXED/COMPLEX STATUSES
         if delivered + refunded == total:
@@ -338,8 +351,6 @@ class OrderWorkflow:
             return "partial_cancelled"
         if filled > 0:
             return "partial_filled"
-        if pending > 0:
-            return "partial_pending"
         else:
             return "pending" # Fallback case that needs manual review
 
@@ -366,6 +377,20 @@ class OrderWorkflow:
         
         # Rerun aggregation immediately after all items have attempted cancellation
         await self._query_and_aggregate_status()
+
+    @workflow.signal
+    async def start_return(self):
+        """Initiates the Batch Return Process for all Order's Items"""
+        if self.is_busy:
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Return Batch aborted")
+            return
+
+        if self.current_status_code in ["delivered", "partial_delivered", "partial_returned"]:
+            await self._run_batch_phase(
+                item_signal_name="return_item_batch"
+            )
+        else:
+            workflow.logger.warning(f"Cannot start return. Order is {self.current_status_code}")
 
 
     # --- QUERIES ---

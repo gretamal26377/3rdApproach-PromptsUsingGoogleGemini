@@ -32,7 +32,7 @@ def update_user(current_user, user_id):
     result, status = update_user_logic(user_id, data)
     return jsonify(result), status
 
-@admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
+@admin_bp.route('/users/<int:user_id>/inactivate', methods=['POST'])
 @token_required
 @admin_required
 def inactivate_user(current_user, user_id):
@@ -53,9 +53,9 @@ def update_store(current_user, store_id):
     result, status = update_store_logic(current_user, store_id, data)
     return jsonify(result), status
 
-@admin_bp.route('/stores/<int:store_id>', methods=['DELETE'])
+@admin_bp.route('/stores/<int:store_id>/inactivate', methods=['POST'])
 @token_required
-def delete_store(current_user, store_id):
+def inactivate_store(current_user, store_id):
     result, status = inactivate_store_logic(current_user, store_id)
     return jsonify(result), status
 
@@ -73,9 +73,9 @@ def update_product(current_user, product_id):
     result, status = update_product_logic(current_user, product_id, data)
     return jsonify(result), status
 
-@admin_bp.route('/products/<int:product_id>', methods=['DELETE'])
+@admin_bp.route('/products/<int:product_id>/inactivate', methods=['POST'])
 @token_required
-def delete_product(current_user, product_id):
+def inactivate_product(current_user, product_id):
     result, status = inactivate_product_logic(current_user, product_id)
     return jsonify(result), status
 

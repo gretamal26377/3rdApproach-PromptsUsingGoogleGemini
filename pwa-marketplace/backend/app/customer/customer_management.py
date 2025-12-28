@@ -11,6 +11,11 @@ from datetime import datetime
 from workflows.order_workflow import OrderWorkflow
 
 TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
+VALID_STATUS_CODES = [
+        'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
+        'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
+        'refunded', 'partial_refunded', 'customer_accepted'
+    ]
 
 # Temporary Temporal Client connection helper
 async def get_temporal_client():
@@ -240,12 +245,7 @@ def get_store_product_service_logic(store_product_service_id):
 
 def get_orders_logic(current_customer):
     # Only return orders with relevant order_statuses.status_code
-    valid_status_codes = [
-        'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
-        'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
-        'refunded', 'partial_refunded', 'customer_accepted'
-    ]
-    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_status_codes)).all()]
+    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(VALID_STATUS_CODES)).all()]
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
         logging.error("Active Status not found during get_orders_logic")
@@ -295,12 +295,7 @@ def get_order_logic(current_customer, order_id):
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
     if not customer:
         return {'message': 'Customer not found or Inactive'}, 403
-    valid_status_codes = [
-        'open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
-        'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
-        'refunded', 'partial_refunded', 'customer_accepted'
-    ]
-    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(valid_status_codes)).all()]
+    status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(VALID_STATUS_CODES)).all()]
     order = Orders.query.filter(
         Orders.customer_id == current_customer.customer_id,
         Orders.order_status_id.in_(status_ids), Orders.order_id == order_id
@@ -423,7 +418,7 @@ def cancel_order_logic(current_customer, order_id):
         logging.warning("Order does not belong to Customer during cancel_order_logic")
         return {'message': 'Order does not belong to Customer'}, 403
     # Only allow cancellation if order status is in allowed list
-    allowed_status_codes = ['open', 'paid', 'pending', 'partial_pending', 'filled', 'partial_filled',
+    allowed_status_codes = ['open', 'paid', 'filled', 'partial_filled',
                             'partial_shipped', 'partial_cancelled', 'partial_delivered', 'partial_returned',
                             'partial_refunded']
     if not order.order_status or order.order_status.status_code not in allowed_status_codes:
