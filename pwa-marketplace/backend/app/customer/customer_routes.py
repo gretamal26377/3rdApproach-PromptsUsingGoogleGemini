@@ -79,8 +79,8 @@ def create_order(current_user):
     result, status = create_order_logic(current_user, data)
     return jsonify(result), status
 
-@customer_bp.route('/orders/<int:order_id>', methods=['PATCH'])
+@customer_bp.route('/orders/<int:order_id>/cancel', methods=['POST'])
 @token_required
-def cancel_order(current_user, order_id):
-    result, status = cancel_order_logic(current_user, order_id)
+def cancel_order(current_customer, order_id):
+    result, status = cancel_order_logic(current_customer, order_id)
     return jsonify(result), status

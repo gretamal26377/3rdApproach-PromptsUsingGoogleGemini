@@ -412,10 +412,14 @@ def cancel_order_logic(current_customer, order_id):
     active_status_id = active_status.status_id
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
     if not customer:
+        logging.warning(f"Customer: {current_customer.customer_id} not found or inactive during cancel_order_logic")
         return {'message': 'Customer not found or Inactive'}, 403
     order = Orders.query.get_or_404(order_id)
+    if not order:
+        logging.warning(f"Order: {order_id} not found during cancel_order_logic")
+        return {'message': 'Order not found'}, 404
     if order.customer_id != current_customer.customer_id:
-        logging.warning("Order does not belong to Customer during cancel_order_logic")
+        logging.warning(f"Order: {order_id} does not belong to Customer: {current_customer.customer_id} during cancel_order_logic")
         return {'message': 'Order does not belong to Customer'}, 403
     # Only allow cancellation if order status is in allowed list
     allowed_status_codes = ['open', 'paid', 'filled', 'partial_filled',
@@ -424,12 +428,12 @@ def cancel_order_logic(current_customer, order_id):
     if not order.order_status or order.order_status.status_code not in allowed_status_codes:
         return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
     try:
-        # Signal Temporal workflow to cancel order
+        # Signal Temporal Workflow to Cancel Order
         async def cancel_order_workflow():
             client = await get_temporal_client()
             handle = client.get_workflow_handle(f"order-{order_id}")
             # handle = client.get_workflow_handle(f"order-{order_id}", workflow_id=f"order-{order_id}")
-            # Ensure your signal name matches the one in order_workflow.py/Parent Workflow
+            # Ensure your signal name matches one in order_workflow.py/Parent Workflow
             await handle.signal("cancel_order")
 
         asyncio.run(cancel_order_workflow())
@@ -437,7 +441,7 @@ def cancel_order_logic(current_customer, order_id):
         # --- The DB update is handled by the Activity in order_activities.py ---
         return {'message': 'Order Cancellation initiated successfully. Status Update pending workflow execution'}, 202 # Use 202 Accepted
     except Exception as e:
-        logging.error(f"Error signalling order cancellation: {e}")
+        logging.error(f"Error signalling Order Cancellation for Order: {order_id}, Customer: {current_customer.customer_id} during cancel_order_logic: {e}")
         return {'message': 'Failed to Signal Order Cancellation'}, 500
     
 def refund_order_logic(current_customer, order_id):

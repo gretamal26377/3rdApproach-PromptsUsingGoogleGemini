@@ -363,7 +363,7 @@ class OrderWorkflow:
         """
         if self.is_busy:
             workflow.logger.warning("Cancellation attempted during batch processing. Signal queued.")
-            # Temporal handles the queuing, but we log the attempt.
+            # Temporal handles the queuing, but we log the attempt
             return 
         
         workflow.logger.info("Propagating Cancel Signal to all Items...")
@@ -406,5 +406,5 @@ class OrderWorkflow:
 
     @workflow.query
     def is_currently_busy(self) -> bool:
-        """Returns the current busy status of the workflow."""
+        """Returns the current busy status of the workflow"""
         return self.is_busy
