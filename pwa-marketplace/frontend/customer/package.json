@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",  // For local development (SSR + HMR)
+    "dev": "vite",  // Starts Vite in dev mode with SSR and HMR (vite-plugin-ssr handles SSR automatically)
     // "dev:ssr": "node server.js",
-    // "build:client": "vite build",
-    // "build:server": "vite build --ssr server.js",
-    // "build": "vite build && vite build --ssr", // Build client and server bundles
-    "build": "vite build",
+    "build:client": "vite build",
+    "build:server": "vite build --ssr server.js",
+    "build": "vite build && vite build --ssr", // Build client and server bundles (entry is auto-detected by vite-plugin-ss
+    // "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "serve": "node dist/server/server.js",  // Start the production SSR server
