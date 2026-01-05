@@ -3,7 +3,17 @@ import os
 class Config:
     # SECRET_KEY is used for session management and should be kept secret in production.
     # It's different from DB password
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret')
+    _secret_key_file = os.environ.get('SECRET_KEY_FILE', '/run/secrets/secret_key')
+    _secret_key = None
+    if _secret_key_file and os.path.exists(_secret_key_file):
+        try:
+            with open(_secret_key_file, 'r', encoding='utf-8') as f:
+                _secret_key = f.read().strip()
+        except Exception:
+            pass
+    if not _secret_key:
+        _secret_key = os.environ.get('SECRET_KEY', 'dev-secret')
+    SECRET_KEY = _secret_key
 
     # Prefer an explicit DATABASE_URL if provided (useful for tests/CI).
     _env_database_url = os.environ.get('DATABASE_URL')

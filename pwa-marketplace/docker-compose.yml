@@ -200,8 +200,10 @@ services:
     environment:
       <<: *database-credentials
       BACKEND_TYPE: admin
+      SECRET_KEY_FILE: /run/secrets/secret_key
     secrets:
       - mysql_db_user_password
+      - secret_key
     restart: always
 
   db:
@@ -239,6 +241,9 @@ secrets:
   mysql_db_user_password:
     file: ./database/secrets/mysql_db_user_password.txt
     # external: true
+
+  secret_key:
+    file: ./database/secrets/secret_key.txt
 
   meilisearch_api_key:
     file: ./database/secrets/meilisearch_api_key.txt
