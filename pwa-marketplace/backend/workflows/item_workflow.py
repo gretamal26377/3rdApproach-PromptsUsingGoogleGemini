@@ -99,6 +99,17 @@ class ItemWorkflow:
             )
 
     @workflow.signal
+    async def cancel_item(self):
+        """Signal from Parent or external system to cancel this Item"""
+        if self.current_status_code in ["open", "paid", "filled", "partial_filled"]:
+            await self.set_status("cancelled") 
+            self._keep_running = False # End the Item workflow
+        else:
+            workflow.logger.warn(
+                f"Cannot cancel Item {self.item_id}, it is already {self.current_status_code}"
+            )
+
+    @workflow.signal
     async def ship_item_batch(self) -> None:
         """
         Triggered by the Parent Order Workflow to perform the Shipping Batch
@@ -246,18 +257,6 @@ class ItemWorkflow:
         # Fire-and-forget timer task
         asyncio.create_task(_timer_task())  # type: ignore[attr-defined]
 
-
-    # --- CANCEL STATUS ---
-    @workflow.signal
-    async def cancel_item(self):
-        """Signal from Parent or external system to cancel this Item"""
-        if self.current_status_code not in ["open", "paid", "filled", "partial_filled"]:
-            await self.set_status("cancelled") 
-            self._keep_running = False # End the Item workflow
-        else:
-            workflow.logger.warn(
-                f"Cannot cancel Item {self.item_id}, it is already {self.current_status_code}"
-            )
 
     # --- QUERIES (Parent calls these to check status) ---
     @workflow.query

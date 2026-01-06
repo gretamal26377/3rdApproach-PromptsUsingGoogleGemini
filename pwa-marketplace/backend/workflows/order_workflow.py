@@ -276,13 +276,13 @@ class OrderWorkflow:
             new_status_codes[item_id] = status
             self.item_status_codes[item_id] = status
 
-        # 4. Compute the new Order status
+        # Compute the new Order status
         # list(): Convert the dict_values to a list for processing
         new_aggregate_status_code = self.calculate_aggregate_status(
             list(self.item_status_codes.values())
         )
         
-        # 5. Perform the single, atomic DB update
+        # Perform the single, atomic DB update
         await self._update_db_status_if_changed(new_aggregate_status_code)
 
     # --- AGGREGATION LOGIC (Used ONLY after a batch is complete) ---
@@ -362,17 +362,16 @@ class OrderWorkflow:
         When Parent receives Order Cancellation, it propagates to ALL Children
         """
         if self.is_busy:
-            workflow.logger.warning("Cancellation attempted during batch processing. Signal queued.")
-            # Temporal handles the queuing, but we log the attempt
+            # Temporal queues the signal to be processed later when the batch processing completes
+            workflow.logger.warning("Cancellation attempted during batch processing. Signal queued")
             return 
         
         workflow.logger.info("Propagating Cancel Signal to all Items...")
-        
-        # Signal all children to cancel
         cancel_tasks = []
         for handle in self.item_handles.values():
             cancel_tasks.append(handle.signal(ItemWorkflow.cancel_item))
-        
+
+        # Wait for all cancellation signals to complete
         await asyncio.gather(*cancel_tasks)
         
         # Rerun aggregation immediately after all items have attempted cancellation
