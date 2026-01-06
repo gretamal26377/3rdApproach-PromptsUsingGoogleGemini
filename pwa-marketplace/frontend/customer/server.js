@@ -1,8 +1,13 @@
-const express = require("express");
-const { createPageRenderer } = require("vite-plugin-ssr");
-const vite = require("vite");
+// express: Simple SSR server with dynamic sitemap.xml route
+import express from "express";
+import { createPageRenderer } from "vite-plugin-ssr";
+import { createServer } from "vite";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
 const isProduction = process.env.NODE_ENV === "production";
-const root = __dirname;
+const __filename = fileURLToPath(import.meta.url);
+const root = dirname(__filename);
 
 async function startServer() {
   const app = express();
@@ -21,17 +26,23 @@ async function startServer() {
   });
   let viteDevServer;
   if (!isProduction) {
-    viteDevServer = await vite.createServer({
+    viteDevServer = await createServer({
       root,
-      server: { middlewareMode: "ssr" },
+      // server: { middlewareMode: "ssr" },
+      server: { middlewareMode: true },
     });
     app.use(viteDevServer.middlewares);
   } else {
+    // In production, serve the pre-built static files from the dist/client directory
     app.use(express.static(`${root}/dist/client`));
   }
   const renderPage = createPageRenderer({ viteDevServer, isProduction, root });
+  // --- SSR Express server listen for all routes ---
   app.get("*", async (req, res, next) => {
     const pageContextInit = { urlOriginal: req.originalUrl };
+    // For each request, it calls renderPage from vite-plugin-ssr to handle SSR, passing {urlOriginal: req.originalUrl}
+    // vite-plugin-ssr matches `/` to index.page.jsx derived from: vite.config.js to search from 'src/pages'
+    // vite-plugin-ssr automatically search for files named *.page.jsx or *.page.server.jsx in 'src/pages' directory
     const pageContext = await renderPage(pageContextInit);
     const { httpResponse } = pageContext;
     if (!httpResponse) return next();

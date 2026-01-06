@@ -11,12 +11,14 @@ export { render };
 // pageContext: Parameter passed by vite-plugin-ssr. Purpose: To pass information about the page being rendered,
 // such as the URL, route parameters, and any other data needed for client-side rendering 
 function render(pageContext) {  // eslint-disable-line no-unused-vars
+  // pageContext.Page get its value from index.page.jsx (This case: App component)
+  const Page = pageContext.Page;
   hydrateRoot(
     document.getElementById("root"),
     <React.StrictMode>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <Page />
         </AuthProvider>
       </BrowserRouter>
     </React.StrictMode>

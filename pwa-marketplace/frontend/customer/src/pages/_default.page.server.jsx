@@ -9,10 +9,12 @@ import "../../../globals.css";
 export { render };
 
 function render(pageContext) {
+  // pageContext.Page get its value from index.page.jsx (This case: App component)
+  const Page = pageContext.Page;
   const appHtml = ReactDOMServer.renderToString(
     <StaticRouter location={pageContext.urlOriginal}>
       <AuthProvider>
-        <App />
+        <Page />
       </AuthProvider>
     </StaticRouter>
   );
