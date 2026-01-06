@@ -115,14 +115,16 @@ services:
     environment:
       <<: *database-credentials
       SEARCH_ENGINE: *search_engine
-      if SEARCH_ENGINE == 'meili':
-        MEILISEARCH_URL: http://meilisearch:7700
-        # Use Docker secret for Meilisearch API key
-        MEILISEARCH_API_KEY_FILE: /run/secrets/meilisearch_api_key
-      else: #SEARCH_ENGINE == 'google'
-        GOOGLE_SEARCH_CX: your_google_search_cx_value_here
-        # Use Docker secret for Google Search API key
-        GOOGLE_SEARCH_API_KEY_FILE: /run/secrets/google_search_api_key
+      # YAML & Docker Compose don't support if/else statements
+      # App check SEARCH_ENGINE and use the correct variables
+      # SEARCH_ENGINE == 'meili'
+      MEILISEARCH_URL: http://meilisearch:7700
+      # Use Docker secret for Meilisearch API key
+      MEILISEARCH_API_KEY_FILE: /run/secrets/meilisearch_api_key
+      # SEARCH_ENGINE == 'google'
+      GOOGLE_SEARCH_CX: your_google_search_cx_value_here
+      # Use Docker secret for Google Search API key
+      GOOGLE_SEARCH_API_KEY_FILE: /run/secrets/google_search_api_key
     restart: always
     secrets:
       - meilisearch_api_key

@@ -1,13 +1,16 @@
-import React from "react";
+// import React from "react";
 import ReactDOMServer from "react-dom/server";
 import { StaticRouter } from "react-router-dom/server";
 import { AuthProvider } from "shared-lib";
-import App from "../App";
+// import App from "../App";
 import { escapeInject, dangerouslySkipEscape } from "vite-plugin-ssr/server";
 import "../../../globals.css";
 
 export { render };
 
+/**
+ * @param {Record<string, any>} pageContext
+ */
 function render(pageContext) {
   // pageContext.Page get its value from index.page.jsx (This case: App component)
   const Page = pageContext.Page;
