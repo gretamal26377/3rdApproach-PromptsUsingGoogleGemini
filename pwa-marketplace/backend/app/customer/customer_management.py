@@ -437,7 +437,6 @@ def cancel_order_logic(current_customer, order_id):
             await handle.signal("cancel_order")
 
         asyncio.run(cancel_order_workflow())
-        # Issue: Order Cancellation might fail cause Order Status is far from cancellable
         # --- The DB update is handled by the Activity in order_activities.py ---
         return {'message': 'Order Cancellation initiated successfully. Status Update pending workflow execution'}, 202 # Use 202 Accepted
     except Exception as e:
@@ -485,6 +484,12 @@ def refund_item_logic(order_id, item_id, current_customer):
     if order.customer_id != current_customer.customer_id:
         logging.warning("Order does not belong to Customer during refund_item_logic")
         return {'message': 'Order does not belong to Customer'}, 403
+
+    # Only allow refunds if order status is in allowed list
+    allowed_status_codes = ["cancelled", "partial_cancelled", "returned", "partial_returned", "partial_refunded"]
+    if not order.order_status or order.order_status.status_code not in allowed_status_codes:
+        return {'message': f"Order cannot be Refunded in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
+
     try:
         async def refund_item_workflow():
             client = await get_temporal_client()

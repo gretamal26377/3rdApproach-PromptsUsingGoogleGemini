@@ -1,8 +1,7 @@
 import asyncio
 from datetime import timedelta
-from turtle import pen
 from temporalio import workflow
-from typing import List, Dict   # Imported Dict for self.item_status_codes
+from typing import List, Dict
 from . import order_activities 
 from .item_workflow import ItemWorkflow
 
@@ -23,8 +22,6 @@ class OrderWorkflow:
         self.current_status_code = "open"
         # Stores item IDs and their corresponding ItemWorkflowHandles
         self.item_handles: Dict[int, workflow.ExternalWorkflowHandle[ItemWorkflow]] = {}
-        # Dictionary to store item status codes (key: item_id, value: status_code)
-        self.item_status_codes: Dict[int, str] = {}
         # Control flag to prevent other phase signals (like cancellation) during a batch run
         self.is_busy = False 
         self._keep_running = True
@@ -50,13 +47,8 @@ class OrderWorkflow:
             start_to_close_timeout=timedelta(seconds=20),
         )
         workflow.logger.info(f"Order {self.order_id} created and persisted via activity")
-
-        # Set up item status codes
-        # items: List[Dict]
+        
         items = order_input.get('items', [])
-        item_ids = [item['store_product_service_id'] for item in items]
-        self.item_status_codes = {item_id: "open" for item_id in item_ids}
-
         # Issue: Payment Processing phase should be triggered by signal through a Bulk Process, not here
         # Order Status Update to "paid", but Items remain "open" to be persisted in DB
         await self._update_db_status_if_changed("paid")
@@ -79,9 +71,6 @@ class OrderWorkflow:
                 parent_close_policy=workflow.ParentClosePolicy.REQUEST_CANCEL, # If parent dies, cancel children
             )
             self.item_handles[item_id] = child_handle
-            
-            # If Order Status was moved to "paid", then move Item internal status map to "paid"
-            self.item_status_codes[item_id] = "paid"
         
         # Enter the continuous waiting loop for signals/cancellation
         # This keeps the workflow alive to receive signals that initiate batch phases
@@ -253,34 +242,23 @@ class OrderWorkflow:
 
         await self._run_batch_phase(item_signal_name="refund_item_batch")
 
+    async def _query_item_statuses(self) -> Dict[int, str]:
+        """Query all item child workflows for their current status"""
+        item_ids = list(self.item_handles.keys())
+        query_tasks = [handle.query(ItemWorkflow.get_status) for handle in self.item_handles.values()]  # type: ignore[attr-defined]
+        results = await asyncio.gather(*query_tasks)
+        # zip() pairs item IDs with their corresponding statuses
+        return {item_id: status for item_id, status in zip(item_ids, results)}
+
     async def _query_and_aggregate_status(self):
         """
         Queries all Item Workflows for their current status and calls the aggregate update function
         """
-        new_status_codes = {}
-        query_tasks = []
-        item_ids = list(self.item_handles.keys())
+        item_statuses = await self._query_item_statuses()
 
-        # Create tasks to query status concurrently
-        # self.item_handles is a Dict then .items() returns (key, value) pairs, 
-        # where item_id gets the key and handle gets the value
-        for item_id, handle in self.item_handles.items():
-            query_tasks.append(handle.query(ItemWorkflow.get_status))   # type: ignore[attr-defined]
-
-        # Gather all query results
-        results = await asyncio.gather(*query_tasks)
-
-        # Map results back to item IDs and update internal state
-        # zip() pairs item_ids with results, so we can update the status codes
-        for item_id, status in zip(item_ids, results):
-            new_status_codes[item_id] = status
-            self.item_status_codes[item_id] = status
-
-        # Compute the new Order status
+        # Compute the new Order Status
         # list(): Convert the dict_values to a list for processing
-        new_aggregate_status_code = self.calculate_aggregate_status(
-            list(self.item_status_codes.values())
-        )
+        new_aggregate_status_code = self.calculate_aggregate_status(list(item_statuses.values()))
         
         # Perform the single, atomic DB update
         await self._update_db_status_if_changed(new_aggregate_status_code)
@@ -292,7 +270,7 @@ class OrderWorkflow:
         """
         total = len(status_codes)
         if total == 0:
-            return "open"
+            return "pending" # Needs manual review to understand why no items exist
         
         # Count occurrences of each Item Status Codes and counts is the type Dict[str, int] (eg: delivered: 3, shipped:2, open:1)
         counts = {s: status_codes.count(s) for s in set(status_codes)}
@@ -310,29 +288,26 @@ class OrderWorkflow:
         # pending = counts.get("pending", 0)
         
         # QUICK STATUSES TO COMPUTE
-        if accepted + refunded + returned + delivered + shipped + cancelled + filled + paid + open == total:
-            # Full Successful Completion
-            if accepted == total:
-                return "customer_accepted"
-            if refunded == total:
-                return "refunded"
-            if returned == total:
-                return "returned"
-            if delivered == total:
-                return "delivered"
-            if shipped == total:
-                return "shipped"
-            # Full Order Cancellation
-            if cancelled == total:
-                return "cancelled"
-            if filled == total:
-                return "filled"
-            if paid == total:
-                return "paid"
-            if open == total:
-                return "open"
-            else:
-                return "pending" # Fallback choice just in case
+        # Full Successful Completion
+        if accepted == total:
+            return "customer_accepted"
+        if refunded == total:
+            return "refunded"
+        if returned == total:
+            return "returned"
+        if delivered == total:
+            return "delivered"
+        if shipped == total:
+            return "shipped"
+        # Full Order Cancellation
+        if cancelled == total:
+            return "cancelled"
+        if filled == total:
+            return "filled"
+        if paid == total:
+            return "paid"
+        if open == total:
+            return "open"
 
         # MIXED/COMPLEX STATUSES
         if delivered + refunded == total:
@@ -348,7 +323,7 @@ class OrderWorkflow:
         if shipped > 0:
             return "partial_shipped"
         if cancelled > 0:
-            return "partial_cancelled"
+            return "partial_cancelled"  # Issue?: I don't see when partial_cancelled would be reached/set in current logic
         if filled > 0:
             return "partial_filled"
         else:
@@ -362,7 +337,7 @@ class OrderWorkflow:
         When Parent receives Order Cancellation, it propagates to ALL Children
         """
         if self.is_busy:
-            # Temporal queues the signal to be processed later when the batch processing completes
+            # Temporal queues the signal to be processed later when the current busy batch processing completes
             workflow.logger.warning("Cancellation attempted during batch processing. Signal queued")
             return 
         
@@ -399,9 +374,9 @@ class OrderWorkflow:
         return self.current_status_code
 
     @workflow.query
-    def get_item_statuses(self) -> Dict[int, str]:
+    async def get_item_statuses(self) -> Dict[int, str]:
         """Public query to check the status of all component Items"""
-        return self.item_status_codes
+        return await self._query_item_statuses()
 
     @workflow.query
     def is_currently_busy(self) -> bool:
