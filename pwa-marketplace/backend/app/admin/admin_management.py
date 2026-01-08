@@ -20,7 +20,10 @@ def get_users_logic():
     return users_data, 200
 
 def get_user_logic(user_id):
-    user = Users.query.get_or_404(user_id)
+    user = Users.query.get(user_id)
+    if not user:
+        logging.warning(f"User: {user_id} not found during get_user_logic")
+        return {'message': 'User not found'}, 404
     user_data = {
         'id': user.id,
         'username': user.username,
@@ -30,7 +33,10 @@ def get_user_logic(user_id):
     return user_data, 200
 
 def update_user_logic(user_id, data):
-    user = Users.query.get_or_404(user_id)
+    user = Users.query.get(user_id)
+    if not user:
+        logging.warning(f"User: {user_id} not found during update_user_logic")
+        return {'message': 'User not found'}, 404
     if not data:
         return {'message': 'No data provided'}, 400
     try:
@@ -48,7 +54,10 @@ def update_user_logic(user_id, data):
         return {'message': 'Failed to update user'}, 500
 
 def inactivate_user_logic(user_id):
-    user = Users.query.get_or_404(user_id)
+    user = Users.query.get(user_id)
+    if not user:
+        logging.warning(f"User: {user_id} not found during inactivate_user_logic")
+        return {'message': 'User not found'}, 404
     try:
         inactive = EntityStatuses.query.filter_by(status_code='inactive').first()
         if not inactive:
@@ -96,7 +105,10 @@ def create_store_logic(current_user, data):
         return {'message': 'Failed to create store'}, 500
 
 def update_store_logic(current_user, store_id, data):
-    store = Stores.query.get_or_404(store_id)
+    store = Stores.query.get(store_id)
+    if not store:
+        logging.warning(f"Store: {store_id} not found during update_store_logic")
+        return {'message': 'Store not found'}, 404
     try:
         
         store.store_name = bleach.clean(data['name'], strip=True)
@@ -115,7 +127,10 @@ def update_store_logic(current_user, store_id, data):
         return {'message': 'Failed to update store'}, 500
 
 def inactivate_store_logic(current_user, store_id):
-    store = Stores.query.get_or_404(store_id)
+    store = Stores.query.get(store_id)
+    if not store:
+        logging.warning(f"Store: {store_id} not found during inactivate_store_logic")
+        return {'message': 'Store not found'}, 404
     try:
         inactive = EntityStatuses.query.filter_by(status_code='inactive').first()
         if not inactive:

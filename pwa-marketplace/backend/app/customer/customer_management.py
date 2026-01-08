@@ -414,19 +414,21 @@ def cancel_order_logic(current_customer, order_id):
     if not customer:
         logging.warning(f"Customer: {current_customer.customer_id} not found or inactive during cancel_order_logic")
         return {'message': 'Customer not found or Inactive'}, 403
-    order = Orders.query.get_or_404(order_id)
+    order = Orders.query.get(order_id)
     if not order:
         logging.warning(f"Order: {order_id} not found during cancel_order_logic")
         return {'message': 'Order not found'}, 404
     if order.customer_id != current_customer.customer_id:
         logging.warning(f"Order: {order_id} does not belong to Customer: {current_customer.customer_id} during cancel_order_logic")
         return {'message': 'Order does not belong to Customer'}, 403
+    
     # Only allow cancellation if order status is in allowed list
     allowed_status_codes = ['open', 'paid', 'filled', 'partial_filled',
                             'partial_shipped', 'partial_cancelled', 'partial_delivered', 'partial_returned',
                             'partial_refunded']
     if not order.order_status or order.order_status.status_code not in allowed_status_codes:
         return {'message': f"Order cannot be Cancelled in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
+    
     try:
         # Signal Temporal Workflow to Cancel Order
         async def cancel_order_workflow():
@@ -457,10 +459,20 @@ def refund_order_logic(current_customer, order_id):
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
     if not customer:
         return {'message': 'Customer not found or Inactive'}, 403
-    order = Orders.query.get_or_404(order_id)
+    order = Orders.query.get(order_id)
+    if not order:
+        logging.warning(f"Order: {order_id} not found during refund_order_logic")
+        return {'message': 'Order not found'}, 404
     if order.customer_id != current_customer.customer_id:
         logging.warning("Order does not belong to Customer during refund_order_logic")
         return {'message': 'Order does not belong to Customer'}, 403
+    
+    # Only allow refunds if order status is in allowed list
+    allowed_status_codes = ["cancelled", "partial_cancelled", "returned", "partial_returned", "partial_refunded",
+                            "partial_delivered", "partial_shipped"]
+    if not order.order_status or order.order_status.status_code not in allowed_status_codes:
+        return {'message': f"Order cannot be Refunded in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
+
     try:
         async def refund_order_workflow():
             client = await get_temporal_client()
@@ -472,35 +484,6 @@ def refund_order_logic(current_customer, order_id):
     except Exception as e:
         logging.error(f"Error signalling Order Refund: {e}")
         return {'message': 'Failed to Signal Order Refund'}, 500
-
-def refund_item_logic(order_id, item_id, current_customer):
-    """
-    Allows the customer to request a refund for a specific item (if eligible).
-    Triggers the refund signal on the Item Workflow via the Order Workflow.
-    """
-    if not current_customer:
-        return {'message': 'Customer not found or Inactive'}, 403
-    order = Orders.query.get_or_404(order_id)
-    if order.customer_id != current_customer.customer_id:
-        logging.warning("Order does not belong to Customer during refund_item_logic")
-        return {'message': 'Order does not belong to Customer'}, 403
-
-    # Only allow refunds if order status is in allowed list
-    allowed_status_codes = ["cancelled", "partial_cancelled", "returned", "partial_returned", "partial_refunded"]
-    if not order.order_status or order.order_status.status_code not in allowed_status_codes:
-        return {'message': f"Order cannot be Refunded in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
-
-    try:
-        async def refund_item_workflow():
-            client = await get_temporal_client()
-            handle = client.get_workflow_handle(f"order-{order_id}")
-            await handle.signal("start_refund")
-
-        asyncio.run(refund_item_workflow())
-        return {'message': f'Refund initiated successfully for Item {item_id}. Status Update pending workflow execution.'}, 202
-    except Exception as e:
-        logging.error(f"Error signalling Item Refund for {order_id}/{item_id}: {e}")
-        return {'message': 'Failed to Signal Item Refund'}, 500
 
 def accept_order_logic(current_customer, order_id):
     """
@@ -515,7 +498,10 @@ def accept_order_logic(current_customer, order_id):
     customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
     if not customer:
         return {'message': 'Customer not found or Inactive'}, 403
-    order = Orders.query.get_or_404(order_id)
+    order = Orders.query.get(order_id)
+    if not order:
+        logging.warning(f"Order: {order_id} not found during accept_order_logic")
+        return {'message': 'Order not found'}, 404
     if order.customer_id != current_customer.customer_id:
         logging.warning("Order does not belong to Customer during accept_order_logic")
         return {'message': 'Order does not belong to Customer'}, 403
@@ -530,29 +516,6 @@ def accept_order_logic(current_customer, order_id):
     except Exception as e:
         logging.error(f"Error signalling order acceptance: {e}")
         return {'message': 'Failed to Signal Order Acceptance'}, 500
-
-def accept_item_logic(order_id, item_id, current_customer):
-    """
-    Allows the customer to mark an item as accepted (post-delivery).
-    Triggers the acceptance signal on the Item Workflow via the Order Workflow.
-    """
-    if not current_customer:
-        return {'message': 'Customer not found or Inactive'}, 403
-    order = Orders.query.get_or_404(order_id)
-    if order.customer_id != current_customer.customer_id:
-        logging.warning("Order does not belong to Customer during accept_item_logic")
-        return {'message': 'Order does not belong to Customer'}, 403
-    try:
-        async def accept_item_workflow():
-            client = await get_temporal_client()
-            handle = client.get_workflow_handle(f"order-{order_id}")
-            await handle.signal("start_acceptance")
-
-        asyncio.run(accept_item_workflow())
-        return {'message': f'Item {item_id} marked as accepted. Status Update pending workflow execution.'}, 202
-    except Exception as e:
-        logging.error(f"Error signalling Item Acceptance for {order_id}/{item_id}: {e}")
-        return {'message': 'Failed to Signal Item Acceptance'}, 500
     
 def return_item_logic(order_id, item_id, current_customer):
     """
@@ -564,7 +527,10 @@ def return_item_logic(order_id, item_id, current_customer):
     # Issue: Check if Customer is active
     if not current_customer:
         return {'message': 'Customer not found or Inactive'}, 403
-    order = Orders.query.get_or_404(order_id)
+    order = Orders.query.get(order_id)
+    if not order:
+        logging.warning(f"Order: {order_id} not found during return_item_logic")
+        return {'message': 'Order not found'}, 404
     if order.customer_id != current_customer.customer_id:
         logging.warning("Order does not belong to Customer during return_item_logic")
         return {'message': 'Order does not belong to Customer'}, 403

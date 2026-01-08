@@ -164,13 +164,8 @@ class OrderWorkflow:
             workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Refund Batch aborted")
             return
         
-        if self.current_status_code in ["cancelled", "partial_cancelled", "returned", "partial_returned", "partial_refunded"]:
-            await self._run_batch_phase(
-                item_signal_name="refund_item_batch"
-            )
-        else:
-            workflow.logger.warning(f"Cannot start refund. Order is {self.current_status_code}")
-
+        await self._run_batch_phase(item_signal_name="refund_item_batch")
+        
     @workflow.signal
     async def start_acceptance(self):
         """Initiates the Batch Acceptance Process for all Order's Items"""
