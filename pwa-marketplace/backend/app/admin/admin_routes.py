@@ -4,7 +4,7 @@ from .admin_management import (
     get_users_logic, get_user_logic, update_user_logic, inactivate_user_logic,
     create_store_logic, update_store_logic, inactivate_store_logic,
     create_product_logic, update_product_logic, inactivate_product_logic,
-    mark_order_shipped_logic, refund_order_logic
+    mark_order_shipped_logic, refund_order_logic, accept_order_logic
 )
 
 

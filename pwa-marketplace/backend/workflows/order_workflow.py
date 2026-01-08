@@ -107,9 +107,9 @@ class OrderWorkflow:
             if new_status_code == "customer_accepted":
                 self._keep_running = False # This ends the workflow loop in run()
 
-            # When a return is completed/requested, arm a 7-day timer to auto-trigger refund
+            # When a cancel/return is completed/requested, arm a 7-day timer to auto-trigger refund
             if new_status_code in ["cancelled", "partial_cancelled", "returned", "partial_returned"] and not self._refund_timer_task:
-                self._refund_timer_task = asyncio.create_task(self._auto_refund_after_return())
+                self._refund_timer_task = asyncio.create_task(self._auto_refund_after_cancelled_returned())
 
 
     # --- BATCH PHASE INITIATORS (Triggered by external systems) ---
@@ -214,19 +214,19 @@ class OrderWorkflow:
         self.is_busy = False
         workflow.logger.info(f"BATCH Phase {item_signal_name} Completed")
 
-    async def _auto_refund_after_return(self):
+    async def _auto_refund_after_cancelled_returned(self):
         """
-        Wait 7 days after an Order Return, then automatically trigger a Refund Batch
-        if the order is still in a returned/partial_returned state
+        Wait 7 days after an Order Cancelled/Returned, then automatically trigger a Refund Batch
+        if the order is still in due state
         """
         await workflow.sleep(timedelta(days=7))
 
         # If already refunded or accepted, skip
-        if self.current_status_code in ["refunded", "partial_refunded", "customer_accepted"]:
+        if self.current_status_code in ["refunded", "customer_accepted"]:
             return
 
-        # Only proceed if still returned/partial_returned
-        if self.current_status_code not in ["returned", "partial_returned"]:
+        # Only proceed if still cancelled/partial_cancelled or returned/partial_returned
+        if self.current_status_code not in ["cancelled", "partial_cancelled", "returned", "partial_returned"]:
             return
 
         # Wait if a batch is in progress

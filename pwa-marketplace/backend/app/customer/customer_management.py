@@ -1,25 +1,19 @@
-import os
-from temporalio.client import Client
 import asyncio
 from ..shared.database import db
 from ..shared.models import Customers, Stores, FeaturedStores, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
 import logging
 from ..shared.auth import generate_token, decode_token
+from ..shared.utils import get_temporal_client
 from werkzeug.security import generate_password_hash, check_password_hash
 import bleach
 from datetime import datetime
 from workflows.order_workflow import OrderWorkflow
 
-TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
 VALID_STATUS_CODES = [
         'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
         'delivered', 'partial_delivered', 'cancelled', 'partial_cancelled', 'returned', 'partial_returned',
         'refunded', 'partial_refunded', 'customer_accepted'
     ]
-
-# Temporary Temporal Client connection helper
-async def get_temporal_client():
-    return await Client.connect(TEMPORAL_HOST)
 
 def create_customer_logic(data):
     if not data:
@@ -444,78 +438,6 @@ def cancel_order_logic(current_customer, order_id):
     except Exception as e:
         logging.error(f"Error signalling Order Cancellation for Order: {order_id}, Customer: {current_customer.customer_id} during cancel_order_logic: {e}")
         return {'message': 'Failed to Signal Order Cancellation'}, 500
-    
-def refund_order_logic(current_customer, order_id):
-    """
-    Allows the Customer to request an Order Refund (if eligible).
-    Triggers the Order Workflow's Refund Signal
-    """
-    # Check customer is active
-    active_status = EntityStatuses.query.filter_by(status_code='active').first()
-    if not active_status:
-        logging.error("Active Status not found during refund_order_logic")
-        return {'message': 'Active Status not found'}, 500
-    active_status_id = active_status.status_id
-    customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
-    if not customer:
-        return {'message': 'Customer not found or Inactive'}, 403
-    order = Orders.query.get(order_id)
-    if not order:
-        logging.warning(f"Order: {order_id} not found during refund_order_logic")
-        return {'message': 'Order not found'}, 404
-    if order.customer_id != current_customer.customer_id:
-        logging.warning("Order does not belong to Customer during refund_order_logic")
-        return {'message': 'Order does not belong to Customer'}, 403
-    
-    # Only allow refunds if order status is in allowed list
-    allowed_status_codes = ["cancelled", "partial_cancelled", "returned", "partial_returned", "partial_refunded",
-                            "partial_delivered", "partial_shipped"]
-    if not order.order_status or order.order_status.status_code not in allowed_status_codes:
-        return {'message': f"Order cannot be Refunded in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
-
-    try:
-        async def refund_order_workflow():
-            client = await get_temporal_client()
-            handle = client.get_workflow_handle(f"order-{order_id}")
-            await handle.signal("start_refund")
-
-        asyncio.run(refund_order_workflow())
-        return {'message': 'Order Refund initiated successfully. Status Update pending workflow execution'}, 202
-    except Exception as e:
-        logging.error(f"Error signalling Order Refund: {e}")
-        return {'message': 'Failed to Signal Order Refund'}, 500
-
-def accept_order_logic(current_customer, order_id):
-    """
-    Allows the Customer to mark an Order as customer_accepted (Order Status Terminal).
-    Triggers the acceptance signal on the Order Workflow.
-    """
-    active_status = EntityStatuses.query.filter_by(status_code='active').first()
-    if not active_status:
-        logging.error("Active Status not found during accept_order_logic")
-        return {'message': 'Active Status not found'}, 500
-    active_status_id = active_status.status_id
-    customer = Customers.query.filter_by(customer_id=current_customer.customer_id, customer_status_id=active_status_id).first()
-    if not customer:
-        return {'message': 'Customer not found or Inactive'}, 403
-    order = Orders.query.get(order_id)
-    if not order:
-        logging.warning(f"Order: {order_id} not found during accept_order_logic")
-        return {'message': 'Order not found'}, 404
-    if order.customer_id != current_customer.customer_id:
-        logging.warning("Order does not belong to Customer during accept_order_logic")
-        return {'message': 'Order does not belong to Customer'}, 403
-    try:
-        async def accept_order_workflow():
-            client = await get_temporal_client()
-            handle = client.get_workflow_handle(f"order-{order_id}")
-            await handle.signal("start_acceptance")
-
-        asyncio.run(accept_order_workflow())
-        return {'message': 'Order Acceptance initiated successfully. Status Update pending workflow execution.'}, 202
-    except Exception as e:
-        logging.error(f"Error signalling order acceptance: {e}")
-        return {'message': 'Failed to Signal Order Acceptance'}, 500
     
 def return_item_logic(order_id, item_id, current_customer):
     """
