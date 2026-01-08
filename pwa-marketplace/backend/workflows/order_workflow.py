@@ -108,7 +108,7 @@ class OrderWorkflow:
                 self._keep_running = False # This ends the workflow loop in run()
 
             # When a return is completed/requested, arm a 7-day timer to auto-trigger refund
-            if new_status_code in ["returned", "partial_returned"] and not self._refund_timer_task:
+            if new_status_code in ["cancelled", "partial_cancelled", "returned", "partial_returned"] and not self._refund_timer_task:
                 self._refund_timer_task = asyncio.create_task(self._auto_refund_after_return())
 
 
@@ -201,11 +201,9 @@ class OrderWorkflow:
         # Wait for all signals to be acknowledged by the Item Workflows (this is fast)
         await asyncio.gather(*signal_tasks) 
 
-        # 2. Wait for the Item Workflows to complete their phase activities/status changes
-        # The Item Workflows DO NOT return from the signal handler. We must query their status 
-        # until all have reached the expected target status or a terminal status.
+        # 2. Wait for the Item Workflows to complete their phase activities/statuses changes
         # Note: In a true Temporal app, we'd use external services to notify us 
-        # when all children are stable, or simply wait for the child workflow to complete/continue.
+        # when all children are stable/finished their activities.
         # For this demonstration, we will rely on querying the status after a brief delay
         # to give time for the child workflow to execute its Activity and update its status
         await asyncio.sleep(2)
@@ -305,8 +303,8 @@ class OrderWorkflow:
             return "open"
 
         # MIXED/COMPLEX STATUSES
-        if delivered + refunded == total:
-            return "customer_accepted"
+        # if delivered + refunded == total:
+        #    return "customer_accepted"
             
         # PROGRESS/PARTIAL STATUSES (Order is in progress)
         if refunded > 0:

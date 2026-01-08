@@ -18,7 +18,7 @@ class ItemActivityOutput(BaseModel):
     item_id: int
     success: bool
     message: str
-    # Add a potential new_item_status_code field if an item activity fails/partially succeeds
+    # Add a potential new_item_status_code field if an item activity succeeds
     new_item_status_code: str
 
 class ItemShipmentResult(BaseModel):

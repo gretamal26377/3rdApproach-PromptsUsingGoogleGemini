@@ -65,7 +65,7 @@ class ItemWorkflow:
     async def set_status(self, new_status_code: str):
         """Updates the internal status"""
         if self.current_status_code != new_status_code:
-            workflow.logger.info(f"Item {self.item_id} status internally changed to: {new_status_code}")
+            workflow.logger.info(f"Item {self.item_id} status changed to: {new_status_code}")
             self.current_status_code = new_status_code
             await self._maybe_schedule_acceptance_timer(new_status_code)
             
@@ -91,7 +91,7 @@ class ItemWorkflow:
                 start_to_close_timeout=timedelta(minutes=5),
             )
 
-            # The result contains the new status (filled or keeps the same paid if it couldn't be processed)
+            # The result contains the new status (filled or keeps the previous one if it couldn't be processed)
             await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
@@ -103,7 +103,7 @@ class ItemWorkflow:
         """Signal from Parent or external system to cancel this Item"""
         if self.current_status_code in ["open", "paid", "filled", "partial_filled"]:
             await self.set_status("cancelled") 
-            self._keep_running = False # End the Item workflow
+            # self._keep_running = False # End the Item workflow
         else:
             workflow.logger.warn(
                 f"Cannot cancel Item {self.item_id}, it is already {self.current_status_code}"
@@ -124,7 +124,7 @@ class ItemWorkflow:
                 item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
                 start_to_close_timeout=timedelta(minutes=5),
             )
-            # The result contains the new status (filled or keeps the same filled if it couldn't be processed)
+            # The result contains the new status (shipped or keeps the previous one if it couldn't be processed)
             await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
@@ -147,7 +147,7 @@ class ItemWorkflow:
                 start_to_close_timeout=timedelta(minutes=5),
             )
 
-            # The result contains the new status (delivered or keeps the same shipped if it couldn't be processed)
+            # The result contains the new status (delivered or keeps the previous one if it couldn't be processed)
             await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
@@ -168,7 +168,7 @@ class ItemWorkflow:
                 start_to_close_timeout=timedelta(minutes=5),
             )
 
-            # The result contains the new status (returned or keeps the same if it couldn't be processed)
+            # The result contains the new status (returned or keeps the previous one if it couldn't be processed)
             await self.set_status(result.new_item_status_code)
         else:
             workflow.logger.warning(
@@ -178,19 +178,19 @@ class ItemWorkflow:
     @workflow.signal
     async def refund_item_batch(self) -> None:
         """Triggered by the Parent Order Workflow to perform the Refund Batch"""
-        if self.current_status_code in ["returned", "cancelled"]:
+        if self.current_status_code in ["cancelled", "partial_cancelled", "returned", "partial_returned", "partial_refunded"]:
             workflow.logger.info(f"Item {self.item_id} queuing Refund Activity to be executed")
             assert self.order_id is not None and self.item_id is not None
 
-             # Execute the Activity for refund
+            # Execute the Activity for refund
             result: item_activities.ItemActivityOutput = await workflow.execute_activity(
                 item_activities.perform_item_refund,
                 item_activities.ItemActivityInput(order_id=self.order_id, item_id=self.item_id, status_code=self.current_status_code),
                 start_to_close_timeout=timedelta(minutes=5),
             )
 
-            # The result contains the new status (delivered or keeps the same if it couldn't be processed)
-            await self.set_status(result.new_item_status_code)           # Refund is terminal for the item
+            # The result contains the new status (refunded or keeps the previous one if it couldn't be processed)
+            await self.set_status(result.new_item_status_code)  # Refund is terminal for the item
         else:
             workflow.logger.warning(
                 f"Item {self.item_id} skipped refund, status is {self.current_status_code}"
@@ -210,7 +210,7 @@ class ItemWorkflow:
                 start_to_close_timeout=timedelta(minutes=5),
             )
 
-            # The result contains the new status (customer_accepted or keeps the same if it couldn't be processed)
+            # The result contains the new status (customer_accepted or keeps the previous one if it couldn't be processed)
             await self.set_status(result.new_item_status_code)
 
             # Acceptance is terminal for the Item
