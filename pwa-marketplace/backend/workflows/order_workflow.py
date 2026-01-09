@@ -25,8 +25,10 @@ class OrderWorkflow:
         # Control flag to prevent other phase signals (like cancellation) during a batch run
         self.is_busy = False 
         self._keep_running = True
-        # Tracks the background refund timer task after a return is completed/requested
+        # Tracks the background refund timer task after a Order Cancel/Return is completed/requested
         self._refund_timer_task: asyncio.Task | None = None
+        # Tracks the background acceptance timer task after a Order Delivery/Refund is completed/requested
+        self._acceptance_timer_task: asyncio.Task | None = None
 
     @workflow.run
     async def run(self, order_input: dict):
@@ -107,9 +109,25 @@ class OrderWorkflow:
             if new_status_code == "customer_accepted":
                 self._keep_running = False # This ends the workflow loop in run()
 
-            # When a cancel/return is completed/requested, arm a 7-day timer to auto-trigger refund
+            # When an Order Delivery/Refund is completed/requested, arm a 10-day timer to auto-trigger customer acceptance
+            if new_status_code in ["delivered", "partial_delivered", "refunded", "partial_refunded"] and not self._acceptance_timer_task:
+                if new_status_code in ["delivered", "refunded"]:
+                    self._acceptance_timer_task = asyncio.create_task(self._auto_accept_after_delivered_refunded())
+                elif new_status_code in ["partial_delivered", "partial_refunded"]:
+                    item_status_occurrences = await self.count_item_status_occurrences()
+                    total = sum(item_status_occurrences.values())
+                    if item_status_occurrences.get("delivered", 0) + item_status_occurrences.get("refunded", 0) == total:
+                        self._acceptance_timer_task = asyncio.create_task(self._auto_accept_after_deliveredrefunded())
+
+            # When an Order Cancel/Return is completed/requested, arm a 7-day timer to auto-trigger refund
             if new_status_code in ["cancelled", "partial_cancelled", "returned", "partial_returned"] and not self._refund_timer_task:
-                self._refund_timer_task = asyncio.create_task(self._auto_refund_after_cancelled_returned())
+                if new_status_code in ["cancelled", "returned"]:
+                    self._refund_timer_task = asyncio.create_task(self._auto_refund_after_cancelled_returned())
+                elif new_status_code in ["partial_cancelled", "partial_returned"]:
+                    item_status_occurrences = await self.count_item_status_occurrences()
+                    total = sum(item_status_occurrences.values())
+                    if item_status_occurrences.get("cancelled", 0) + item_status_occurrences.get("returned", 0) == total:
+                        self._refund_timer_task = asyncio.create_task(self._auto_refund_after_cancelled_returned())
 
 
     # --- BATCH PHASE INITIATORS (Triggered by external systems) ---
@@ -118,7 +136,7 @@ class OrderWorkflow:
     async def start_fill(self):
         """Initiates the Batch Filling Process for all Items"""
         if self.is_busy:
-            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Filling Batch aborted")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Filling Batch signal queued")
             return
 
         if self.current_status_code == "paid":
@@ -132,7 +150,7 @@ class OrderWorkflow:
     async def start_shipping(self):
         """Initiates the Batch Shipping Process for all Items that are filled"""
         if self.is_busy:
-            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Shipping Batch aborted")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Shipping Batch signal queued")
             return
 
         # Allowed statuses include 'filled' or 'partial_filled' (which is the aggregate status)
@@ -147,7 +165,7 @@ class OrderWorkflow:
     async def start_delivery(self):
         """Initiates the Batch Delivery Process for all Items that are shipped"""
         if self.is_busy:
-            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Delivery Batch aborted")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Delivery Batch signal queued")
             return
             
         if self.current_status_code in ["shipped", "partial_shipped"]:
@@ -161,7 +179,7 @@ class OrderWorkflow:
     async def start_refund(self):
         """Initiates the Batch Refund Process for all Order's Items"""
         if self.is_busy:
-            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Refund Batch aborted")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Refund Batch signal queued")
             return
         
         await self._run_batch_phase(item_signal_name="refund_item_batch")
@@ -170,18 +188,11 @@ class OrderWorkflow:
     async def start_acceptance(self):
         """Initiates the Batch Acceptance Process for all Order's Items"""
         if self.is_busy:
-            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Acceptance Batch aborted")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Acceptance Batch signal queued")
             return
 
-        if self.current_status_code in ["delivered", "refunded", "partial_delivered", "partial_refunded"]:
-            #await self._run_batch_phase(
-            #    item_signal_name="accept_item_batch"
-            #)
-            await self._query_and_aggregate_status()
-
-        else:
-            workflow.logger.warning(f"Cannot start acceptance. Order is {self.current_status_code}")
-
+        await self._run_batch_phase(item_signal_name="accept_item_batch")
+        
     
     # --- CORE BATCH EXECUTION LOGIC ---
     async def _run_batch_phase(self, item_signal_name: str):
@@ -213,6 +224,27 @@ class OrderWorkflow:
 
         self.is_busy = False
         workflow.logger.info(f"BATCH Phase {item_signal_name} Completed")
+
+    async def _auto_accept_after_delivered_refunded(self):
+        """
+        Wait 10 days after an Order Delivered/Refunded, then automatically trigger Customer Acceptance
+        if the Order is still in due state
+        """
+        await workflow.sleep(timedelta(days=10))
+
+        # If already accepted, skip
+        if self.current_status_code == "customer_accepted":
+            return
+
+        # Only proceed if still refunded/partial_refunded
+        if self.current_status_code not in ["delivered", "partial_delivered", "refunded", "partial_refunded"]:
+            return
+
+        # Wait if a batch is in progress
+        while self.is_busy:
+            await workflow.sleep(timedelta(seconds=1))
+
+        await self._run_batch_phase(item_signal_name="accept_item_batch")
 
     async def _auto_refund_after_cancelled_returned(self):
         """
@@ -247,82 +279,69 @@ class OrderWorkflow:
         """
         Queries all Item Workflows for their current status and calls the aggregate update function
         """
-        item_statuses = await self._query_item_statuses()
-
         # Compute the new Order Status
-        # list(): Convert the dict_values to a list for processing
-        new_aggregate_status_code = self.calculate_aggregate_status(list(item_statuses.values()))
+        new_aggregate_status_code = self.calculate_aggregate_status()
         
         # Perform the single, atomic DB update
         await self._update_db_status_if_changed(new_aggregate_status_code)
 
     # --- AGGREGATION LOGIC (Used ONLY after a batch is complete) ---
-    def calculate_aggregate_status(self, status_codes: List[str]) -> str:
+    async def calculate_aggregate_status(self) -> str:
         """
         Logic to determine Parent Status based on Child/Item Statuses after a batch finishes
         """
-        total = len(status_codes)
+        item_status_occurrences = await self.count_item_status_occurrences()
+        total = sum(item_status_occurrences.values())
+
         if total == 0:
             return "pending" # Needs manual review to understand why no items exist
         
-        # Count occurrences of each Item Status Codes and counts is the type Dict[str, int] (eg: delivered: 3, shipped:2, open:1)
-        counts = {s: status_codes.count(s) for s in set(status_codes)}
-        
-        # Define statuses based on their progress level (highest possible status first)
-        accepted = counts.get("customer_accepted", 0)
-        refunded = counts.get("refunded", 0)
-        returned = counts.get("returned", 0)
-        delivered = counts.get("delivered", 0)
-        shipped = counts.get("shipped", 0)
-        cancelled = counts.get("cancelled", 0)
-        filled = counts.get("filled", 0)
-        paid = counts.get("paid", 0)
-        open = counts.get("open", 0)
-        # pending = counts.get("pending", 0)
-        
         # QUICK STATUSES TO COMPUTE
         # Full Successful Completion
-        if accepted == total:
+        if item_status_occurrences.get("customer_accepted", 0) == total:
             return "customer_accepted"
-        if refunded == total:
+        if item_status_occurrences.get("refunded", 0) == total:
             return "refunded"
-        if returned == total:
+        if item_status_occurrences.get("returned", 0) == total:
             return "returned"
-        if delivered == total:
+        if item_status_occurrences.get("delivered", 0) == total:
             return "delivered"
-        if shipped == total:
+        if item_status_occurrences.get("shipped", 0) == total:
             return "shipped"
-        # Full Order Cancellation
-        if cancelled == total:
+        if item_status_occurrences.get("cancelled", 0) == total:
             return "cancelled"
-        if filled == total:
+        if item_status_occurrences.get("filled", 0) == total:
             return "filled"
-        if paid == total:
+        if item_status_occurrences.get("paid", 0) == total:
             return "paid"
-        if open == total:
+        if item_status_occurrences.get("open", 0) == total:
             return "open"
-
-        # MIXED/COMPLEX STATUSES
-        # if delivered + refunded == total:
-        #    return "customer_accepted"
-            
+    
         # PROGRESS/PARTIAL STATUSES (Order is in progress)
-        if refunded > 0:
+        if item_status_occurrences.get("refunded", 0) > 0:
             return "partial_refunded"
-        if returned > 0:
+        if item_status_occurrences.get("returned", 0) > 0:
             return "partial_returned"
-        if delivered > 0:
+        if item_status_occurrences.get("delivered", 0) > 0:
             return "partial_delivered"
-        if shipped > 0:
+        if item_status_occurrences.get("shipped", 0) > 0:
             return "partial_shipped"
-        if cancelled > 0:
+        if item_status_occurrences.get("cancelled", 0) > 0:
             return "partial_cancelled"  # Issue?: I don't see when partial_cancelled would be reached/set in current logic
-        if filled > 0:
+        if item_status_occurrences.get("filled", 0) > 0:
             return "partial_filled"
         else:
             return "pending" # Fallback case that needs manual review
+        
+    async def count_item_status_occurrences(self) -> Dict[str, int]:
+        """
+        Helper function to count occurrences of each Dict Status Code
+        """
+        item_statuses = await self._query_item_statuses()
+        # list(): Convert the dict_values to a list for processing
+        statuses = list(item_statuses.values())
+        return {s: statuses.count(s) for s in set(statuses)}
 
-    
     # --- EXTERNAL SIGNALS (Must be guarded by self.is_busy) ---
     @workflow.signal
     async def cancel_order(self):
@@ -349,7 +368,7 @@ class OrderWorkflow:
     async def start_return(self):
         """Initiates the Batch Return Process for all Order's Items"""
         if self.is_busy:
-            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Return Batch aborted")
+            workflow.logger.warning("Order's Workflow is busy processing another Order's Batch. Order's Return Batch signal queued")
             return
 
         if self.current_status_code in ["delivered", "partial_delivered", "partial_returned"]:
