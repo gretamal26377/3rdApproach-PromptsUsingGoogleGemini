@@ -179,14 +179,12 @@ async def perform_item_acceptance(item_data: ItemActivityInput) -> ItemActivityO
     """
     activity.logger.info(f"Activity: Recording acceptance for Item {item_data.item_id}")
 
-    await asyncio.sleep(0.2)
-
     success_status_code = "customer_accepted"
     _update_DB_item_status(item_data.order_id, item_data.item_id, success_status_code)
     return ItemActivityOutput(
         item_id=item_data.item_id,
         success=True,
-        message=f"Item {item_data.item_id} accepted by Customer",
+        message=f"Item {item_data.item_id} Accepted by Customer",
         new_item_status_code=success_status_code,
     )
 

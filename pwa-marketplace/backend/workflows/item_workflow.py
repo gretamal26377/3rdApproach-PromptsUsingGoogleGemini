@@ -67,7 +67,7 @@ class ItemWorkflow:
         if self.current_status_code != new_status_code:
             workflow.logger.info(f"Item {self.item_id} status changed to: {new_status_code}")
             self.current_status_code = new_status_code
-            await self._maybe_schedule_acceptance_timer(new_status_code)
+            # await self._maybe_schedule_acceptance_timer(new_status_code)
             
             # Note: We do NOT signal the parent here. The Parent will QUERY or receive 
             # the status after the Batch Process is complete
@@ -221,6 +221,7 @@ class ItemWorkflow:
             )
 
     # --- INTERNAL: Schedule Acceptance after 10 days of Delivered/Refunded ---
+    # GRL: Not used till now, because we're controlling it from Order Workflow as a Batch
     async def _maybe_schedule_acceptance_timer(self, status_code: str):
         """
         When the Item reaches delivered/refunded status code, start a one-time 10-day timer.

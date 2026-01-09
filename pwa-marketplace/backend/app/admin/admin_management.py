@@ -329,10 +329,10 @@ def accept_order_logic(current_customer, order_id):
         return {'message': 'Order does not belong to Customer'}, 403
     
     # Only allow acceptance if order status is in allowed list
-    allowed_status_codes = ["cancelled", "partial_cancelled", "returned", "partial_returned", "partial_refunded",
-                            "partial_delivered", "partial_shipped"]
+    allowed_status_codes = ["delivered", "partial_delivered", "refunded", "partial_refunded"]
     if not order.order_status or order.order_status.status_code not in allowed_status_codes:
         return {'message': f"Order cannot be Refunded in its current Status: {order.order_status.status_display if order.order_status else 'Unknown'}"}, 400
+
 
     try:
         async def accept_order_workflow():

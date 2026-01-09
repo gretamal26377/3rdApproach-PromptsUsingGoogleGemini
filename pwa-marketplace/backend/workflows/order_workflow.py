@@ -244,7 +244,8 @@ class OrderWorkflow:
         while self.is_busy:
             await workflow.sleep(timedelta(seconds=1))
 
-        await self._run_batch_phase(item_signal_name="accept_item_batch")
+        await self.start_acceptance()
+        # await self._run_batch_phase(item_signal_name="accept_item_batch")
 
     async def _auto_refund_after_cancelled_returned(self):
         """
