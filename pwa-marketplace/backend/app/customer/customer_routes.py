@@ -3,7 +3,7 @@ from ..shared.auth import token_required
 # Issue: Missing logics (update_order_logic)
 from .customer_management import (
     create_customer_logic, get_store_products_services_logic, login_customer_logic, decode_customer_logic, get_featured_stores_logic,
-    get_stores_logic, get_store_logic, get_products_services_logic, get_product_service_logic,
+    get_stores_logic, get_store_logic, get_store_product_service_logic,
     create_order_logic, get_orders_logic, get_order_logic, cancel_order_logic
 )
 
@@ -20,7 +20,21 @@ def register_customer():
 def login_customer():
     data = request.get_json()
     result, status = login_customer_logic(data)
-    return jsonify(result), status
+
+    # If login succeeds and a token is returned, set cookies for reuse
+    response = jsonify(result)
+    # isinstance check to avoid errors if result is a dict, if not a dict, token will be None
+    token = result.get("token") if isinstance(result, dict) else None
+    user_email = result.get("customer_email") if isinstance(result, dict) else None
+    if token:
+        # httponly=True to prevent JavaScript access (mitigates XSS attacks)
+        # samesite="Lax" to help prevent CSRF attacks while allowing some cross-site usage
+        # secure=True to ensure the cookie is only sent over HTTPS
+        response.set_cookie("auth_token", token, httponly=True, samesite="Lax", secure=True)
+    if user_email:
+        # secure=True to restrict transmission to HTTPS only
+        response.set_cookie("user_email", user_email, httponly=False, samesite="Lax", secure=True)
+    return response, status
 
 """
 Route to decode a user from its token

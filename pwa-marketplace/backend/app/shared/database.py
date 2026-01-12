@@ -1,5 +1,7 @@
+from flask import g, request
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+from flask_migrate import Migrate  # type: ignore
+from sqlalchemy import text
 
 # Centralized DB instances used across the application
 # Import `db` and `migrate` from other modules instead of creating new instances
@@ -17,3 +19,21 @@ def init_extensions(app):
     # Wires the Flask app with the Flask-Migrate instance and
     # binds it to the SQLAlchemy instance
     migrate.init_app(app, db)
+
+def register_request_hooks(app):
+    """Register per-request hooks (e.g., audit user propagation)"""
+
+    # @app.before_request: It's a Flask decorator to run a function (this case: set_audit_user_from_cookie) before each DB request
+    @app.before_request
+    def set_audit_user_from_cookie():
+        """Set @audit_user for this DB session using a cookie-stored user email"""
+        user_email = request.cookies.get("user_email")
+        g.current_user_email = user_email
+        try:
+            if user_email:
+                db.session.execute(text("SET @audit_user = :email"), {"email": user_email})
+            else:
+                db.session.execute(text("SET @audit_user = NULL"))
+        # This Exception is defensive coding, it's a "safety net" if for some reason the DB isn't ready yet 
+        except Exception:
+            db.session.rollback()

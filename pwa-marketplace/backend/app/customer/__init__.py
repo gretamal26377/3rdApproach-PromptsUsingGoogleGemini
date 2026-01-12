@@ -1,6 +1,6 @@
 from flask import Flask
 from ..shared.config import Config
-from ..shared.database import init_extensions
+from ..shared.database import init_extensions, register_request_hooks
 from .customer_routes import customer_bp
 
 def create_app(config_class=Config):
@@ -12,6 +12,7 @@ def create_app(config_class=Config):
     # needing to initialize them again.
     # It also connects the DB through SQLALCHEMY_DATABASE_URI setting in config
     init_extensions(app)
+    register_request_hooks(app)
 
     # Register customer blueprint
     app.register_blueprint(customer_bp)

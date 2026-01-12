@@ -63,14 +63,18 @@ def login_customer_logic(data):
         return {'message': 'Missing required fields'}, 400
     customer = Customers.query.filter_by(customer_email=data['customer_email']).first()
     if not customer:
-        return {'message': 'Invalid credentials'}, 401
+        return {'message': 'Invalid Credentials'}, 401
     # Check status is active
     if not customer.customer_status or customer.customer_status.status_code != 'active':
         return {'message': 'Customer is not Active'}, 403
     if not check_password_hash(customer.customer_password_hash, data['customer_password']):
-        return {'message': 'Invalid credentials'}, 401
+        return {'message': 'Invalid Password'}, 401
     token = generate_token({'customer_id': customer.customer_id, 'customer_email': customer.customer_email})
-    return {'message': 'Login successful', 'token': token}, 200
+    return {
+        'message': 'Login Successful',
+        'token': token,
+        'customer_email': customer.customer_email
+    }, 200
 
 def decode_customer_logic(data):
     if not data or 'token' not in data:
