@@ -12,6 +12,7 @@ import { DarkModeToggle } from "shared-lib";
 // console.log(SharedLib); // This will log all exports from shared-lib
 
 function CustomerNav({ cart, handleLogout }) {
+  // Access authentication state from AuthContext
   const { isLoggedIn, isAdmin } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -110,6 +111,7 @@ function CustomerNav({ cart, handleLogout }) {
 }
 
 function AppContent() {
+  // Access authentication state from AuthContext
   const { isLoggedIn, user, isAdmin, login, logout } = useContext(AuthContext);
   const [cart, setCart] = useState([]);
   const location = useLocation();

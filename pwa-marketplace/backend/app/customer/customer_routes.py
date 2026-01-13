@@ -70,8 +70,8 @@ def get_store_products_services(store_id):
     return jsonify(result), status
 
 @customer_bp.route('/products-services/<int:product_service_id>', methods=['GET'])
-def get_product_service(product_service_id):
-    result, status = get_product_service_logic(product_service_id)
+def get_store_product_service(product_service_id):
+    result, status = get_store_product_service_logic(product_service_id)
     return jsonify(result), status
 
 @customer_bp.route('/orders', methods=['GET'])
