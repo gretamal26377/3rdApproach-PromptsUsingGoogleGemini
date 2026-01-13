@@ -31,16 +31,8 @@ const Login = ({ onLogin }) => {
     }
 
     try {
-      // Issue: Simulate API call. It must be replaced with real API call and token handling,
-      //        but also manage when Authentication fails. There's no logic to handle it
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const fakeUser = {
-        username: username,
-        email: "test@example.com",
-        is_admin: username === "admin",
-      };
-
-      onLogin(fakeUser); // Call the onLogin prop
+      const userData = { username, password };
+      onLogin(userData); // Call the onLogin prop
     } catch (err) {
       setError("Invalid credentials. Please try again");
     } finally {

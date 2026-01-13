@@ -28,7 +28,7 @@ const authService = {
 
   getCurrentUser: async () => {
     // Issue?: Perhaps to set a try/catch block here to handle errors when calling the backend?
-    const token = authService.getToken();
+    const token = getToken();
     if (token) {
       try {
         // Call the /decode endpoint and token will be passed as JSON data 2nd body parameter and not as 3rd token parameter in deed because of security reasons given by Copilot

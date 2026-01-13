@@ -16,7 +16,7 @@ const LoginPage = () => {
   };
 
   return (
-    <Login onLogin={handleLoginSuccess} /> // Pass the login function
+    <Login onLogin={handleLoginSuccess} /> // Pass the login function as a prop to Login component
   );
 };
 

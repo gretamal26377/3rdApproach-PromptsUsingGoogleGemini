@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }) => {
   // Purpose: To navigate programmatically. For example, navigate("/login") to trigger navigating to the login page
   //const navigate = useNavigate();
 
+  // On component mount, check if user is already logged in. Runs only once when the component is first rendered
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
@@ -35,25 +36,37 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const handleLogin = async (userData) => {
-    setIsLoggedIn(true);
-    setUser(userData);
-    setIsAdmin(userData.is_admin);
-    //navigate("/");
+    const response = await authService.login(
+      userData.username,
+      userData.password
+    );
+    if (response) {
+      setIsLoggedIn(true);
+      setUser(response);
+      setIsAdmin(response.is_admin);
+    }
   };
 
   const handleSignup = async (userData) => {
-    setIsLoggedIn(true);
-    setUser(userData);
-    setIsAdmin(userData.is_admin);
-    //navigate("/");
+    const response = await authService.signup(
+      userData.username,
+      userData.email,
+      userData.password
+    );
+    if (response) {
+      setIsLoggedIn(true);
+      setUser(response);
+      setIsAdmin(response.is_admin);
+      //navigate("/");
+    }
   };
 
   const handleLogout = () => {
     authService.logout();
     setIsLoggedIn(false);
     setUser(null);
-    setIsAdmin(false);
-    //navigate("/");
+    // setIsAdmin(false);
+    // navigate("/");
   };
 
   // Linked to createContext, see its comments above

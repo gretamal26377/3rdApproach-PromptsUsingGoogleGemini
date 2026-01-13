@@ -22,19 +22,20 @@ def login_customer():
     result, status = login_customer_logic(data)
 
     # If login succeeds and a token is returned, set cookies for reuse
-    response = jsonify(result)
-    # isinstance check to avoid errors if result is a dict, if not a dict, token will be None
-    token = result.get("token") if isinstance(result, dict) else None
-    user_email = result.get("customer_email") if isinstance(result, dict) else None
-    if token:
-        # httponly=True to prevent JavaScript access (mitigates XSS attacks)
-        # samesite="Lax" to help prevent CSRF attacks while allowing some cross-site usage
-        # secure=True to ensure the cookie is only sent over HTTPS
-        response.set_cookie("auth_token", token, httponly=True, samesite="Lax", secure=True)
-    if user_email:
-        # secure=True to restrict transmission to HTTPS only
-        response.set_cookie("user_email", user_email, httponly=False, samesite="Lax", secure=True)
-    return response, status
+    if status == 200:
+        response = jsonify(result)
+        # isinstance check to avoid errors if result is a dict, if not a dict, token will be None
+        token = result.get("token") if isinstance(result, dict) else None
+        user_email = result.get("customer_email") if isinstance(result, dict) else None
+        if token:
+            # httponly=True to prevent JavaScript access (mitigates XSS attacks)
+            # samesite="Lax" to help prevent CSRF attacks while allowing some cross-site usage
+            # secure=True to ensure the cookie is only sent over HTTPS
+            response.set_cookie("auth_token", token, httponly=True, samesite="Lax", secure=True)
+        if user_email:
+            # secure=True to restrict transmission to HTTPS only
+            response.set_cookie("user_email", user_email, httponly=False, samesite="Lax", secure=True)
+        return response, status
 
 """
 Route to decode a user from its token
