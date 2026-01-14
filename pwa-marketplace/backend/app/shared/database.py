@@ -23,12 +23,13 @@ def init_extensions(app):
 def register_request_hooks(app):
     """Register per-request hooks (e.g., audit user propagation)"""
 
-    # @app.before_request: It's a Flask decorator to run a function (this case: set_audit_user_from_cookie) before each DB request
     @app.before_request
     def set_audit_user_from_cookie():
         """
         Set @audit_user for this DB session using a cookie-stored user email.
-        This is used among others to populate audit fields like created_by, updated_by in tables such as the history ones
+        This is used among others to populate audit fields like created_by, updated_by in tables such as the history ones.
+        # @app.before_request: It's a Flask decorator that run this function automatically before each DB request
+
         """
         user_email = request.cookies.get("user_email")
         g.current_user_email = user_email

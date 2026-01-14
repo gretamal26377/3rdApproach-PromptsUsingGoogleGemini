@@ -14,7 +14,11 @@ x-database-credentials: &database-credentials
   MYSQL_DATABASE: marketplace_db
   MYSQL_USER: db_user
   MYSQL_PASSWORD_FILE: /run/secrets/mysql_db_user_password
-x-search-engine: &search_engine meili
+
+x-search-engine: &search-engine
+  SEARCH_ENGINE: meili
+  VITE_SEARCH_API_BASE_URL: http://backend-search:5002/api-search
+
 x-temporal: &temporal
   TEMPORAL_HOST: temporal-server:7233
 
@@ -32,7 +36,7 @@ services:
     environment:
       - NODE_ENV=production
       - VITE_API_BASE_URL=http://backend-customer:5000/api
-      - VITE_SEARCH_API_BASE_URL=http://backend-search:5002/api-search
+      <<: *search-engine
     # Mounting host machine's path to container's path. This way,
     # changes in host machine's path are reflected in container's path without rebuilding the image.
     # Before the colon, host machine's path and after, it's the container's path
@@ -57,7 +61,7 @@ services:
       - "3001:3000"
     environment:
       - VITE_API_BASE_URL=http://backend-admin:5000/api
-      - VITE_SEARCH_API_BASE_URL=http://backend-search:5002/api-search
+      <<: *search-engine
     volumes:
       - ./frontend:/pwa-marketplace/frontend:ro
     depends_on:
@@ -104,7 +108,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile-search
       args:
-        SEARCH_ENGINE: *search_engine  
+        SEARCH_ENGINE: *search-engine.SEARCH_ENGINE
     # Search has no a standard port number, so we use 5002 as for host as for its container
     ports:
       - "5002:5002"
@@ -117,7 +121,7 @@ services:
     command: ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]
     environment:
       <<: *database-credentials
-      SEARCH_ENGINE: *search_engine
+      <<: *search-engine
       # YAML & Docker Compose don't support if/else statements
       # App check SEARCH_ENGINE and use the correct variables
       # SEARCH_ENGINE == 'meili'

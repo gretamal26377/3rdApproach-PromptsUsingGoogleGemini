@@ -33,7 +33,11 @@ def token_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Prefer Authorization header if present (this case defined in api.js), fall back to auth_token cookie
+        """
+        This is gral purpose decorator, so that's the reason for both checks. Authorization header and cookie.
+        Authorization is used when tokens are stored in localStorage/sessionStorage at frontend side
+        Cookies store tokens at backend side and are considered more secure against XSS attacks because of features like HttpOnly and Secure flags
+        """
         auth_header = request.headers.get('Authorization')
         cookie_token = request.cookies.get('auth_token')
 

@@ -7,19 +7,15 @@ const SEARCH_API_BASE_URL =
   "http://localhost:5002/api-search";
 
 const api = {
-  get: async (endpoint, token = null) => {
-    // Token is optional. If no provided, it will be set by default to null
+  get: async (endpoint) => {
     const headers = {
       "Content-Type": "application/json",
     };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-      const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-        method: "GET",
-        headers,
-        credentials: "include",
-      });
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
     }
@@ -56,18 +52,15 @@ const api = {
    *   ]
    * }
    */
-  getSearch: async (endpoint, token = null) => {
+  getSearch: async (endpoint) => {
     const headers = {
       "Content-Type": "application/json",
     };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-      const response = await fetch(`${SEARCH_API_BASE_URL}/${endpoint}`, {
-        method: "GET",
-        headers,
-        credentials: "include",
-      });
+    const response = await fetch(`${SEARCH_API_BASE_URL}/${endpoint}`, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
     if (!response.ok) {
       throw new Error(`Search API request failed: ${response.status}`);
     }
@@ -87,19 +80,16 @@ const api = {
   },
 
   // post is used for creating new resources
-  post: async (endpoint, data, token = null) => {
+  post: async (endpoint, data) => {
     const headers = {
       "Content-Type": "application/json",
     };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-      const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
     if (!response.ok) {
       // Raise an error if the response is not ok (HTTP status not in 200-299 range)
       // This error pops up till finding a try/catch block in the calling code
@@ -110,37 +100,31 @@ const api = {
   },
 
   // put is used to update an existing resource
-  put: async (endpoint, data, token = null) => {
+  put: async (endpoint, data) => {
     const headers = {
       "Content-Type": "application/json",
     };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-      const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
     }
     return response.json();
   },
 
-  delete: async (endpoint, token = null) => {
+  delete: async (endpoint) => {
     const headers = {
       "Content-Type": "application/json",
     };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-      const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-        method: "DELETE",
-        headers,
-        credentials: "include",
-      });
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+      method: "DELETE",
+      headers,
+      credentials: "include",
+    });
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
     }
