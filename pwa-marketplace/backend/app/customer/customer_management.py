@@ -1,12 +1,15 @@
 import asyncio
+import logging
+from datetime import datetime
+
+import bleach
+from flask import request
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from ..shared.auth import decode_token, generate_token
 from ..shared.database import db
 from ..shared.models import Customers, Stores, FeaturedStores, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
-import logging
-from ..shared.auth import generate_token, decode_token
 from ..shared.utils import get_temporal_client
-from werkzeug.security import generate_password_hash, check_password_hash
-import bleach
-from datetime import datetime
 from workflows.order_workflow import OrderWorkflow
 
 VALID_STATUS_CODES = [
@@ -77,9 +80,14 @@ def login_customer_logic(data):
     }, 200
 
 def decode_customer_logic(data):
-    if not data or 'token' not in data:
+    # Prefer explicit token in payload; fall back to auth_token cookie for HttpOnly flows
+    token = None
+    if data and 'token' in data:
+        token = data['token']
+    if not token:
+        token = request.cookies.get('auth_token')
+    if not token:
         return {'message': 'No token provided'}, 400
-    token = data['token']
     decoded = decode_token(token)
     if decoded and 'customer_id' in decoded:
         customer = Customers.query.get(decoded['customer_id'])

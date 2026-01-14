@@ -34,6 +34,7 @@ def login_customer():
             response.set_cookie("auth_token", token, httponly=True, samesite="Lax", secure=True)
         if user_email:
             # secure=True to restrict transmission to HTTPS only
+            # httponly=False to allow JavaScript access (e.g., for frontend display purposes)
             response.set_cookie("user_email", user_email, httponly=False, samesite="Lax", secure=True)
         return response, status
 

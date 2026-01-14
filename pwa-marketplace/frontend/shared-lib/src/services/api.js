@@ -15,10 +15,11 @@ const api = {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-      method: "GET",
-      headers,
-    });
+      const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+        method: "GET",
+        headers,
+        credentials: "include",
+      });
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
     }
@@ -62,10 +63,11 @@ const api = {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    const response = await fetch(`${SEARCH_API_BASE_URL}/${endpoint}`, {
-      method: "GET",
-      headers,
-    });
+      const response = await fetch(`${SEARCH_API_BASE_URL}/${endpoint}`, {
+        method: "GET",
+        headers,
+        credentials: "include",
+      });
     if (!response.ok) {
       throw new Error(`Search API request failed: ${response.status}`);
     }
@@ -92,11 +94,12 @@ const api = {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(data),
-    });
+      const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
     if (!response.ok) {
       // Raise an error if the response is not ok (HTTP status not in 200-299 range)
       // This error pops up till finding a try/catch block in the calling code
@@ -114,11 +117,12 @@ const api = {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify(data),
-    });
+      const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
     }
@@ -132,10 +136,11 @@ const api = {
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-      method: "DELETE",
-      headers,
-    });
+      const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+        method: "DELETE",
+        headers,
+        credentials: "include",
+      });
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
     }
