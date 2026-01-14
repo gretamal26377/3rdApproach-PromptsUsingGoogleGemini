@@ -4,12 +4,12 @@ from functools import wraps  # for creating decorators
 from .models import Users
 import datetime  # for handling date and time
 
-def generate_token(user):
+def generate_token(id):
     """
-    Generate a JWT token for a user
+    Generate a JWT token for an id
     """
     payload = {
-        'user_id': user.id,
+        'user_id': id,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)  # Token expires in 7 days
     }
     return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')

@@ -49,7 +49,7 @@ def create_customer_logic(data):
         new_customer.customer_status_id = active_status.status_id
         db.session.add(new_customer)
         db.session.commit()
-        token = generate_token({'customer_id': new_customer.customer_id, 'customer_email': new_customer.customer_email})
+        token = generate_token(new_customer.customer_id)
         return {'message': 'Customer created successfully', 'token': token}, 201
     except Exception as e:
         db.session.rollback()
@@ -72,11 +72,10 @@ def login_customer_logic(data):
         return {'message': 'Customer is not Active'}, 403
     if not check_password_hash(customer.customer_password_hash, data['customer_password']):
         return {'message': 'Invalid Password'}, 401
-    token = generate_token({'customer_id': customer.customer_id, 'customer_email': customer.customer_email})
+    token = generate_token(customer.customer_id)
     return {
         'message': 'Login Successful',
-        'token': token,
-        'customer_email': customer.customer_email
+        'token': token
     }, 200
 
 def decode_customer_logic(data):
@@ -89,8 +88,8 @@ def decode_customer_logic(data):
     if not token:
         return {'message': 'No token provided'}, 400
     decoded = decode_token(token)
-    if decoded and 'customer_id' in decoded:
-        customer = Customers.query.get(decoded['customer_id'])
+    if decoded:
+        customer = Customers.query.get(decoded['user_id'])
         if customer and customer.customer_status and customer.customer_status.status_code == 'active':
             customer_data = {
                 'customer_id': customer.customer_id,

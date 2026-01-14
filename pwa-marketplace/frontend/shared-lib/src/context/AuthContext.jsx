@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     if (response) {
       setIsLoggedIn(true);
       setUser(response);
-      setIsAdmin(response.is_admin);
+      // setIsAdmin(response.is_admin);
     }
   };
 
