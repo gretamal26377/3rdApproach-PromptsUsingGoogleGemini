@@ -37,6 +37,9 @@ def login_customer():
             # httponly=False to allow JavaScript access (e.g., for frontend display purposes)
             response.set_cookie("user_email", user_email, httponly=False, samesite="Lax", secure=True)
         return response, status
+    
+    # Explicitly handle error case
+    return jsonify(result), status
 
 """
 Route to decode a user from its token

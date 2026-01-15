@@ -31,9 +31,12 @@ const Login = ({ onLogin }) => {
     }
 
     try {
+      // userData data type: An JS object containing username and password
       const userData = { username, password };
       onLogin(userData); // Call the onLogin prop
     } catch (err) {
+      // This error msg is shown in the UI
+      // err.message is the error message from the backend (eg: msg set in throw new Error(msg))
       setError("Invalid credentials. Please try again");
     } finally {
       // Executed after try/catch block, regardless of success or failure
