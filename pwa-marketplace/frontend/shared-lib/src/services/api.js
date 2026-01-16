@@ -94,6 +94,7 @@ const api = {
       // Raise an error if the response is not ok (HTTP status not in 200-299 range)
       // This error pops up till finding a try/catch block in the calling code
       // If no try/catch is found, the program will crash
+      // When this happens, this function returns no data
       throw new Error(`API request failed: ${response.status}`);
     }
     return response.json();

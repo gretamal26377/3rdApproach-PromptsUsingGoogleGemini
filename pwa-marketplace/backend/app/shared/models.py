@@ -31,15 +31,16 @@ class EntityStatuses(db.Model):
     status_description = db.Column(db.Text)
 
     categories = db.relationship('Categories', back_populates='category_status')
-    cities = db.relationship('Cities', back_populates='city_status')
+    cities_towns = db.relationship('CitiesTowns', back_populates='city_town_status')
     states_regions = db.relationship('StatesRegions', back_populates='state_region_status')
     countries = db.relationship('Countries', back_populates='country_status')
-    customer_addresses = db.relationship('CustomerAddresses', back_populates='address_status')
+    # customers_addresses = db.relationship('CustomersAddresses', back_populates='address_status')
     customers = db.relationship('Customers', back_populates='customer_status')
-    store_products_services = db.relationship('StoreProductsServices', back_populates='status')
+    stores_products_services = db.relationship('StoresProductsServices', back_populates='status')
+    organisations = db.relationship('Organisations', back_populates='organisations_status')
     stores = db.relationship('Stores', back_populates='store_status')
     products_services = db.relationship('ProductsServices', back_populates='product_service_status')
-    store_user_roles = db.relationship('StoreUserRole', back_populates='status')
+    stores_users = db.relationship('StoresUsers', back_populates='status')
     users = db.relationship('Users', back_populates='user_status')
 
 
@@ -48,6 +49,8 @@ class CategoriesHistory(db.Model):
     __table_args__ = (
         Index('category_id', 'category_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -59,18 +62,17 @@ class CategoriesHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
+class CitiesTowns(db.Model):
+    __tablename__ = 'cities_towns'
 
-class Cities(db.Model):
-    __tablename__ = 'cities'
-
-    city_id = db.Column(db.Integer, primary_key=True)
-    city_name = db.Column(db.String(100), nullable=False)
+    city_town_id = db.Column(db.Integer, primary_key=True)
+    city_town_name = db.Column(db.String(100), nullable=False)
     state_region_id = db.Column(db.Integer, db.ForeignKey('states_regions.state_region_id'), nullable=False)
-    city_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    city_town_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     state_region = db.relationship('StatesRegions', back_populates='cities')
-    city_status = db.relationship('EntityStatuses', back_populates='cities')
-    customer_addresses = db.relationship('CustomerAddresses', back_populates='city')
+    city_town_status = db.relationship('EntityStatuses', back_populates='cities')
+    customers_addresses = db.relationship('CustomersAddresses', back_populates='city')
 
 
 class StatesRegions(db.Model):
@@ -87,7 +89,7 @@ class StatesRegions(db.Model):
 
     country = db.relationship('Countries', back_populates='states_regions')
     state_region_status = db.relationship('EntityStatuses', back_populates='states_regions')
-    cities = db.relationship('Cities', back_populates='state_region')
+    cities_towns = db.relationship('CitiesTowns', back_populates='state_region')
 
 
 class Countries(db.Model):
@@ -105,11 +107,13 @@ class Countries(db.Model):
     states_regions = db.relationship('StatesRegions', back_populates='country')
 
 
-class CitiesHistory(db.Model):
-    __tablename__ = 'cities_history'
+class CitiesTownsHistory(db.Model):
+    __tablename__ = 'cities_towns_history'
     __table_args__ = (
-        Index('city_id', 'city_id'),
+        Index('city_town_id', 'city_town_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -127,6 +131,8 @@ class CountriesHistory(db.Model):
     __table_args__ = (
         Index('country_id', 'country_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -139,8 +145,8 @@ class CountriesHistory(db.Model):
 
 
 
-class CustomerAddresses(db.Model):
-    __tablename__ = 'customer_addresses'
+class CustomersAddresses(db.Model):
+    __tablename__ = 'customers_addresses'
 
     address_id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.customer_id'), nullable=False)
@@ -152,9 +158,9 @@ class CustomerAddresses(db.Model):
     postal_code = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
-    customer = db.relationship('Customers', back_populates='customer_addresses')
-    city = db.relationship('Cities', back_populates='customer_addresses')
-    address_status = db.relationship('EntityStatuses', back_populates='customer_addresses')
+    customer = db.relationship('Customers', back_populates='customers_addresses')
+    city_town = db.relationship('CitiesTowns', back_populates='customers_addresses')
+    # address_status = db.relationship('EntityStatuses', back_populates='customers_addresses')
 
 
 class Customers(db.Model):
@@ -172,16 +178,18 @@ class Customers(db.Model):
     customer_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     customer_status = db.relationship('EntityStatuses', back_populates='customers')
-    customer_addresses = db.relationship('CustomerAddresses', back_populates='customer')
+    customers_addresses = db.relationship('CustomersAddresses', back_populates='customer')
     orders = db.relationship('Orders', back_populates='customer')
 
 
-class CustomerAddressesHistory(db.Model):
-    __tablename__ = 'customer_addresses_history'
+class CustomersAddressesHistory(db.Model):
+    __tablename__ = 'customers_addresses_history'
     __table_args__ = (
         Index('changed_at', 'changed_at'),
         Index('customer_id', 'customer_id'),
         Index('address_id', 'address_id'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -194,12 +202,13 @@ class CustomerAddressesHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
 class CustomersHistory(db.Model):
     __tablename__ = 'customers_history'
     __table_args__ = (
         Index('changed_at', 'changed_at'),
         Index('customer_id', 'customer_id'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -211,12 +220,13 @@ class CustomersHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
 class EntityStatusesHistory(db.Model):
     __tablename__ = 'entity_statuses_history'
     __table_args__ = (
         Index('changed_at', 'changed_at'),
         Index('status_id', 'status_id'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -228,9 +238,8 @@ class EntityStatusesHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
-class OrderDetails(db.Model):
-    __tablename__ = 'order_details'
+class OrdersDetails(db.Model):
+    __tablename__ = 'orders_details'
     __table_args__ = (
         Index('product_service_status_id', 'product_service_status_id'),
         # Add index for Temporal Item Workflow ID
@@ -248,9 +257,9 @@ class OrderDetails(db.Model):
     product_service_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
     temporal_workflow_id = db.Column(db.String(100), nullable=False, unique=True)  # Field for Temporal Item Workflow ID
 
-    order = db.relationship('Orders', back_populates='order_details')
-    store_product_service = db.relationship('StoreProductsServices', back_populates='order_details')
-    product_service_status = db.relationship('OrderStatuses', back_populates='order_details')
+    order = db.relationship('Orders', back_populates='orders_details')
+    store_product_service = db.relationship('StoresProductsServices', back_populates='orders_details')
+    product_service_status = db.relationship('OrderStatuses', back_populates='orders_details')
 
 
 class OrderStatuses(db.Model):
@@ -268,7 +277,7 @@ class OrderStatuses(db.Model):
     status_display = db.Column(db.String(100), nullable=False)
     status_description = db.Column(db.Text)
 
-    order_details = db.relationship('OrderDetails', back_populates='product_service_status')
+    orders_details = db.relationship('OrdersDetails', back_populates='product_service_status')
     orders = db.relationship('Orders', back_populates='order_status')
 
 
@@ -292,11 +301,57 @@ class Orders(db.Model):
 
     customer = db.relationship('Customers', back_populates='orders')
     order_status = db.relationship('OrderStatuses', back_populates='orders')
-    order_details = db.relationship('OrderDetails', back_populates='order')
+    orders_details = db.relationship('OrdersDetails', back_populates='order')
 
 
-class StoreProductsServices(db.Model):
-    __tablename__ = 'store_products_services'
+class Organisations(db.Model):
+    __tablename__ = 'organisations'
+    __table_args__ = (
+        Index('organisation_email', 'organisation_email', unique=True),
+    )
+
+    organisation_id = db.Column(db.Integer, primary_key=True)
+    organisation_email = db.Column(db.String(100), nullable=False)
+    organisation_name = db.Column(db.String(100), nullable=False)
+    organisation_description = db.Column(db.Text)
+    organisation_phone = db.Column(db.String(20))
+    organisation_address = db.Column(db.Text, nullable=False)
+    organisation_pic_path = db.Column(db.String(255))
+    organisation_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    organisation_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
+
+    organisations_status = db.relationship('EntityStatuses', back_populates='organisations')
+    organisations_stores = db.relationship('Stores', back_populates='organisations')
+    organisations_users = db.relationship('Users', back_populates='organisations')
+
+
+class Stores(db.Model):
+    __tablename__ = 'stores'
+    __table_args__ = (
+        Index('store_email', 'store_email', unique=True),
+    )
+
+    store_id = db.Column(db.Integer, primary_key=True)
+    store_email = db.Column(db.String(100), nullable=False)
+    store_name = db.Column(db.String(100), nullable=False)
+    store_description = db.Column(db.Text)
+    store_phone = db.Column(db.String(20))
+    store_type = db.Column(db.Enum('PHYSICAL', 'ONLINE', 'BOTH', name='store_type_enum'), nullable=False)
+    store_city_town_id = db.Column(db.Integer, db.ForeignKey('cities_towns.city_town_id'), nullable=False)
+    store_address = db.Column(db.Text, nullable=False)
+    store_pic_path = db.Column(db.String(255))
+    store_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    store_organisation_id = db.Column(db.Integer, db.ForeignKey('organisations.organisation_id'), nullable=False)
+    store_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
+
+    store_status = db.relationship('EntityStatuses', back_populates='stores')
+    stores_products_services = db.relationship('StoresProductsServices', back_populates='store')
+    stores_users = db.relationship('StoresUsers', back_populates='store')
+    organisations = db.relationship('Organisations', back_populates='organisations_stores')
+
+
+class StoresProductsServices(db.Model):
+    __tablename__ = 'stores_products_services'
     __table_args__ = (
         Index('uk_store_product', 'store_id', 'product_service_id', unique=True),
     )
@@ -312,28 +367,7 @@ class StoreProductsServices(db.Model):
     store = db.relationship('Stores', back_populates='store_products_services')
     product_service = db.relationship('ProductsServices', back_populates='store_products_services')
     status = db.relationship('EntityStatuses', back_populates='store_products_services')
-    order_details = db.relationship('OrderDetails', back_populates='store_product_service')
-
-
-class Stores(db.Model):
-    __tablename__ = 'stores'
-    __table_args__ = (
-        Index('store_email', 'store_email', unique=True),
-    )
-
-    store_id = db.Column(db.Integer, primary_key=True)
-    store_email = db.Column(db.String(100), nullable=False)
-    store_name = db.Column(db.String(100), nullable=False)
-    store_description = db.Column(db.Text)
-    store_phone = db.Column(db.String(20))
-    store_address = db.Column(db.Text, nullable=False)
-    store_pic_path = db.Column(db.String(255))
-    store_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
-    store_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
-
-    store_status = db.relationship('EntityStatuses', back_populates='stores')
-    store_products_services = db.relationship('StoreProductsServices', back_populates='store')
-    store_user_roles = db.relationship('StoreUserRole', back_populates='store')
+    orders_details = db.relationship('OrdersDetails', back_populates='store_product_service')
 
 
 # --- FeaturedStores Model ---
@@ -354,6 +388,20 @@ class FeaturedStores(db.Model):
 
     store = db.relationship('Stores', backref='featured_stores')
 
+class Roles(db.Model):
+    __tablename__ = 'roles'
+    __table_args__ = (
+        Index('role_code', 'role_code', unique=True),
+    )
+
+    role_id = db.Column(db.Integer, primary_key=True)
+    # e.g., 'admin', 'supervisor', 'agent'
+    role_code = db.Column(db.String(50), nullable=False)
+    role_description = db.Column(db.Text)
+
+    stores_users = db.relationship('StoresUsers', back_populates='role')
+    role_users = db.relationship('Users', back_populates='role')
+
 
 # --- FeaturedStoresHistory Model ---
 class FeaturedStoresHistory(db.Model):
@@ -361,6 +409,8 @@ class FeaturedStoresHistory(db.Model):
     __table_args__ = (
         Index('idx_featured_stores_hist_featured_id', 'featured_id'),
         Index('idx_featured_stores_hist_changed_at', 'changed_at'),
+        Index('idx_featured_stores_hist_changed_by', 'changed_by'),
+        Index('idx_featured_stores_hist_op_type', 'op_type'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -387,15 +437,17 @@ class ProductsServices(db.Model):
 
     product_service_category = db.relationship('Categories', back_populates='products_services')
     product_service_status = db.relationship('EntityStatuses', back_populates='products_services')
-    store_products_services = db.relationship('StoreProductsServices', back_populates='product_service')
+    store_products_services = db.relationship('StoresProductsServices', back_populates='product_service')
 
 
-class OrderDetailsHistory(db.Model):
-    __tablename__ = 'order_details_history'
+class OrdersDetailsHistory(db.Model):
+    __tablename__ = 'orders_details_history'
     __table_args__ = (
         Index('store_product_service_id', 'store_product_service_id'),
         Index('order_id', 'order_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -408,12 +460,13 @@ class OrderDetailsHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
 class OrderStatusesHistory(db.Model):
     __tablename__ = 'order_statuses_history'
     __table_args__ = (
         Index('status_id', 'status_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -425,12 +478,13 @@ class OrderStatusesHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
 class OrdersHistory(db.Model):
     __tablename__ = 'orders_history'
     __table_args__ = (
         Index('order_id', 'order_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -442,12 +496,13 @@ class OrdersHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
 class ProductsServicesHistory(db.Model):
     __tablename__ = 'products_services_history'
     __table_args__ = (
         Index('product_service_id', 'product_service_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -459,26 +514,13 @@ class ProductsServicesHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
-class Roles(db.Model):
-    __tablename__ = 'roles'
-    __table_args__ = (
-        Index('role_code', 'role_code', unique=True),
-    )
-
-    role_id = db.Column(db.Integer, primary_key=True)
-    # e.g., 'admin', 'user', 'guest'
-    role_code = db.Column(db.String(50), nullable=False)
-    role_description = db.Column(db.Text)
-
-    store_user_roles = db.relationship('StoreUserRole', back_populates='role')
-
-
 class RolesHistory(db.Model):
     __tablename__ = 'roles_history'
     __table_args__ = (
         Index('changed_at', 'changed_at'),
         Index('role_id', 'role_id'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -490,12 +532,13 @@ class RolesHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
 class StatesRegionsHistory(db.Model):
     __tablename__ = 'states_regions_history'
     __table_args__ = (
         Index('state_region_id', 'state_region_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -507,14 +550,15 @@ class StatesRegionsHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
-class StoreProductsServicesHistory(db.Model):
-    __tablename__ = 'store_products_services_history'
+class StoresProductsServicesHistory(db.Model):
+    __tablename__ = 'stores_products_services_history'
     __table_args__ = (
         Index('id', 'id'),
         Index('store_id', 'store_id'),
         Index('changed_at', 'changed_at'),
         Index('product_service_id', 'product_service_id'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -528,19 +572,17 @@ class StoreProductsServicesHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
-class StoreUserRole(db.Model):
-    __tablename__ = 'store_user_role'
+class StoresUsers(db.Model):
+    __tablename__ = 'stores_users'
 
     store_id = db.Column(db.Integer, db.ForeignKey('stores.store_id'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'), nullable=False)
     status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
-    store = db.relationship('Stores', back_populates='store_user_roles')
-    user = db.relationship('Users', back_populates='store_user_roles')
-    role = db.relationship('Roles', back_populates='store_user_roles')
-    status = db.relationship('EntityStatuses', back_populates='store_user_roles')
+    store = db.relationship('Stores', back_populates='stores_users')
+    users = db.relationship('Users', back_populates='stores_users')
+    role = db.relationship('Roles', back_populates='stores_users')
+    status = db.relationship('EntityStatuses', back_populates='stores_users')
 
 
 class Users(db.Model):
@@ -555,29 +597,51 @@ class Users(db.Model):
     user_password_hash = db.Column(db.String(255), nullable=False)
     user_phone = db.Column(db.String(20), nullable=False)
     user_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    user_organisation_id = db.Column(db.Integer, db.ForeignKey('organisations.organisation_id'), nullable=False)
+    user_role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'), nullable=False)
+    user_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     user_status = db.relationship('EntityStatuses', back_populates='users')
-    store_user_roles = db.relationship('StoreUserRole', back_populates='user')
+    stores_users = db.relationship('StoresUsers', back_populates='users')
+    organisations = db.relationship('Organisations', back_populates='organisations_users')
 
 
-class StoreUserRoleHistory(db.Model):
-    __tablename__ = 'store_user_role_history'
+class StoresUsersHistory(db.Model):
+    __tablename__ = 'stores_users_history'
     __table_args__ = (
         Index('changed_at', 'changed_at'),
         Index('store_id', 'store_id'),
         Index('user_id', 'user_id'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
     store_id = db.Column(db.Integer)
     user_id = db.Column(db.Integer)
-    role_id = db.Column(db.Integer)
     op_type = db.Column(db.Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
     changed_by = db.Column(db.String(100))
     changed_at = db.Column(db.DateTime)
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
+
+class OrganisationsHistory(db.Model):
+    __tablename__ = 'organisations_history'
+    __table_args__ = (
+        Index('organisation_id', 'organisation_id'),
+        Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
+    )
+
+    hist_id = db.Column(db.BigInteger, primary_key=True)
+    organisation_id = db.Column(db.Integer)
+    op_type = db.Column(db.Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    changed_by = db.Column(db.String(100))
+    changed_at = db.Column(db.DateTime)
+    data_before = db.Column(db.JSON)
+    data_after = db.Column(db.JSON)
 
 
 class StoresHistory(db.Model):
@@ -585,6 +649,8 @@ class StoresHistory(db.Model):
     __table_args__ = (
         Index('store_id', 'store_id'),
         Index('changed_at', 'changed_at'),
+        Index('changed_by', 'changed_by'),
+        Index('op_type', 'op_type')
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
@@ -596,12 +662,13 @@ class StoresHistory(db.Model):
     data_after = db.Column(db.JSON)
 
 
-
 class UsersHistory(db.Model):
     __tablename__ = 'users_history'
     __table_args__ = (
         Index('idx_users_history_user', 'user_id'),
         Index('idx_users_history_time', 'changed_at'),
+        Index('idx_users_history_changed_by', 'changed_by'),
+        Index('idx_users_history_op', 'op_type'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)

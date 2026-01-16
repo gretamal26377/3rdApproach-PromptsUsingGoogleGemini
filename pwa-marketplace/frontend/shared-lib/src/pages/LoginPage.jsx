@@ -10,6 +10,7 @@ const LoginPage = () => {
   // const navigate = useNavigate();
 
   const handleLoginSuccess = (user) => {
+    // keep an eye this login function from AuthContext is different from defined in authService.login
     login(user);
     // After successful login, comeback to father component that called this component
     // navigate("/");

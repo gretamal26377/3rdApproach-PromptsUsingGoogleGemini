@@ -6,7 +6,6 @@ const authService = {
     return response;
   },
 
-  //Issue: We must separate admin and customer signup as they require/ask for different information
   signup: async (username, email, password) => {
     const response = await api.post("register", { username, email, password });
     return response;

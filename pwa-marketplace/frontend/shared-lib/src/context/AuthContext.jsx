@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
       userData.username,
       userData.password
     );
+    // This "if" will be reached only if no error is thrown in authService.login. That means login was successful
     if (response) {
       setIsLoggedIn(true);
       setUser(response);
