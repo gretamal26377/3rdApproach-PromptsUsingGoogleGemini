@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import Button from "./ui/button";
 import Input from "./ui/input";
@@ -14,7 +15,7 @@ import { AlertCircle } from "lucide-react";
 
 const Login = ({ onLogin }) => {
   // Receive onLogin prop
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +25,7 @@ const Login = ({ onLogin }) => {
     setError("");
     setIsLoading(true);
 
-    if (!username || !password) {
+    if (!email || !password) {
       setError("Please fill in all fields");
       setIsLoading(false);
       return;
@@ -32,11 +33,12 @@ const Login = ({ onLogin }) => {
 
     try {
       // userData data type: An JS object containing username and password
-      const userData = { username, password };
-      onLogin(userData); // Call the onLogin prop
+      const userData = { email, password };
+      await onLogin(userData); // Call the onLogin prop
     } catch (err) {
       // This error msg is shown in the UI
-      // err.message is the error message from the backend (eg: msg set in throw new Error(msg))
+      // err.message is the error message from the backend (eg: msg set in throw new Error(msg)) and
+      // you could show this err.message in the UI using setError(err.message) if you want. However, we opted for a generic message here instead
       setError("Invalid credentials. Please try again");
     } finally {
       // Executed after try/catch block, regardless of success or failure
@@ -48,18 +50,18 @@ const Login = ({ onLogin }) => {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle>Login</CardTitle>
-        <CardDescription>Enter Username and Password</CardDescription>
+        <CardDescription>Enter Email and Password</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="username"
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
             />
           </div>

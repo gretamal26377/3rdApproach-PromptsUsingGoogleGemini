@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { Button } from "shared-lib";
-import { Input } from "shared-lib";
+import React, { useContext, useState } from "react";
+import { AuthContext, Button, Input } from "shared-lib";
 import {
   Card,
   CardContent,
@@ -20,7 +19,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { cn } from "shared-lib";
+import { useNavigate } from "react-router-dom";
 
 // Define the schema for the checkout form
 const checkoutSchema = z.object({
@@ -48,6 +47,8 @@ const checkoutSchema = z.object({
 
 const Checkout = ({ total, onCheckout }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isLoggedIn } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const form = useForm({
     resolver: zodResolver(checkoutSchema),
@@ -73,8 +74,25 @@ const Checkout = ({ total, onCheckout }) => {
     setIsSubmitting(false);
     onCheckout(values); // Pass form values to parent component
   };
+  
+  if (!isLoggedIn) {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>Sign in to continue</CardTitle>
+          <CardDescription>
+            You need an account to checkout. Please log in and come back to complete your order
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button className="w-full" onClick={() => navigate("/login") }>
+            Go to login
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
 
-  // Issue: Check if Customer is logged in. If not, ask to log in before go on with Checkout
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>

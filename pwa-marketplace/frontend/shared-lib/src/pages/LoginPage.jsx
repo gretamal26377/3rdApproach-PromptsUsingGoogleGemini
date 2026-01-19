@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import Login from "../components/Login"; // Import Login Component
@@ -9,9 +10,9 @@ const LoginPage = () => {
   // Purpose: To navigate programmatically. For example, navigate("/login") to trigger navigating to the login page
   // const navigate = useNavigate();
 
-  const handleLoginSuccess = (user) => {
+  const handleLoginSuccess = async (user) => {
     // keep an eye this login function from AuthContext is different from defined in authService.login
-    login(user);
+    await login(user);
     // After successful login, comeback to father component that called this component
     // navigate("/");
   };

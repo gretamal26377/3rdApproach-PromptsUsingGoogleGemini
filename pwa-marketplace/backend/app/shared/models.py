@@ -397,6 +397,8 @@ class Roles(db.Model):
     role_id = db.Column(db.Integer, primary_key=True)
     # e.g., 'admin', 'supervisor', 'agent'
     role_code = db.Column(db.String(50), nullable=False)
+    # e.g., 'Admin', 'Supervisor', 'Agent'
+    role_display = db.Column(db.String(100), nullable=False)
     role_description = db.Column(db.Text)
 
     roles_users = db.relationship('Users', back_populates='role')

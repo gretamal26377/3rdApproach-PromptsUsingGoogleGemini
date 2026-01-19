@@ -1,5 +1,26 @@
 import React, { useState, useEffect, createContext } from "react";
 import authService from "../services/authService";
+
+/**
+ * @typedef {Object} LoginPayload
+ * @property {string} email
+ * @property {string} password
+ */
+
+/**
+ * @typedef {Object} SignupPayload
+ * @property {string} [customer_name]
+ * @property {string} [customer_email]
+ * @property {string} [customer_password]
+ * @property {string} [customer_phone]
+ * @property {string} [user_name]
+ * @property {string} [user_email]
+ * @property {string} [user_password]
+ * @property {string} [user_phone]
+ * @property {string} [user_role_code]
+ * @property {string|number} [user_organisation_id]
+ * @property {string|number} [user_store_id]
+ */
 // import { useNavigate } from "react-router-dom";
 
 /**
@@ -13,11 +34,16 @@ export const AuthContext = createContext({
   isLoggedIn: false,
   user: null,
   isAdmin: false,
-  login: () => {},
-  signup: () => {},
+  login: /** @type {(payload: LoginPayload) => Promise<any>} */ (
+    async (_payload) => {}
+  ),
+  signup: /** @type {(payload: SignupPayload) => Promise<any>} */ (
+    async (_payload) => {}
+  ),
   logout: () => {},
 });
 
+/** @param {{ children: import('react').ReactNode }} props */
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null); // Issue: Change user to customer
@@ -27,39 +53,42 @@ export const AuthProvider = ({ children }) => {
 
   // On component mount, check if user is already logged in. Runs only once when the component is first rendered
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setIsLoggedIn(true);
-      setIsAdmin(currentUser.is_admin);
-    }
+    let isMounted = true;
+    const fetchUser = async () => {
+      const currentUser = await authService.getCurrentUser();
+      if (isMounted && currentUser) {
+        setUser(currentUser);
+        setIsLoggedIn(true);
+        setIsAdmin(currentUser.is_admin || false);
+      }
+    };
+    fetchUser();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  /** @param {LoginPayload} userData */
   const handleLogin = async (userData) => {
-    const response = await authService.login(
-      userData.username,
-      userData.password
-    );
-    // This "if" will be reached only if no error is thrown in authService.login. That means login was successful
-    if (response) {
+    await authService.login(userData.email, userData.password);
+    const currentUser = await authService.getCurrentUser();
+    if (currentUser) {
       setIsLoggedIn(true);
-      setUser(response);
-      // setIsAdmin(response.is_admin);
+      setUser(currentUser);
+      setIsAdmin(currentUser.is_admin || false);
     }
+    return currentUser;
   };
 
+  /** @param {SignupPayload} userData */
   const handleSignup = async (userData) => {
-    const response = await authService.signup(
-      userData.username,
-      userData.email,
-      userData.password
-    );
-    if (response) {
+    const currentUser = await authService.signup(userData);
+    if (currentUser) {
       setIsLoggedIn(true);
-      setUser(response);
-      setIsAdmin(response.is_admin);
-      //navigate("/");
+      setUser(currentUser);
+      setIsAdmin(currentUser.is_admin || false);
     }
+    return currentUser;
   };
 
   const handleLogout = () => {
