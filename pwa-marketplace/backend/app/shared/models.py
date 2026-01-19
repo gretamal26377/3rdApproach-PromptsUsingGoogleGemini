@@ -258,7 +258,7 @@ class OrdersDetails(db.Model):
     temporal_workflow_id = db.Column(db.String(100), nullable=False, unique=True)  # Field for Temporal Item Workflow ID
 
     order = db.relationship('Orders', back_populates='orders_details')
-    store_product_service = db.relationship('StoresProductsServices', back_populates='orders_details')
+    stores_product_service = db.relationship('StoresProductsServices', back_populates='orders_details')
     product_service_status = db.relationship('OrderStatuses', back_populates='orders_details')
 
 
@@ -321,8 +321,8 @@ class Organisations(db.Model):
     organisation_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     organisations_status = db.relationship('EntityStatuses', back_populates='organisations')
-    organisations_stores = db.relationship('Stores', back_populates='organisations')
-    organisations_users = db.relationship('Users', back_populates='organisations')
+    organisations_stores = db.relationship('Stores', back_populates='organisation')
+    organisations_users = db.relationship('Users', back_populates='organisation')
 
 
 class Stores(db.Model):
@@ -347,7 +347,7 @@ class Stores(db.Model):
     store_status = db.relationship('EntityStatuses', back_populates='stores')
     stores_products_services = db.relationship('StoresProductsServices', back_populates='store')
     stores_users = db.relationship('StoresUsers', back_populates='store')
-    organisations = db.relationship('Organisations', back_populates='organisations_stores')
+    organisation = db.relationship('Organisations', back_populates='organisations_stores')
 
 
 class StoresProductsServices(db.Model):
@@ -364,10 +364,10 @@ class StoresProductsServices(db.Model):
     status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
     created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
-    store = db.relationship('Stores', back_populates='store_products_services')
-    product_service = db.relationship('ProductsServices', back_populates='store_products_services')
-    status = db.relationship('EntityStatuses', back_populates='store_products_services')
-    orders_details = db.relationship('OrdersDetails', back_populates='store_product_service')
+    store = db.relationship('Stores', back_populates='stores_products_services')
+    product_service = db.relationship('ProductsServices', back_populates='stores_products_services')
+    status = db.relationship('EntityStatuses', back_populates='stores_products_services')
+    orders_details = db.relationship('OrdersDetails', back_populates='stores_product_service')
 
 
 # --- FeaturedStores Model ---
@@ -399,8 +399,7 @@ class Roles(db.Model):
     role_code = db.Column(db.String(50), nullable=False)
     role_description = db.Column(db.Text)
 
-    stores_users = db.relationship('StoresUsers', back_populates='role')
-    role_users = db.relationship('Users', back_populates='role')
+    roles_users = db.relationship('Users', back_populates='role')
 
 
 # --- FeaturedStoresHistory Model ---
@@ -437,7 +436,7 @@ class ProductsServices(db.Model):
 
     product_service_category = db.relationship('Categories', back_populates='products_services')
     product_service_status = db.relationship('EntityStatuses', back_populates='products_services')
-    store_products_services = db.relationship('StoresProductsServices', back_populates='product_service')
+    stores_products_services = db.relationship('StoresProductsServices', back_populates='product_service')
 
 
 class OrdersDetailsHistory(db.Model):
@@ -580,8 +579,7 @@ class StoresUsers(db.Model):
     status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     store = db.relationship('Stores', back_populates='stores_users')
-    users = db.relationship('Users', back_populates='stores_users')
-    role = db.relationship('Roles', back_populates='stores_users')
+    user = db.relationship('Users', back_populates='stores_user')
     status = db.relationship('EntityStatuses', back_populates='stores_users')
 
 
@@ -602,8 +600,9 @@ class Users(db.Model):
     user_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     user_status = db.relationship('EntityStatuses', back_populates='users')
-    stores_users = db.relationship('StoresUsers', back_populates='users')
-    organisations = db.relationship('Organisations', back_populates='organisations_users')
+    stores_user = db.relationship('StoresUsers', back_populates='user')
+    organisation = db.relationship('Organisations', back_populates='organisations_users')
+    role = db.relationship('Roles', back_populates='roles_users')
 
 
 class StoresUsersHistory(db.Model):
@@ -678,5 +677,4 @@ class UsersHistory(db.Model):
     changed_at = db.Column(db.DateTime)
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
-
 
