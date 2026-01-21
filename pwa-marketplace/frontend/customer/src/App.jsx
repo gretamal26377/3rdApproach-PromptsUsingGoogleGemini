@@ -13,7 +13,7 @@ import { DarkModeToggle } from "shared-lib";
 
 function CustomerNav({ cart, handleLogout }) {
   // Access authentication state from AuthContext
-  const { isLoggedIn, isAdmin } = useContext(AuthContext);
+  const { isLoggedIn } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const closeMenu = () => setIsMenuOpen(false);
@@ -26,15 +26,6 @@ function CustomerNav({ cart, handleLogout }) {
     <>
       {isLoggedIn ? (
         <>
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className="text-gray-700 dark:text-gray-300 hover:text-blue-500"
-              onClick={closeMenu}
-            >
-              Admin
-            </Link>
-          )}
           <Button variant="outline" onClick={handleLogoutAndCloseMenu}>
             Logout
           </Button>
@@ -112,39 +103,42 @@ function CustomerNav({ cart, handleLogout }) {
 
 function AppContent() {
   // Access authentication state from AuthContext
-  const { isLoggedIn, user, isAdmin, login, logout } = useContext(AuthContext);
+  const { isLoggedIn, user, login, logout } = useContext(AuthContext);
   const [cart, setCart] = useState([]);
   const location = useLocation();
 
   useEffect(() => {
     const storedCart = localStorage.getItem("cart");
     const fetchUser = async () => {
-      const user = await authService.getCurrentUser();
-      if (user) {
-        login(user); // Use the login function from AuthContext to update the state
+      const customer = await authService.getCurrentUser();
+      if (customer) {
+        login(customer); // Use the login function from AuthContext to update the state
       }
     };
     fetchUser();
     if (storedCart) {
+      // Initialize cart state from localStorage converting a JSON string back to JS Object
       setCart(JSON.parse(storedCart));
     }
   }, []);
 
+  // Sync cart state to localStorage saving cart data there whenever it adds or removes items
   useEffect(() => {
+    // Store cart as a JSON string in localStorage
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product) => {
+  const addToCart = (productService) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
+      const existingItem = prevCart.find((item) => item.id === productService.id);
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id
+          item.id === productService.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       } else {
-        return [...prevCart, { ...product, quantity: 1 }];
+        return [...prevCart, { ...productService, quantity: 1 }];
       }
     });
   };

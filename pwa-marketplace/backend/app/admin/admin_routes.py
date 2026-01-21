@@ -59,24 +59,24 @@ def inactivate_store(current_user, store_id):
     result, status = inactivate_store_logic(current_user, store_id)
     return jsonify(result), status
 
-@admin_bp.route('/products', methods=['POST'])
+@admin_bp.route('/create-product-service', methods=['POST'])
 @token_required
-def create_product(current_user):
+def create_product_service(current_user):
     data = request.get_json()
-    result, status = create_product_logic(current_user, data)
+    result, status = create_product_service_logic(current_user, data)
+    return jsonify(result), status
+    
+@admin_bp.route('/update-product-service/<int:product_service_id>', methods=['PUT'])
+@token_required
+def update_product_service(current_user, product_service_id):
+    data = request.get_json()
+    result, status = update_product_service_logic(current_user, product_service_id, data)
     return jsonify(result), status
 
-@admin_bp.route('/products/<int:product_id>', methods=['PUT'])
+@admin_bp.route('/inactivate-product-service/<int:product_service_id>', methods=['POST'])
 @token_required
-def update_product(current_user, product_id):
-    data = request.get_json()
-    result, status = update_product_logic(current_user, product_id, data)
-    return jsonify(result), status
-
-@admin_bp.route('/products/<int:product_id>/inactivate', methods=['POST'])
-@token_required
-def inactivate_product(current_user, product_id):
-    result, status = inactivate_product_logic(current_user, product_id)
+def inactivate_product_service(current_user, product_service_id):
+    result, status = inactivate_product_service_logic(current_user, product_service_id)
     return jsonify(result), status
 
 @admin_bp.route('/orders/<int:order_id>/ship', methods=['PATCH'])

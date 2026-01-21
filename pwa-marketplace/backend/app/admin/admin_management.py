@@ -148,7 +148,7 @@ def inactivate_store_logic(current_user, store_id):
         logging.error(f"Error Inactivating Store: {e}")
         return {'message': 'Failed to Inactivate Store'}, 500
 
-def create_product_logic(current_customer, data):
+def create_product_service_logic(current_customer, data):
     required_fields = ['product_service_name', 'product_service_description', 'product_service_category_id', 'product_service_pic_path', 'store_id', 'price', 'stock']
     if not all(field in data for field in required_fields):
         return {'message': 'Missing required fields'}, 400
@@ -167,48 +167,48 @@ def create_product_logic(current_customer, data):
         if not store:
             return {'message': 'Store not found or Inactive'}, 404
         # Create product/service
-        new_product = ProductsServices()
-        new_product.product_service_name = name
-        new_product.product_service_description = description
-        new_product.product_service_pic_path = pic_path
-        new_product.product_service_category_id = data['product_service_category_id']
-        new_product.product_service_status_id = active_status_id
-        db.session.add(new_product)
+        new_product_service = ProductsServices()
+        new_product_service.product_service_name = name
+        new_product_service.product_service_description = description
+        new_product_service.product_service_pic_path = pic_path
+        new_product_service.product_service_category_id = data['product_service_category_id']
+        new_product_service.product_service_status_id = active_status_id
+        db.session.add(new_product_service)
         db.session.flush()  # Get product_service_id
 
         # Create store-product-service link
         # Issue: There would be another function to handle linking SPS
         sps = StoreProductsServices()
         sps.store_id = store.store_id
-        sps.product_service_id = new_product.product_service_id
+        sps.product_service_id = new_product_service.product_service_id
         sps.price = data['price']
         sps.stock = data['stock']
         sps.status_id = active_status_id
         db.session.add(sps)
         db.session.commit()
-        return {'message': 'Product/Service created successfully', 'product_service_id': new_product.product_service_id}, 201
+        return {'message': 'Product/Service created successfully', 'product_service_id': new_product_service.product_service_id}, 201
     except Exception as e:
         db.session.rollback()
         logging.error(f"Error creating Product/Service: {e}")
         return {'message': 'Failed to create Product/Service'}, 500
 
-def update_product_logic(current_customer, product_service_id, data):
+def update_product_service_logic(current_customer, product_service_id, data):
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
         logging.error("Active Status not found")
         return {'message': 'Active Status not configured'}, 500
-    product = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status.status_id).first()
-    if not product:
+    product_service = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status.status_id).first()
+    if not product_service:
         return {'message': 'Product/Service not found or Inactive'}, 404
     try:
         if 'product_service_name' in data:
-            product.product_service_name = bleach.clean(data['product_service_name'], strip=True)
+            product_service.product_service_name = bleach.clean(data['product_service_name'], strip=True)
         if 'product_service_description' in data:
-            product.product_service_description = bleach.clean(data['product_service_description'], strip=True)
+            product_service.product_service_description = bleach.clean(data['product_service_description'], strip=True)
         if 'product_service_pic_path' in data:
-            product.product_service_pic_path = bleach.clean(data['product_service_pic_path'], strip=True)
+            product_service.product_service_pic_path = bleach.clean(data['product_service_pic_path'], strip=True)
         if 'product_service_category_id' in data:
-            product.product_service_category_id = data['product_service_category_id']
+            product_service.product_service_category_id = data['product_service_category_id']
         db.session.commit()
         return {'message': 'Product/Service updated successfully'}, 200
     except Exception as e:
@@ -216,7 +216,7 @@ def update_product_logic(current_customer, product_service_id, data):
         logging.error(f"Error updating Product/Service: {e}")
         return {'message': 'Failed to update Product/Service'}, 500
 
-def inactivate_product_logic(current_customer, product_service_id):
+def inactivate_product_service_logic(current_customer, product_service_id):
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
         logging.error("Active Status not found")

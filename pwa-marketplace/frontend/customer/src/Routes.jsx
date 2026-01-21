@@ -6,7 +6,7 @@ import { LoginPage } from "shared-lib";
 import SignupPage from "./pages/SignupPage";
 import StoresPage from "./pages/StoresPage";
 import StorePage from "./pages/StorePage";
-import ProductPage from "./pages/ProductPage";
+import ProductServicePage from "./pages/ProductServicePage";
 import { ProductServiceListingsPage } from "shared-lib";
 import CartPage from "./pages/CartPage";
 
@@ -25,11 +25,11 @@ export default function CustomerRoutes({ addToCart }) {
         element={<StorePage addToCart={addToCart} />}
       />
       <Route
-        path="/products/:productId"
-        element={<ProductPage addToCart={addToCart} />}
+        path="/products-services/:productId"
+        element={<ProductServicePage addToCart={addToCart} />}
       />
       <Route
-        path="/products/:baseProductServiceId/listings"
+        path="/products-services/:baseProductServiceId/listings"
         element={<ProductServiceListingsPage addToCart={addToCart} />}
       />
       <Route path="/cart" element={<CartPage />} />

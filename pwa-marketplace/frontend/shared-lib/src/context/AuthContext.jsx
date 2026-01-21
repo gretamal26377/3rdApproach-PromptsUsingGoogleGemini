@@ -2,6 +2,12 @@ import React, { useState, useEffect, createContext } from "react";
 import authService from "../services/authService";
 
 /**
+ * This lines define a JSDoc type annotation for the LoginPayload object.
+ * They document the expected structure of this object.
+ * They help with code completion, type checking in editors that support JSDoc and
+ * improve code readability
+ */
+/**
  * @typedef {Object} LoginPayload
  * @property {string} email
  * @property {string} password
@@ -24,16 +30,23 @@ import authService from "../services/authService";
 // import { useNavigate } from "react-router-dom";
 
 /**
-Context to manage authentication state across the application.
-createContext is used to create a context object that can be used to share data
-across components without having to pass props down manually at every level.
-Initially, the context is set with default or placeholder values that later can be
-updated by authContextValue
-*/
+ * Context to manage authentication state across the application.
+ * createContext is used to create a context object that can be used to share data
+ * across components without having to pass props down manually at every level.
+ * Initially, the context is set with default or placeholder values that later can be
+ * updated by authContextValue
+ */
 export const AuthContext = createContext({
   isLoggedIn: false,
   user: null,
   isAdmin: false,
+  /**
+   * Defines login function signature, it takes a single arg named payload of type LoginPayload and
+   * returns a Promise that resolves to any value. This function signature (empty at the moment) accepts
+   * a parameter named _payload, which is a convention to indicate that the parameter is intentionally unused.
+   * Thus the function is signed but doesn't implemented yet.
+   * Structuring this function this way provides a clear contract for how the function should be used in the future
+   */
   login: /** @type {(payload: LoginPayload) => Promise<any>} */ (
     async (_payload) => {}
   ),
@@ -43,10 +56,15 @@ export const AuthContext = createContext({
   logout: () => {},
 });
 
+/**
+ * JSDoc type annotation to document the props parameter of AuthProvider component.
+ * This is the ReactNode type representing any valid React child element, including
+ * elements, strings, numbers, fragments, portals, etc.
+ */
 /** @param {{ children: import('react').ReactNode }} props */
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null); // Issue: Change user to customer
+  const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false); // Issue: Change all logic for Role approach
   // Purpose: To navigate programmatically. For example, navigate("/login") to trigger navigating to the login page
   //const navigate = useNavigate();
@@ -63,6 +81,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
     fetchUser();
+    // Cleanup function to set isMounted to false when component unmounts
     return () => {
       isMounted = false;
     };

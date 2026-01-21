@@ -14,6 +14,7 @@ const api = {
     const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
       method: "GET",
       headers,
+      // Include credentials such as cookies in the request
       credentials: "include",
     });
     if (!response.ok) {

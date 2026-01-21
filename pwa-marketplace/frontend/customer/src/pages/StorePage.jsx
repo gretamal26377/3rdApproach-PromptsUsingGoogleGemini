@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import ProductList from "../components/ProductList";
+import ProductServiceList from "../components/ProductServiceList";
 import { api } from "shared-lib";
 
 const StorePage = ({ addToCart }) => {
   const { storeId } = useParams();
   const [store, setStore] = useState(null);
-  const [products, setProducts] = useState([]);
+  const [productsServices, setProductsServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -16,12 +16,8 @@ const StorePage = ({ addToCart }) => {
         setLoading(true); // Set loading to true before fetching data
         const storeData = await api.get(`/stores/${storeId}`);
         setStore(storeData);
-        const productsData = await api.get("/products");
-        setProducts(
-          productsData.filter(
-            (product) => product.store_id === parseInt(storeId)
-          )
-        );
+        const productsServicesData = await api.get(`/store-products-services/${storeId}`);
+        setProductsServices(productsServicesData);
         setLoading(false);
       } catch (err) {
         setError(err.message || "Failed to load store data");
@@ -51,9 +47,9 @@ const StorePage = ({ addToCart }) => {
 
       <section>
         <h2 className="text-2xl font-semibold mb-4">
-          Products from {store.name}
+          Products & Services from {store.name}
         </h2>
-        <ProductList products={products} addToCart={addToCart} />
+        <ProductServiceList productsServices={productsServices} addToCart={addToCart} />
       </section>
     </div>
   );

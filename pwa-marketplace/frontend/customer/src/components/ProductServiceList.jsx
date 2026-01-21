@@ -4,16 +4,16 @@ import { Badge } from "shared-lib";
 import { Button } from "shared-lib";
 import { ShoppingCart } from "lucide-react";
 import { cn } from "shared-lib";
-import ProductCard from "./ProductCard";
+import ProductServiceCard from "./ProductServiceCard";
 
-const ProductList = ({ products, addToCart }) => {
+const ProductServiceList = ({ productsServices, addToCart }) => {
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded shadow p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
+        {productsServices.map((productService) => (
+          <ProductServiceCard
+            key={productService.id}
+            productService={productService}
             onAddToCart={addToCart}
           />
         ))}
@@ -22,4 +22,4 @@ const ProductList = ({ products, addToCart }) => {
   );
 };
 
-export default ProductList;
+export default ProductServiceList;

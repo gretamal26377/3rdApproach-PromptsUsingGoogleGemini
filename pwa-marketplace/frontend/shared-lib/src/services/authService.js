@@ -54,6 +54,7 @@ const authService = {
   getCurrentUser: async () => {
     try {
       // Backend will read the auth_token HttpOnly cookie and decode it
+      // This api call is passed an empty body {} since the token is in the cookie
       const response = await api.post(`${AUTH_BASE}/decode`, {});
       if (response && (response.customer || response.user)) {
         return response.customer || response.user;

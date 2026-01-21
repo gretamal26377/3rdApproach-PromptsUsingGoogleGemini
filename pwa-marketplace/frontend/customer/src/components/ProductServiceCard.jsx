@@ -10,19 +10,19 @@ import { Badge } from "shared-lib";
 import { ShoppingCart } from "lucide-react";
 import { cn } from "shared-lib";
 
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductServiceCard = ({ productService, onAddToCart }) => {
   return (
     <Card className="transition-transform transform hover:scale-105 hover:shadow-lg">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">{product.name}</CardTitle>
+        <CardTitle className="text-xl font-semibold">{productService.name}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-700 mb-2">{product.description}</p>
+        <p className="text-gray-700 mb-2">{productService.description}</p>
         <Badge variant="outline" className="mb-2">
-          Price: ${product.price}
+          Price: ${productService.price}
         </Badge>
         <Button
-          onClick={() => onAddToCart(product)}
+          onClick={() => onAddToCart(productService)}
           className={cn(
             "w-full bg-blue-500 text-white hover:bg-blue-600 transition-colors",
             "flex items-center justify-center gap-2"
@@ -36,4 +36,4 @@ const ProductCard = ({ product, onAddToCart }) => {
   );
 };
 
-export default ProductCard;
+export default ProductServiceCard;
