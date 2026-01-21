@@ -48,57 +48,57 @@ It can test this route using curl, Postman, or a similar tool. Here's an example
 Adjust the http://localhost:5000 part to match your backend's container's localhost address and port
 curl -X POST -H "Content-Type: application/json" -d '{"token": "your_token_here"}' http://localhost:5000/api/decode
 """
-@customer_bp.route('/decode', methods=['POST'])
+@customer_bp.route('decode', methods=['POST'])
 def decode_customer():
     data = request.get_json()
     result, status = decode_customer_logic(data)
     return jsonify(result), status
 
-@customer_bp.route('/featured-stores', methods=['GET'])
+@customer_bp.route('featured-stores', methods=['GET'])
 def get_featured_stores():
     result, status = get_featured_stores_logic()
     return jsonify(result), status
 
-@customer_bp.route('/stores', methods=['GET'])
+@customer_bp.route('stores', methods=['GET'])
 def get_stores():
     result, status = get_stores_logic()
     return jsonify(result), status
 
-@customer_bp.route('/stores/<int:store_id>', methods=['GET'])
+@customer_bp.route('stores/<int:store_id>', methods=['GET'])
 def get_store(store_id):
     result, status = get_store_logic(store_id)
     return jsonify(result), status
 
-@customer_bp.route('/store-products-services/<int:store_id>', methods=['GET'])
+@customer_bp.route('store-products-services/<int:store_id>', methods=['GET'])
 def get_store_products_services(store_id):
     result, status = get_store_products_services_logic(store_id)
     return jsonify(result), status
 
-@customer_bp.route('/products-services/<int:product_service_id>', methods=['GET'])
+@customer_bp.route('products-services/<int:product_service_id>', methods=['GET'])
 def get_store_product_service(product_service_id):
     result, status = get_store_product_service_logic(product_service_id)
     return jsonify(result), status
 
-@customer_bp.route('/orders', methods=['GET'])
+@customer_bp.route('orders', methods=['GET'])
 @token_required
 def get_orders(current_user):
     result, status = get_orders_logic(current_user)
     return jsonify(result), status
 
-@customer_bp.route('/orders/<int:order_id>', methods=['GET'])
+@customer_bp.route('orders/<int:order_id>', methods=['GET'])
 @token_required
 def get_order(current_user, order_id):
     result, status = get_order_logic(current_user, order_id)
     return jsonify(result), status
 
-@customer_bp.route('/orders', methods=['POST'])
+@customer_bp.route('orders', methods=['POST'])
 @token_required
 def create_order(current_user):
     data = request.get_json()
     result, status = create_order_logic(current_user, data)
     return jsonify(result), status
 
-@customer_bp.route('/orders/<int:order_id>/cancel', methods=['POST'])
+@customer_bp.route('orders/<int:order_id>/cancel', methods=['POST'])
 @token_required
 def cancel_order(current_customer, order_id):
     result, status = cancel_order_logic(current_customer, order_id)

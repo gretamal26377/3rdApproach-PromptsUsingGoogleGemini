@@ -12,7 +12,6 @@ import { SearchBar } from "shared-lib";
 
 // Mock data for stores and products (replace with actual API calls)
 
-
 const mockProducts = [
   {
     id: 1,
@@ -110,6 +109,7 @@ const HomePage = () => {
   useEffect(() => {
     // Fetch featured stores from backend using generic get()
     api.get('customer/featured-stores')
+      // data: Gets featured stores from api.get()
       .then((data) => {
         setFeaturedStores(data);
       })
