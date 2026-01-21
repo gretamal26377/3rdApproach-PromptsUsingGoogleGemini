@@ -1,7 +1,7 @@
 import React from "react";
 import Cart from "../components/Cart";
 
-const CartPage = ({ cart, addToCart, removeFromCart, clearCart }) => {
+const CartPage = ({ cart, addToCart, removeFromCart, clearCart, inactivateCartItems }) => {
   return (
     <div>
       <Cart
@@ -9,6 +9,7 @@ const CartPage = ({ cart, addToCart, removeFromCart, clearCart }) => {
         addToCart={addToCart}
         removeFromCart={removeFromCart}
         clearCart={clearCart}
+        inactivateCartItems={inactivateCartItems}
       />
     </div>
   );

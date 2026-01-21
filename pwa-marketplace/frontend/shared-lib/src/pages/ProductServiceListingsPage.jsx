@@ -14,7 +14,7 @@ const ProductServiceListingsPage = ({ addToCart }) => {
     const fetchProductListings = async () => {
       try {
         const listingsData = await api.get(
-          `/products/${baseProductServiceId}/listings`
+          `/products-services/${baseProductServiceId}/listings`
         );
         setListings(listingsData);
       } catch (err) {

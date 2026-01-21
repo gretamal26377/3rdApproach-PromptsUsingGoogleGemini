@@ -10,7 +10,7 @@ import ProductServicePage from "./pages/ProductServicePage";
 import { ProductServiceListingsPage } from "shared-lib";
 import CartPage from "./pages/CartPage";
 
-export default function CustomerRoutes({ addToCart }) {
+export default function CustomerRoutes({ cart, addToCart, removeFromCart, clearCart, inactivateCartItems }) {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
@@ -22,8 +22,9 @@ export default function CustomerRoutes({ addToCart }) {
         StorePage component adding products from the store to the customer's cart */}
       <Route
         path="/stores/:storeId"
-        element={<StorePage addToCart={addToCart} />}
+        element={<StorePage addToCart={addToCart}  />}
       />
+      {/* Issue?: Im not sure whether this route will be used here at Customer or Admin Frontend */}
       <Route
         path="/products-services/:productId"
         element={<ProductServicePage addToCart={addToCart} />}
@@ -32,7 +33,25 @@ export default function CustomerRoutes({ addToCart }) {
         path="/products-services/:baseProductServiceId/listings"
         element={<ProductServiceListingsPage addToCart={addToCart} />}
       />
-      <Route path="/cart" element={<CartPage />} />
+      <Route
+        path="/cart"
+        element={
+          <CartPage
+            cart={cart}
+            addToCart={addToCart}
+            removeFromCart={removeFromCart}
+            clearCart={clearCart}
+            inactivateCartItems={inactivateCartItems}
+          />
+        }
+      />
+    </Routes>
+  );
+}
+
+    />
+  }
+/>
     </Routes>
   );
 }

@@ -76,6 +76,7 @@ def get_store_products_services(store_id):
 
 @customer_bp.route('products-services/<int:product_service_id>', methods=['GET'])
 def get_store_product_service(product_service_id):
+    # Issue: Calling the same above logic
     result, status = get_store_product_service_logic(product_service_id)
     return jsonify(result), status
 

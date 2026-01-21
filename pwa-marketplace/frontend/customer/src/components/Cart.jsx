@@ -5,7 +5,7 @@ import { cn } from "shared-lib";
 import Checkout from "./Checkout";
 import { useState } from "react";
 
-const Cart = ({ cart, addToCart, removeFromCart, clearCart }) => {
+const Cart = ({ cart, addToCart, removeFromCart, clearCart, inactivateCartItems }) => {
   const [isCheckout, setIsCheckout] = useState(false);
 
   if (cart.length === 0) {
@@ -81,7 +81,7 @@ const Cart = ({ cart, addToCart, removeFromCart, clearCart }) => {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={clearCart}
+            onClick={inactivateCartItems}
             className="bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
           >
             Clear Cart

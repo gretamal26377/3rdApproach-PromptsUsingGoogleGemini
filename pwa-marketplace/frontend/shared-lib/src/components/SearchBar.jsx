@@ -78,7 +78,7 @@ export default function SearchBar({
         id: p.base_product_service_id,
         title: p.name,
         price: `From $${p.lowest_price.toFixed(2)}`,
-        path: `/products/${p.base_product_service_id}/listings`,
+        path: `/products-services/${p.base_product_service_id}/listings`,
         thumbnailUrl: p.thumbnail_url,
         stock: p.stock,
       }));

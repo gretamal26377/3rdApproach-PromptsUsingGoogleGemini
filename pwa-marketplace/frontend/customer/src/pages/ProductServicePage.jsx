@@ -12,7 +12,7 @@ const ProductServicePage = ({ addToCart }) => {
   useEffect(() => {
     const fetchProductServiceData = async () => {
       try {
-        const productServiceData = await api.get(`/products-services/${productServiceId}`);
+        const productServiceData = await api.get(`products-services/${productServiceId}`);
         setProductService(productServiceData);
         setLoading(false);
       } catch (err) {

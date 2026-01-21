@@ -66,6 +66,7 @@ function CustomerNav({ cart, handleLogout }) {
               <ShoppingCart className="h-6 w-6 text-gray-700 dark:text-gray-300" />
               {cart.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-700 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                  {/* reduce: calculate total quantity of items in cart. Equivalent to total = total + item.quantity where item.quantity iterates over each item in cart */}
                   {cart.reduce((total, item) => total + item.quantity, 0)}
                 </span>
               )}
@@ -128,6 +129,7 @@ function AppContent() {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
+  // Add to cart as before
   const addToCart = (productService) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === productService.id);
@@ -138,9 +140,14 @@ function AppContent() {
             : item
         );
       } else {
-        return [...prevCart, { ...productService, quantity: 1 }];
+        return [...prevCart, { ...productService, quantity: 1, active: true }];
       }
     });
+  };
+
+  // Inactivate all items in the cart (set active: false)
+  const inactivateCartItems = () => {
+    setCart((prevCart) => prevCart.map(item => ({ ...item, active: false })));
   };
 
   // fullRemove define a default value of false if this function is called without this parameter
@@ -164,10 +171,14 @@ function AppContent() {
     setCart([]);
   };
 
+  // Only show active items in the cart to the customer
+  const activeCart = cart.filter(item => item.active !== false);
+
   return (
     <div className="bg-background text-text dark:bg-background-dark dark:text-text-dark min-h-screen">
       {/* The sticky search bar is rendered inside HomePage, which is rendered below CustomerNav */}
-      <CustomerNav cart={cart} handleLogout={logout} />
+      <CustomerNav cart={activeCart} handleLogout={logout} />
+
       {/* main: This is an HTML5 semantic element that represents the dominant/main content of the document's <body> */}
       <main className="container mx-auto p-4">
         {/* A component can be invoked with any amount of props and then it receives just the ones it defines */}
@@ -176,6 +187,7 @@ function AppContent() {
           addToCart={addToCart}
           removeFromCart={removeFromCart}
           clearCart={clearCart}
+          inactivateCartItems={inactivateCartItems}
         />
       </main>
 
