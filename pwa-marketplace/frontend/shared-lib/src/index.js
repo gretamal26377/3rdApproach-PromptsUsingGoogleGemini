@@ -34,7 +34,7 @@ export * from "./components/ui/table";
 export { default as LoginPage } from "./pages/LoginPage";
 export { default as SearchPage } from "./pages/SearchPage";
 export { default as ProductServiceListingsPage } from "./pages/ProductServiceListingsPage";
-export { default as StorePage } from "./pages/StorePage";
+// export { default as StorePage } from "../../customer/src/pages/StorePage";
 
 // Services
 export { default as api } from "./services/api";

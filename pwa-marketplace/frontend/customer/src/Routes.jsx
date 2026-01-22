@@ -5,7 +5,7 @@ import HomePage from "./pages/HomePage";
 import { LoginPage } from "shared-lib";
 import SignupPage from "./pages/SignupPage";
 import StoresPage from "./pages/StoresPage";
-import StorePage from "shared-lib";
+import StorePage from "./pages/StorePage";
 import ProductServicePage from "./pages/ProductServicePage";
 import { ProductServiceListingsPage } from "shared-lib";
 import CartPage from "./pages/CartPage";

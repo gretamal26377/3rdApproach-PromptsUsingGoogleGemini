@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ProductServiceList from "../components/ProductServiceList";
-import { api } from "shared-lib";
+import api from "../../src/services/api";
 
-const StorePage = ({ addToCart }) => {
+// Determine application type from environment variable
+const appType = (import.meta.env.APP_TYPE || "customer").toLowerCase();
+
+const CategoryStorePage = ({ addToCart }) => {
   const { storeId } = useParams();
   const [store, setStore] = useState(null);
   const [productsServices, setProductsServices] = useState([]);
@@ -60,4 +63,4 @@ const StorePage = ({ addToCart }) => {
   );
 };
 
-export default StorePage;
+export default CategoryStorePage;
