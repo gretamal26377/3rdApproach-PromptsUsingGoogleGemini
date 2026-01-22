@@ -55,7 +55,7 @@ function CustomerNav({ cart, handleLogout }) {
     <nav className="sticky top-0 z-30 bg-white dark:bg-gray-900 shadow-md p-4 text-gray-800 dark:text-gray-200">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-xl font-bold" onClick={closeMenu}>
-          PWA-Marketplace
+          Home
         </Link>
         <div className="flex items-center gap-4">
           {/* Desktop Nav */}
@@ -151,19 +151,25 @@ function AppContent() {
   };
 
   // fullRemove define a default value of false if this function is called without this parameter
-  const removeFromCart = (productId, fullRemove = false) => {
+  const removeFromCart = (productServiceId, fullRemove = false) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === productId);
-      if (fullRemove || (existingItem && existingItem.quantity === 1)) {
-        // Remove the item entirely
-        return prevCart.filter((item) => item.id !== productId);
-      } else {
-        return prevCart.map((item) =>
-          item.id === productId
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        );
+      const existingItem = prevCart.find((item) => item.id === productServiceId);
+      if (existingItem && existingItem.active) {
+        if (fullRemove || existingItem.quantity === 1) {
+          // Inactivate the item instead of removing it to keep cart history
+          return prevCart.map((item) =>
+            item.id === productServiceId
+              ? { ...item, active: false }
+              : item
+          );
+        } else {
+          return prevCart.map((item) =>
+            item.id === productServiceId ? { ...item, quantity: item.quantity - 1 } : item
+          );
+        }
       }
+      // If item doesn't exist or is not active, return previous cart unmodified
+      return prevCart;
     });
   };
 

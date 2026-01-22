@@ -8,7 +8,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from ..shared.auth import decode_token, generate_token
 from ..shared.database import db
-from ..shared.models import Customers, Stores, FeaturedStores, StoreProductsServices, Orders, OrderDetails, EntityStatuses, OrderStatuses
+from ..shared.models import ( Customers, Stores, FeaturedStores, StoresProductsServices, Orders, OrdersDetails,
+    EntityStatuses, OrderStatuses, Categories, ProductsServices )
 from ..shared.utils import get_temporal_client
 from workflows.order_workflow import OrderWorkflow
 
@@ -102,6 +103,50 @@ def decode_customer_logic(data):
             return {'message': 'Customer not found or Inactive'}, 404
     else:
         return {'message': 'Invalid or expired token'}, 401
+
+# --- Categories Logic ---
+def get_categories_logic():
+    try:
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        if not active_status:
+            return {'error': 'Active Status not found'}, 404
+        active_status_id = active_status.status_id
+        categories = Categories.query.filter_by(category_status_id=active_status_id).all()
+        categories_data = [
+            {
+                'id': category.category_id,
+                'name': category.category_name,
+                'description': category.category_description,
+                'picture_path': category.category_pic_path,
+            }
+            for category in categories
+        ]
+        return categories_data, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+# --- Category Products/Services Logic ---
+def get_category_products_services_logic(category_id):
+    try:
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        if not active_status:
+            return {'error': 'Active status not found'}, 404
+        active_status_id = active_status.status_id
+        products_services = ProductsServices.query.filter_by(category_id=category_id, product_service_status_id=active_status_id).all()
+        products_services_data = [
+            {
+                'id': product_service.product_service_id,
+                'name': product_service.product_service_name,
+                'description': product_service.product_service_description,
+                'price': product_service.product_service_price,
+                # getattr used to avoid AttributeError if picture_path is not defined
+                'picture_path': getattr(product_service, 'product_service_pic_path', None),
+            }
+            for product_service in products_services
+        ]
+        return products_services_data, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
 
 # --- Featured Stores Logic ---
 def get_featured_stores_logic():

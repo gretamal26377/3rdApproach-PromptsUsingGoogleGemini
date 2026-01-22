@@ -9,14 +9,14 @@ from .customer_management import (
 
 customer_bp = Blueprint('customer_bp', __name__, url_prefix='/api/customer')
 
-@customer_bp.route('/register', methods=['POST'])
+@customer_bp.route('register', methods=['POST'])
 def register_customer():
     #Issue: Check for Role Authorization
     data = request.get_json()
     result, status = create_customer_logic(data)
     return jsonify(result), status
 
-@customer_bp.route('/login', methods=['POST'])
+@customer_bp.route('login', methods=['POST'])
 def login_customer():
     data = request.get_json()
     result, status = login_customer_logic(data)
@@ -52,6 +52,19 @@ curl -X POST -H "Content-Type: application/json" -d '{"token": "your_token_here"
 def decode_customer():
     data = request.get_json()
     result, status = decode_customer_logic(data)
+    return jsonify(result), status
+
+@customer_bp.route('categories', methods=['GET'])
+def get_categories():
+    from .customer_management import get_categories_logic
+    result, status = get_categories_logic()
+    return jsonify(result), status
+
+# Get all Products/Services for a given Category (for Customer Frontend)
+@customer_bp.route('categories/<int:category_id>/products-services', methods=['GET'])
+def get_category_products_services(category_id):
+    from .customer_management import get_category_products_services_logic
+    result, status = get_category_products_services_logic(category_id)
     return jsonify(result), status
 
 @customer_bp.route('featured-stores', methods=['GET'])
