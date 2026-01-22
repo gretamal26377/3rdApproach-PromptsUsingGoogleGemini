@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import ProductServiceCard from "../components/ProductServiceCard";
+import ProductServiceCard from "shared-lib";
 import { api } from "shared-lib";
 
 const ProductServicePage = ({ addToCart }) => {
+  // useParams hook to extract productServiceId from the URL
   const { productServiceId } = useParams();
   const [productService, setProductService] = useState(null);
   const [loading, setLoading] = useState(true);

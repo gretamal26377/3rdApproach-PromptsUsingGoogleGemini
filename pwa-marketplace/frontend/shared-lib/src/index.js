@@ -12,6 +12,8 @@ export { default as Login } from "./components/Login";
 export { default as Signup } from "./components/Signup";
 export { default as SearchBar } from "./components/SearchBar";
 export { default as ProductServiceListingCard } from "./components/ProductServiceListingCard";
+export { default as ProductServiceList } from "./components/ProductServiceList";
+export { default as ProductServiceCard } from "./components/ProductServiceCard";
 
 // UI components
 export * from "./components/ui/alert";
@@ -32,6 +34,7 @@ export * from "./components/ui/table";
 export { default as LoginPage } from "./pages/LoginPage";
 export { default as SearchPage } from "./pages/SearchPage";
 export { default as ProductServiceListingsPage } from "./pages/ProductServiceListingsPage";
+export { default as StorePage } from "./pages/StorePage";
 
 // Services
 export { default as api } from "./services/api";

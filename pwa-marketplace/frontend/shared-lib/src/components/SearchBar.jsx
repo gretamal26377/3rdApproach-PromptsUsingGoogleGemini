@@ -8,7 +8,7 @@ import React, {
 import { Link, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { debounce } from "lodash";
-import { api } from "shared-lib";
+import api from "../services/api";
 
 // Props:
 // - placeholder, className, onSelect(item)

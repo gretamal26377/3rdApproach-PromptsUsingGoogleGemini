@@ -16,7 +16,9 @@ const StorePage = ({ addToCart }) => {
         setLoading(true); // Set loading to true before fetching data
         const storeData = await api.get(`/stores/${storeId}`);
         setStore(storeData);
-        const productsServicesData = await api.get(`/store-products-services/${storeId}`);
+        const productsServicesData = await api.get(
+          `/store-products-services/${storeId}`
+        );
         setProductsServices(productsServicesData);
         setLoading(false);
       } catch (err) {
@@ -49,7 +51,10 @@ const StorePage = ({ addToCart }) => {
         <h2 className="text-2xl font-semibold mb-4">
           Products & Services from {store.name}
         </h2>
-        <ProductServiceList productsServices={productsServices} addToCart={addToCart} />
+        <ProductServiceList
+          productsServices={productsServices}
+          addToCart={addToCart}
+        />
       </section>
     </div>
   );
