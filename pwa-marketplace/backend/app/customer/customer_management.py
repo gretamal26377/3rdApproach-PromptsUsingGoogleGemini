@@ -293,6 +293,31 @@ def get_store_product_service_logic(store_product_service_id):
     }
     return store_product_service_data, 200
 
+# --- Stores for Product/Service Logic ---
+def get_stores_for_product_service_logic(product_service_id):
+    try:
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        if not active_status:
+            return {'error': 'Active status not found'}, 404
+        active_status_id = active_status.status_id
+        # Join StoresProductsServices and Stores, filter by product_service_id and active status
+        sps_list = StoresProductsServices.query.filter_by(product_service_id=product_service_id, status_id=active_status_id).all()
+        stores = []
+        for sps in sps_list:
+            store = Stores.query.filter_by(store_id=sps.store_id, store_status_id=active_status_id).first()
+            if store and sps.stock > 0:
+                stores.append({
+                    'id': store.store_id,
+                    'name': store.store_name,
+                    'description': store.store_description,
+                    'picture_path': store.store_pic_path,
+                    'price': getattr(sps, 'price', None),
+                    'stock': getattr(sps, 'stock', None),
+                })
+        return stores, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+
 def get_orders_logic(current_customer):
     # Only return orders with relevant order_statuses.status_code
     status_ids = [s.status_id for s in OrderStatuses.query.filter(OrderStatuses.status_code.in_(VALID_STATUS_CODES)).all()]

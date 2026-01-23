@@ -2,9 +2,10 @@ from flask import Blueprint, jsonify, request
 from ..shared.auth import token_required
 # Issue: Missing logics (update_order_logic)
 from .customer_management import (
-    create_customer_logic, get_store_products_services_logic, login_customer_logic, decode_customer_logic, get_featured_stores_logic,
-    get_stores_logic, get_store_logic, get_store_product_service_logic,
-    create_order_logic, get_orders_logic, get_order_logic, cancel_order_logic
+    create_customer_logic, get_categories_logic, get_category_products_services_logic, get_store_products_services_logic,
+    login_customer_logic, decode_customer_logic, get_featured_stores_logic,
+    get_stores_logic, get_store_logic, get_store_product_service_logic, get_stores_for_product_service_logic,
+    create_order_logic, get_orders_logic, get_order_logic, cancel_order_logic, update_order_logic
 )
 
 customer_bp = Blueprint('customer_bp', __name__, url_prefix='/api/customer')
@@ -56,14 +57,12 @@ def decode_customer():
 
 @customer_bp.route('categories', methods=['GET'])
 def get_categories():
-    from .customer_management import get_categories_logic
     result, status = get_categories_logic()
     return jsonify(result), status
 
 # Get all Products/Services for a given Category (for Customer Frontend)
 @customer_bp.route('categories/<int:category_id>/products-services', methods=['GET'])
 def get_category_products_services(category_id):
-    from .customer_management import get_category_products_services_logic
     result, status = get_category_products_services_logic(category_id)
     return jsonify(result), status
 
@@ -85,6 +84,12 @@ def get_store(store_id):
 @customer_bp.route('store-products-services/<int:store_id>', methods=['GET'])
 def get_store_products_services(store_id):
     result, status = get_store_products_services_logic(store_id)
+    return jsonify(result), status
+
+# Get all Stores selling a given Product/Service (for Customer Frontend)
+@customer_bp.route('products-services/<int:product_service_id>/stores', methods=['GET'])
+def get_stores_for_product_service(product_service_id):
+    result, status = get_stores_for_product_service_logic(product_service_id)
     return jsonify(result), status
 
 @customer_bp.route('products-services/<int:product_service_id>', methods=['GET'])
