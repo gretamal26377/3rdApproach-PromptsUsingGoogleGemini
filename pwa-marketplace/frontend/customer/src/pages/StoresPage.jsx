@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import StoreList from "../components/StoreList";
+import StoreList from "../../../shared-lib/src/components/StoreList";
 import { api } from "shared-lib";
 
-const StoresPage = () => {
+const StoresPage = ({ addToCart }) => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +29,7 @@ const StoresPage = () => {
     <div className="container mx-auto p-4">
       <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded shadow p-4">
         <h1 className="text-3xl font-bold mb-6">All Stores</h1>
-        <StoreList stores={stores} />
+        <StoreList stores={stores} addToCart={addToCart} />
       </div>
     </div>
   );

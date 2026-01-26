@@ -1,13 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "shared-lib";
-import { Button } from "shared-lib";
-import { cn } from "shared-lib";
 import StoreCard from "./StoreCard";
 
 const StoreList = ({ stores, addToCart }) => {

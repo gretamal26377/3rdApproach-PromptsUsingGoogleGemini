@@ -16,7 +16,7 @@ export default function CustomerRoutes({ cart, addToCart, removeFromCart, clearC
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      <Route path="/stores" element={<StoresPage />} />
+      <Route path="/stores" element={<StoresPage addToCart={addToCart} />} />
       {/* This route allows users navigate to a specific store by providing storeId parameter in the URL.
         The StorePage component can then use storeId to fetch that store's data. addToCart prop allows
         StorePage component adding products from the store to the customer's cart */}

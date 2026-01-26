@@ -14,10 +14,10 @@ const StorePage = ({ addToCart }) => {
     const fetchStoreData = async () => {
       try {
         setLoading(true); // Set loading to true before fetching data
-        const storeData = await api.get(`/stores/${storeId}`);
+        const storeData = await api.get(`stores/${storeId}`);
         setStore(storeData);
         const productsServicesData = await api.get(
-          `/store-products-services/${storeId}`
+          `store-products-services/${storeId}`
         );
         setProductsServices(productsServicesData);
         setLoading(false);
@@ -53,6 +53,7 @@ const StorePage = ({ addToCart }) => {
         </h2>
         <ProductServiceList
           productsServices={productsServices}
+          store={store}
           addToCart={addToCart}
         />
       </section>

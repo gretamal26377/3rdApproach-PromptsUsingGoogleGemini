@@ -1,13 +1,7 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "shared-lib";
-import { Button } from "shared-lib";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import Button from "./ui/button";
 import { Link } from "react-router-dom";
-import { cn } from "shared-lib";
 
 const StoreCard = ({ store, addToCart }) => {
   return (
@@ -29,10 +23,13 @@ const StoreCard = ({ store, addToCart }) => {
             View Store Products
           </Button>
         </Link>
+        {/* Show Add to Cart button only if addToCart function is provided as a prop */}
         {addToCart && (
           <Button
             className="w-full bg-green-500 text-white hover:bg-green-600 transition-colors"
-            onClick={() => addToCart(store)}
+            onClick={() =>
+              addToCart({ productService: store.productService, store })
+            }
           >
             Add to Cart
           </Button>

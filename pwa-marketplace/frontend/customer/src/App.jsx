@@ -129,18 +129,30 @@ function AppContent() {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  // Add to cart as before
-  const addToCart = (productService) => {
+
+  // Add to cart: expects { productService, store }
+  const addToCart = ({ productService, store }) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === productService.id);
+      // Unique key: productService.id + store.id
+      const existingItem = prevCart.find(
+        (item) => item.productService.id === productService.id && item.store.id === store.id
+      );
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === productService.id
+          item.productService.id === productService.id && item.store.id === store.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       } else {
-        return [...prevCart, { ...productService, quantity: 1, active: true }];
+        return [
+          ...prevCart,
+          {
+            productService,
+            store,
+            quantity: 1,
+            active: true,
+          },
+        ];
       }
     });
   };
@@ -150,21 +162,25 @@ function AppContent() {
     setCart((prevCart) => prevCart.map(item => ({ ...item, active: false })));
   };
 
-  // fullRemove define a default value of false if this function is called without this parameter
-  const removeFromCart = (productServiceId, fullRemove = false) => {
+  // Remove from cart: expects { productService, store, fullRemove }
+  const removeFromCart = ({ productService, store, fullRemove = false }) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === productServiceId);
+      const existingItem = prevCart.find(
+        (item) => item.productService.id === productService.id && item.store.id === store.id
+      );
       if (existingItem && existingItem.active) {
         if (fullRemove || existingItem.quantity === 1) {
           // Inactivate the item instead of removing it to keep cart history
           return prevCart.map((item) =>
-            item.id === productServiceId
+            item.productService.id === productService.id && item.store.id === store.id
               ? { ...item, active: false }
               : item
           );
         } else {
           return prevCart.map((item) =>
-            item.id === productServiceId ? { ...item, quantity: item.quantity - 1 } : item
+            item.productService.id === productService.id && item.store.id === store.id
+              ? { ...item, quantity: item.quantity - 1 }
+              : item
           );
         }
       }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import StoreList from "../components/StoreList";
+import StoreList from "../../../shared-lib/src/components/StoreList";
 import { api } from "shared-lib";
 
 // This page shows all stores selling a selected product/service from a category
