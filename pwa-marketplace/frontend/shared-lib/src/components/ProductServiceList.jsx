@@ -1,20 +1,41 @@
 // @ts-nocheck
 import React from "react";
+import { useParams, useLocation } from "react-router-dom";
 import ProductServiceCard from "./ProductServiceCard";
 
-const ProductServiceList = ({ productsServices, store, addToCart }) => {
+// Differentiates Workflows by presence of Store or Category Ids
+const ProductServiceList = ({ addToCart }) => {
+  const { categoryId, storeId } = useParams();
+  const location = useLocation();
+  const { state } = location;
+  const productsServices = state?.categoryProductsServices || [];
+
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded shadow p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {productsServices.map((productService) => (
-          <ProductServiceCard
-            // key: Used as a unique identifier for each ProductServiceCard component in the list, usually used alongside the map function
-            key={`${productService.id}-${store.id}`}
-            productService={productService}
-            store={store}
-            onAddToCart={addToCart}
-          />
-        ))}
+        {productsServices.map((productService) => {
+          // Category Workflow: Show all Products/Services for the given Category
+          if (categoryId) {
+            return (
+              <ProductServiceCard
+                // key: Used as a unique identifier for each ProductServiceCard component in the list, usually used alongside the map function
+                key={`${productService.id}-${categoryId}`}
+                productService={productService}
+                categoryId={categoryId}
+                onAddToCart={addToCart}
+              />
+            );
+          }
+          // Store Workflow: Show Product/Service for the given Store
+          return (
+            <ProductServiceCard
+              key={`${productService.id}-${storeId || "no-store"}`}
+              productService={productService}
+              storeId={storeId}
+              onAddToCart={addToCart}
+            />
+          );
+        })}
       </div>
     </div>
   );

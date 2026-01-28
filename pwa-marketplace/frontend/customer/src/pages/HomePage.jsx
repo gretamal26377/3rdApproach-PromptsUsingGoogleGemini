@@ -137,23 +137,24 @@ const HomePage = () => {
     setProductsServices(mockProducts); // Keep mock for products for now
   }, []);
 
+  const [navigateSearch, navigateCustomer] = useNavigate();
+  const handleSelect = (item) => navigateSearch(item.path);
+
   // Fetch Products/Services for a selected Category
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
     setLoadingCategoryProductsServices(true);
-    api.get(`customer/categories/${category.id}/products-services`)
+    api.get(`categories/${category.id}/products-services`)
       .then((data) => {
         setCategoryProductsServices(data);
         setLoadingCategoryProductsServices(false);
+        navigateCustomer(`/category/${category.id}`, { state: { categoryProductsServices } });
       })
       .catch(() => {
         setCategoryProductsServices([]);
         setLoadingCategoryProductsServices(false);
       });
   };
-
-  const navigate = useNavigate();
-  const handleSelect = (item) => navigate(item.path);
 
   return (
     <div className="bg-background text-text dark:bg-background-dark dark:text-text-dark min-h-screen flex flex-row">

@@ -2,6 +2,7 @@ import * as React from "react";
 
 const base =
   "inline-flex items-center justify-center font-medium rounded px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed bg-background text-text dark:bg-background-dark dark:text-text-dark";
+
 const variants = {
   primary:
     "bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-800",
@@ -15,15 +16,40 @@ const variants = {
     "bg-transparent hover:bg-gray-100 text-gray-800 dark:hover:bg-gray-800 dark:text-gray-200",
 };
 
+/**
+ * @typedef {'primary' | 'secondary' | 'outline' | 'destructive' | 'ghost'} Variant
+ */
+
+/**
+ * We extend the standard HTML button attributes to ensure compatibility with all native props and React event handlers
+ * @typedef {Object} CustomButtonProps
+ * @property {Variant} [variant]
+ * @typedef {CustomButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>} ButtonProps
+ */
+
+/**
+ * @type {React.ForwardRefExoticComponent<ButtonProps>}
+ */
 const Button = React.forwardRef(
-  ({ className = "", variant = "primary", type = "button", ...props }, ref) => {
+  (
+    {
+      className = "",
+      variant = "primary",
+      type = "button",
+      children,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <button
         ref={ref}
         type={type}
         className={[base, variants[variant] || "", className].join(" ")}
         {...props}
-      />
+      >
+        {children}
+      </button>
     );
   }
 );

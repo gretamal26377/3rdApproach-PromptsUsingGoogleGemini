@@ -24,10 +24,18 @@ export default function CustomerRoutes({ cart, addToCart, removeFromCart, clearC
         path="/stores/:storeId"
         element={<StorePage addToCart={addToCart}  />}
       />
+      <Route
+        path="/category/:categoryId"
+        element={<ProductServiceList addToCart={addToCart} />}
+      />
       {/* Issue?: Im not sure whether this route will be used here at Customer or Admin Frontend */}
       <Route
         path="/products-services/:productId"
-        element={<ProductServicePage addToCart={addToCart} />}
+        element={<ProductServiceList addToCart={addToCart} />}
+      />
+      <Route
+        path="/category/:categoryId/products-services/:productServiceId/stores"
+        element={<CategoryProductServiceStoresPage addToCart={addToCart} />}
       />
       <Route
         path="/products-services/:baseProductServiceId/listings"
@@ -45,13 +53,6 @@ export default function CustomerRoutes({ cart, addToCart, removeFromCart, clearC
           />
         }
       />
-    </Routes>
-  );
-}
-
-    />
-  }
-/>
     </Routes>
   );
 }
