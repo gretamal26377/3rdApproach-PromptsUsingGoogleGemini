@@ -130,16 +130,16 @@ function AppContent() {
   }, [cart]);
 
 
-  // Add to cart: expects { productService, store }
-  const addToCart = ({ productService, store }) => {
+  // Aaaa
+  const addToCart = ({ productService }) => {
     setCart((prevCart) => {
-      // Unique key: productService.id + store.id
+      // Unique key: productService.id + productService.store_id
       const existingItem = prevCart.find(
-        (item) => item.productService.id === productService.id && item.store.id === store.id
+        (item) => item.productService.id === productService.id && item.productService.store_id === productService.store_id
       );
       if (existingItem) {
         return prevCart.map((item) =>
-          item.productService.id === productService.id && item.store.id === store.id
+          item.productService.id === productService.id && item.productService.store_id === store.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );

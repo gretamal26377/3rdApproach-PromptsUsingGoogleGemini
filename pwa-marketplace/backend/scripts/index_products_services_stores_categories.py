@@ -75,15 +75,15 @@ def run_indexing():
                 Stores.store_status_id == active_status,
                 Categories.category_status_id == active_status
             ).all()
-            print(f"Found {len(all_products_services)} products/services to index (active only)")
+            print(f"Found {len(all_products_services)} Products/Services to index (active only)")
 
             # Fetch all stores with 'active' status
             all_stores = db.session.query(Stores).filter(Stores.store_status_id == active_status).all()
-            print(f"Found {len(all_stores)} stores to index (active only)")
+            print(f"Found {len(all_stores)} Stores to index (active only)")
 
             # Fetch all categories with 'active' status
             all_categories = db.session.query(Categories).filter(Categories.category_status_id == active_status).all()
-            print(f"Found {len(all_categories)} categories to index (active only)")
+            print(f"Found {len(all_categories)} Categories to index (active only)")
 
         except Exception as e:
             print(f"Error: Failed to fetch data from the database. Details: {e}")
@@ -96,7 +96,7 @@ def run_indexing():
         # 3. Structure Documents for Meilisearch
         documents = []
 
-        # Process products/services
+        # Process Products/Services
         for store_product_service, product_service, store, category in all_products_services:
             doc = {
                 'id': f'product_service_{store_product_service.id}',

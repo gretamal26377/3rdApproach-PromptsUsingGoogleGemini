@@ -234,7 +234,7 @@ def get_store_products_services_logic(store_id):
         logging.error("Active Status not found during get_store_products_services_logic")
         return {'message': 'Active Status not found'}, 500
     active_status_id = active_status.status_id
-    sps_list = StoreProductsServices.query.filter_by(store_id=store_id, status_id=active_status_id).all()
+    sps_list = StoresProductsServices.query.filter_by(store_id=store_id, status_id=active_status_id).all()
     store_products_services_data = []
     for sps in sps_list:
         ps = sps.product_service

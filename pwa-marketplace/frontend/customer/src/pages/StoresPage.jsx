@@ -11,7 +11,7 @@ const StoresPage = ({ addToCart }) => {
     const fetchStores = async () => {
       try {
         setLoading(true);
-        const data = await api.get("/stores");
+        const data = await api.get("stores");
         setStores(data);
       } catch (err) {
         setError(err.message || "Failed to load stores");

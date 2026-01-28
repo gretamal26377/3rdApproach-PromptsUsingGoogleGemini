@@ -9,16 +9,16 @@ import { cn } from "../lib/utils";
 // Differentiates Workflows by presence of Store or Category Ids
 const ProductServiceCard = ({
   productService,
-  storeId,
   categoryId,
+  store,
   onAddToCart,
 }) => {
   const navigate = useNavigate();
   const handleViewStores = () => {
     // Navigate to Category Workflow page for this Product/Service
-    navigate(
-      `/category/${categoryId}/products-services/${productService.id}/stores`
-    );
+    navigate(`/category/${categoryId}/products-services/stores`, {
+      state: { productService },
+    });
   };
   return (
     <Card className="transition-transform transform hover:scale-105 hover:shadow-lg">
@@ -27,26 +27,27 @@ const ProductServiceCard = ({
           {productService.name}
         </CardTitle>
       </CardHeader>
-      {storeId && (
+      {store ? (
         <CardContent>
           <p className="text-gray-700 mb-2">{productService.description}</p>
           <Badge variant="outline" className="mb-2">
             Price: ${productService.price}
           </Badge>
         </CardContent>
-      )}
-      {/* Category Workflow: Show button to view all Stores selling this Product/Service */}
-      {categoryId && (
-        <Button
-          className="w-full bg-purple-500 text-white hover:bg-purple-600 transition-colors mb-2"
-          onClick={handleViewStores}
-        >
-          Stores Selling This Product/Service
-        </Button>
+      ) : (
+        // Category Workflow: Show button to view all Stores selling this Product/Service
+        <>
+          <Button
+            className="w-full bg-purple-500 text-white hover:bg-purple-600 transition-colors mb-2"
+            onClick={handleViewStores}
+          >
+            Stores Selling This Product/Service
+          </Button>
+        </>
       )}
       {/* Store Workflow: Show Add to Cart button */}
       {/* When this component called from Admin Frontend, no need to Add to Cart button, so called without onAddToCart prop */}
-      {onAddToCart && storeId && (
+      {onAddToCart && (
         <Button
           onClick={() => onAddToCart({ productService, store })}
           className={cn(

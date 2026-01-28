@@ -13,8 +13,8 @@ const ProductServiceListingsPage = ({ addToCart }) => {
   useEffect(() => {
     const fetchProductListings = async () => {
       try {
-        const listingsData = await api.get(
-          `/products-services/${baseProductServiceId}/listings`
+        const listingsData = await api.getSearch(
+          `products-services/${baseProductServiceId}/listings`
         );
         setListings(listingsData);
       } catch (err) {

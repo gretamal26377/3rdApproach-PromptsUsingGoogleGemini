@@ -4,11 +4,14 @@ import { useParams, useLocation } from "react-router-dom";
 import ProductServiceCard from "./ProductServiceCard";
 
 // Differentiates Workflows by presence of Store or Category Ids
-const ProductServiceList = ({ addToCart }) => {
-  const { categoryId, storeId } = useParams();
+const ProductServiceList = ({ productsServices, store, addToCart }) => {
+  const { categoryId } = useParams();
   const location = useLocation();
   const { state } = location;
-  const productsServices = state?.categoryProductsServices || [];
+
+  // Use state if available, otherwise fallback to prop
+  const productsServices =
+    state?.categoryProductsServices || propProductsServices || [];
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 rounded shadow p-4">
@@ -29,9 +32,9 @@ const ProductServiceList = ({ addToCart }) => {
           // Store Workflow: Show Product/Service for the given Store
           return (
             <ProductServiceCard
-              key={`${productService.id}-${storeId || "no-store"}`}
+              key={`${productService.id}-${store.id || "no-store"}`}
               productService={productService}
-              storeId={storeId}
+              store={store}
               onAddToCart={addToCart}
             />
           );

@@ -148,7 +148,7 @@ const HomePage = () => {
       .then((data) => {
         setCategoryProductsServices(data);
         setLoadingCategoryProductsServices(false);
-        navigateCustomer(`/category/${category.id}`, { state: { categoryProductsServices } });
+        navigateCustomer(`/category/${category.id}/products-services`, { state: { categoryProductsServices } });
       })
       .catch(() => {
         setCategoryProductsServices([]);
