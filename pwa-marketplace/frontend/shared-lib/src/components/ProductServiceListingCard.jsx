@@ -11,25 +11,26 @@ import { Badge } from "shared-lib";
 import { ShoppingCart, Store } from "lucide-react";
 import { cn } from "shared-lib";
 
-const ProductServiceListingCard = ({ listing, onAddToCart }) => {
+const ProductServiceListingCard = ({ storeProductService, onAddToCart }) => {
   return (
     <Card className="flex flex-col justify-between transition-transform transform hover:scale-105 hover:shadow-lg">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">
-          ${listing.price.toFixed(2)}
+          ${storeProductService.price.toFixed(2)}
         </CardTitle>
         <CardDescription className="flex items-center gap-2 text-gray-600">
           <Store className="h-4 w-4" />
           {listing.seller_name}
+          {storeProductService.store_name}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2">
           <Badge variant="outline" className="mb-2 w-fit">
-            Stock: {listing.stock_quantity}
+            Stock: {storeProductService.stock_quantity}
           </Badge>
           <Button
-            onClick={() => onAddToCart(listing)}
+            onClick={() => onAddToCart({ storeProductService })}
             className={cn(
               "w-full bg-blue-500 text-white hover:bg-blue-600 transition-colors",
               "flex items-center justify-center gap-2"

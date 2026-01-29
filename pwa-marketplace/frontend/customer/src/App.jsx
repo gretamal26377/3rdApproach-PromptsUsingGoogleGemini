@@ -130,16 +130,24 @@ function AppContent() {
   }, [cart]);
 
 
-  // Aaaa
-  const addToCart = ({ productService }) => {
+
+  // Use StoresProductsServices.id as the unique identifier for Cart Items
+  const addToCart = ({ storeProductService }) => {
     setCart((prevCart) => {
-      // Unique key: productService.id + productService.store_id
       const existingItem = prevCart.find(
-        (item) => item.productService.id === productService.id && item.productService.store_id === productService.store_id
+        (item) => item.storeProductService.id === storeProductService.id
       );
+      // ??: If storeProductService is null or undefined then assume no stock limit through built-in global JS math value: Infinity
+      const stock = storeProductService.stock ?? Infinity; // fallback if stock is undefined
+      const currentQty = existingItem ? existingItem.quantity : 0;
+      if (currentQty + 1 > stock) {
+        // Optionally, show a message to the user (e.g., toast, alert)
+        alert('Not enough stock available for this Item');
+        return prevCart;
+      }
       if (existingItem) {
         return prevCart.map((item) =>
-          item.productService.id === productService.id && item.productService.store_id === store.id
+          item.storeProductService.id === storeProductService.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -147,8 +155,7 @@ function AppContent() {
         return [
           ...prevCart,
           {
-            productService,
-            store,
+            storeProductService,
             quantity: 1,
             active: true,
           },
@@ -162,23 +169,22 @@ function AppContent() {
     setCart((prevCart) => prevCart.map(item => ({ ...item, active: false })));
   };
 
-  // Remove from cart: expects { productService, store, fullRemove }
-  const removeFromCart = ({ productService, store, fullRemove = false }) => {
+  const removeFromCart = ({ storeProductService, fullRemove = false }) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find(
-        (item) => item.productService.id === productService.id && item.store.id === store.id
+        (item) => item.storeProductService.id === storeProductService.id
       );
       if (existingItem && existingItem.active) {
         if (fullRemove || existingItem.quantity === 1) {
           // Inactivate the item instead of removing it to keep cart history
           return prevCart.map((item) =>
-            item.productService.id === productService.id && item.store.id === store.id
+            item.storeProductService.id === storeProductService.id
               ? { ...item, active: false }
               : item
           );
         } else {
           return prevCart.map((item) =>
-            item.productService.id === productService.id && item.store.id === store.id
+            item.storeProductService.id === storeProductService.id
               ? { ...item, quantity: item.quantity - 1 }
               : item
           );

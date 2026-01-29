@@ -4,16 +4,17 @@ import Button from "./ui/button";
 import { Link } from "react-router-dom";
 
 // Differentiates Workflows by presence of Store or Category Ids
-const StoreCard = ({ categoryId, productService, store, addToCart }) => {
+
+const StoreCard = ({ categoryId, store, addToCart }) => {
   return (
     <Card className="transition-transform transform hover:scale-105 hover:shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">{store.name}</CardTitle>
       </CardHeader>
       <CardContent>
-        {store.store_pic_path && (
+        {store.picture_path && (
           <img
-            src={store.store_pic_path}
+            src={store.picture_path}
             alt={store.name}
             className="w-full h-32 object-cover rounded mb-2"
           />
@@ -26,7 +27,11 @@ const StoreCard = ({ categoryId, productService, store, addToCart }) => {
             {addToCart && (
               <Button
                 className="w-full bg-green-500 text-white hover:bg-green-600 transition-colors"
-                onClick={() => addToCart({ productService, store })}
+                onClick={() =>
+                  addToCart({
+                    storeProductService: store.store_product_service,
+                  })
+                }
               >
                 Add to Cart
               </Button>

@@ -1,8 +1,9 @@
 import StoreCard from "./StoreCard";
 
-// Differentiates Workflows by presence of Store or Category Ids
-const StoreList = ({ categoryId, productService, stores, addToCart }) => {
-  // If categoryId is present, show Stores selling Product/Service for Category Workflow
+// Differentiates Workflows by presence of Category Id
+
+const StoreList = ({ categoryId, stores, addToCart }) => {
+  // Category Workflow: If categoryId is present, shows Stores selling Product/Service in that Category
   if (categoryId) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -10,7 +11,6 @@ const StoreList = ({ categoryId, productService, stores, addToCart }) => {
           <StoreCard
             key={s.id}
             categoryId={categoryId}
-            productService={productService}
             store={s}
             addToCart={addToCart}
           />

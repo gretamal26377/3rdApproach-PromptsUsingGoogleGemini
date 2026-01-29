@@ -6,50 +6,53 @@ import Badge from "./ui/badge";
 import { ShoppingCart } from "lucide-react";
 import { cn } from "../lib/utils";
 
-// Differentiates Workflows by presence of Store or Category Ids
+// Differentiates Workflows by presence of Category Id
+
 const ProductServiceCard = ({
-  productService,
+  item
   categoryId,
-  store,
   onAddToCart,
 }) => {
   const navigate = useNavigate();
   const handleViewStores = () => {
-    // Navigate to Category Workflow page for this Product/Service
+    // Navigate to Category Workflow page for this Item = Product/Service
     navigate(`/category/${categoryId}/products-services/stores`, {
-      state: { productService },
+      state: { item },
     });
   };
   return (
     <Card className="transition-transform transform hover:scale-105 hover:shadow-lg">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">
-          {productService.name}
+          {item.name}
         </CardTitle>
       </CardHeader>
-      {store ? (
+      {!categoryId ? (
+        // Store Workflow: Show Item = Store Product/Service details
         <CardContent>
-          <p className="text-gray-700 mb-2">{productService.description}</p>
+          <p className="text-gray-700 mb-2">
+            {item.description}
+          </p>
           <Badge variant="outline" className="mb-2">
-            Price: ${productService.price}
+            Price: ${item.price}
           </Badge>
         </CardContent>
       ) : (
-        // Category Workflow: Show button to view all Stores selling this Product/Service
+        // Category Workflow: Show button to view all Stores selling this Item = Product/Service
         <>
           <Button
             className="w-full bg-purple-500 text-white hover:bg-purple-600 transition-colors mb-2"
             onClick={handleViewStores}
           >
-            Stores Selling This Product/Service
+            Stores Selling Product/Service
           </Button>
         </>
       )}
-      {/* Store Workflow: Show Add to Cart button */}
+      {/* Store Workflow: Show Add to Cart button for this Item = Store Product/Service */}
       {/* When this component called from Admin Frontend, no need to Add to Cart button, so called without onAddToCart prop */}
-      {onAddToCart && (
+      {!categoryId && onAddToCart && (
         <Button
-          onClick={() => onAddToCart({ productService, store })}
+          onClick={() => onAddToCart({ item })}
           className={cn(
             "w-full bg-blue-500 text-white hover:bg-blue-600 transition-colors",
             "flex items-center justify-center gap-2"

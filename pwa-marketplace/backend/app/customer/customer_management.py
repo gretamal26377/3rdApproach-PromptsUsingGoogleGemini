@@ -302,19 +302,20 @@ def get_stores_for_product_service_logic(product_service_id):
         active_status_id = active_status.status_id
         # Join StoresProductsServices and Stores, filter by product_service_id and active status
         sps_list = StoresProductsServices.query.filter_by(product_service_id=product_service_id, status_id=active_status_id).all()
-        stores = []
+        product_service_stores = []
         for sps in sps_list:
             store = Stores.query.filter_by(store_id=sps.store_id, store_status_id=active_status_id).first()
             if store and sps.stock > 0:
-                stores.append({
+                product_service_stores.append({
                     'id': store.store_id,
                     'name': store.store_name,
                     'description': store.store_description,
                     'picture_path': store.store_pic_path,
+                    'store_product_service': sps,
                     'price': getattr(sps, 'price', None),
                     'stock': getattr(sps, 'stock', None),
                 })
-        return stores, 200
+        return product_service_stores, 200
     except Exception as e:
         return {'error': str(e)}, 500
 

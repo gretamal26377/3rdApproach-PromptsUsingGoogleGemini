@@ -7,7 +7,7 @@ import { useLocation } from "react-router-dom";
 // This page shows all Stores selling a selected Product/Service from a Category
 const CategoryProductServiceStoresPage = ({ addToCart }) => {
   const { categoryId } = useParams();
-  const [stores, setStores] = useState([]);
+  const [productServiceStores, setProductServiceStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,7 +18,7 @@ const CategoryProductServiceStoresPage = ({ addToCart }) => {
     setLoading(true);
     api.get(`products-services/${productService.id}/stores`)
       .then((data) => {
-        setStores(data);
+        setProductServiceStores(data.product_service_stores);
         setLoading(false);
       })
       .catch((err) => {
@@ -29,12 +29,12 @@ const CategoryProductServiceStoresPage = ({ addToCart }) => {
 
   if (loading) return <p>Loading Stores...</p>;
   if (error) return <p>Error: {error}</p>;
-  if (!stores.length) return <p>No Stores found for this Product/Service</p>;
+  if (!productServiceStores.length) return <p>No Stores found for this Product/Service</p>;
 
   return (
     <div className="container mx-auto p-4 space-y-6">
       <h2 className="text-2xl font-semibold mb-4">Stores selling this Product/Service</h2>
-      <StoreList categoryId={categoryId} productService={productService} stores={stores} addToCart={addToCart} />
+      <StoreList categoryId={categoryId} stores={productServiceStores} addToCart={addToCart} />
     </div>
   );
 };
