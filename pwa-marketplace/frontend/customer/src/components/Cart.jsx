@@ -55,6 +55,7 @@ const Cart = ({ cart, addToCart, removeFromCart, clearCart, inactivateCartItems 
                   size="icon"
                   onClick={() => addToCart(item)}
                   className="hover:bg-gray-100"
+                  disabled={item.stock === 0}
                 >
                   <PlusCircle className="h-4 w-4" />
                 </Button>

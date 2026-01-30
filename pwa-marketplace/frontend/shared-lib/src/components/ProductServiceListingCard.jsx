@@ -31,6 +31,7 @@ const ProductServiceListingCard = ({ storeProductService, onAddToCart }) => {
           </Badge>
           <Button
             onClick={() => onAddToCart({ storeProductService })}
+            disabled={storeProductService.stock === 0}
             className={cn(
               "w-full bg-blue-500 text-white hover:bg-blue-600 transition-colors",
               "flex items-center justify-center gap-2"

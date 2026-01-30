@@ -32,6 +32,10 @@ const StoreCard = ({ categoryId, store, addToCart }) => {
                     storeProductService: store.store_product_service,
                   })
                 }
+                disabled={
+                  store.store_product_service &&
+                  store.store_product_service.stock === 0
+                }
               >
                 Add to Cart
               </Button>
