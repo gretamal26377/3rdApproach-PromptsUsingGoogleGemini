@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import StoreList from "../../../shared-lib/src/components/StoreList";
+import StoreList from "shared-lib";
 import { api } from "shared-lib";
 
 const StoresPage = ({ addToCart }) => {

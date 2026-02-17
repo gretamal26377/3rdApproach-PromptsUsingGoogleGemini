@@ -14,6 +14,7 @@ export { default as SearchBar } from "./components/SearchBar";
 export { default as ProductServiceListingCard } from "./components/ProductServiceListingCard";
 export { default as ProductServiceList } from "./components/ProductServiceList";
 export { default as ProductServiceCard } from "./components/ProductServiceCard";
+export { default as StoreList } from "./components/StoreList";
 
 // UI components
 export * from "./components/ui/alert";

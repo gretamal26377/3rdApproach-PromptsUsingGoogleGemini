@@ -30,7 +30,7 @@ const checkoutSchema = z.object({
     message: "Please enter a valid email address",
   }),
   address: z.string().min(5, {
-    message: "Address must be at least 5 characters.",
+    message: "Address must be at least 5 characters",
   }),
   city: z.string().min(2),
   state: z.string().min(2),
@@ -59,13 +59,14 @@ const Checkout = ({ total, onCheckout }) => {
       city: "",
       state: "",
       zip: "",
-      paymentMethod: "creditCard", // Default to credit card
+      paymentMethod: "creditCard", // Default to Credit Card
       cardNumber: "",
       cardExpiry: "",
       cardCvc: "",
     },
   });
 
+  // value: Form values from the checkout form
   const onSubmit = async (values) => {
     setIsSubmitting(true);
     // Simulate an API call
@@ -81,12 +82,12 @@ const Checkout = ({ total, onCheckout }) => {
         <CardHeader>
           <CardTitle>Sign in to continue</CardTitle>
           <CardDescription>
-            You need an account to checkout. Please log in and come back to complete your order
+            You need an Account to Checkout. Please Log In and come back to complete your Order
           </CardDescription>
         </CardHeader>
         <CardFooter>
           <Button className="w-full" onClick={() => navigate("/login") }>
-            Go to login
+            Go to Login
           </Button>
         </CardFooter>
       </Card>

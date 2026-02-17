@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "shared-lib";
 import { ShoppingCart, XCircle, PlusCircle, MinusCircle } from "lucide-react";
-import { cn } from "shared-lib";
+// import { cn } from "shared-lib";
 import Checkout from "./Checkout";
 import { useState } from "react";
 

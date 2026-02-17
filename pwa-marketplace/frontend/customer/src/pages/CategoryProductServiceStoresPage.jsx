@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import StoreList from "../../../shared-lib/src/components/StoreList";
+import StoreList from "shared-lib";
 import { api } from "shared-lib";
 import { useLocation } from "react-router-dom";
 

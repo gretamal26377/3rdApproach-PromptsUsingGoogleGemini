@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import ProductServiceList from "../../../shared-lib/src/components/ProductServiceList";
+import ProductServiceList from "shared-lib";
 import { api } from "shared-lib";
 
 const StorePage = ({ addToCart }) => {
