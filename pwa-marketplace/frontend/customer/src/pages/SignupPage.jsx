@@ -18,8 +18,8 @@ const SignupPage = () => {
     if (appType === "customer") {
       /**
        * Keep in mind that navigate redirect has priority over any component rerendering
-       * (and its father and sons component rerenderings) triggered by setting any
-       * var state, actually these rerenderings will be cancelled and those components are unmounted
+       * (and its father and sons component rerendering) triggered by setting any
+       * var state, actually these rerendering will be cancelled and those components are unmounted
        */
       navigate("/");
     }

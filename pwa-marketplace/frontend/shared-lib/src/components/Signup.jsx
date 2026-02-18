@@ -25,7 +25,7 @@ const initialState = {
   addressLine1: "",
   addressLine2: "",
   city: "",
-  state: "",
+  stateRegion: "",
   postalCode: "",
   organisationId: "",
   storeId: "",
@@ -43,6 +43,7 @@ const Signup = ({ onSignup }) => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // useMemo: Memoize the page copy to avoid unnecessary recalculations
   const pageCopy = useMemo(
     () =>
       isCustomerApp
@@ -56,9 +57,12 @@ const Signup = ({ onSignup }) => {
             description: "Create a User",
             cta: "Create User",
           },
-    []
+    [] // Empty dependency array means this will only be calculated once on initial render
   );
 
+  // Function to update form field values. It takes the field name as an argument and returns a function
+  // that takes an event (from the input change) and updates the corresponding field in formData state
+  // with the new value from the input
   const updateField = (field) => (event) => {
     setFormData((prev) => ({ ...prev, [field]: event.target.value }));
   };
@@ -68,6 +72,8 @@ const Signup = ({ onSignup }) => {
       return "Passwords do not match";
     }
 
+    // For each field of the required fields, it checks if the field is empty in formData.
+    // If it is empty, it adds the field name to the missingBasics array
     const missingBasics = [
       "name",
       "email",
@@ -76,6 +82,8 @@ const Signup = ({ onSignup }) => {
       "phone",
     ].filter((field) => !formData[field]);
 
+    // If missingBasics array is not empty, it means there are required fields that are not filled in,
+    // so it returns an error message asking the user to fill in all required fields
     if (missingBasics.length) {
       return "Please fill in all required fields";
     }
@@ -84,14 +92,16 @@ const Signup = ({ onSignup }) => {
       const missingAddress = [
         "addressLine1",
         "city",
-        "state",
+        "stateRegion",
         "postalCode",
       ].filter((field) => !formData[field]);
+
       if (missingAddress.length) {
         return "Please complete your address";
       }
     }
 
+    // For admin app, we don't have any additional required fields beyond the basics, so we can skip to the end
     return "";
   };
 
@@ -100,6 +110,8 @@ const Signup = ({ onSignup }) => {
     setError("");
 
     const validationError = validate();
+    // If validationError is not an empty string, it means there was a validation error,
+    // so we set the error state to the validation error message and return early to prevent further processing
     if (validationError) {
       setError(validationError);
       return;
@@ -117,7 +129,7 @@ const Signup = ({ onSignup }) => {
             address_line1: formData.addressLine1,
             address_line2: formData.addressLine2,
             city: formData.city,
-            state: formData.state,
+            state_region: formData.stateRegion,
             postal_code: formData.postalCode,
           },
         }
@@ -134,7 +146,11 @@ const Signup = ({ onSignup }) => {
     try {
       await onSignup(payload);
     } catch (err) {
-      setError("Failed to create Customer. Please try again");
+      if (isCustomerApp) {
+        setError("Failed to create Customer. Please try again");
+      } else {
+        setError("Failed to create User. Please try again");
+      }
       // Executed after try/catch block, regardless of success or failure
     } finally {
       setIsLoading(false);
@@ -151,7 +167,7 @@ const Signup = ({ onSignup }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -177,7 +193,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="phone"
                 type="tel"
-                placeholder="555-123-4567"
+                placeholder="+Country Code Phone Number: +999 999999999"
                 value={formData.phone}
                 onChange={updateField("phone")}
                 disabled={isLoading}
@@ -247,13 +263,13 @@ const Signup = ({ onSignup }) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">State / Province</Label>
+                  <Label htmlFor="stateRegion">State/Region/Province</Label>
                   <Input
-                    id="state"
+                    id="stateRegion"
                     type="text"
-                    placeholder="State"
-                    value={formData.state}
-                    onChange={updateField("state")}
+                    placeholder="State/Region/Province"
+                    value={formData.stateRegion}
+                    onChange={updateField("stateRegion")}
                     disabled={isLoading}
                   />
                 </div>
