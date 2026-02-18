@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Button from "./ui/button";
 import Input from "./ui/input";
 import Label from "./ui/label";
@@ -24,7 +24,7 @@ const initialState = {
   confirmPassword: "",
   addressLine1: "",
   addressLine2: "",
-  city: "",
+  cityTown: "",
   stateRegion: "",
   postalCode: "",
   organisationId: "",
@@ -32,16 +32,27 @@ const initialState = {
   roleCode: "supervisor",
 };
 
-const roleOptions = [
-  { value: "admin", label: "Admin" },
-  { value: "supervisor", label: "Supervisor" },
-  { value: "agent", label: "Agent" },
-];
+// Utility fetch function (replace with your API utility if needed)
+const fetchOptions = async (endpoint, params = {}) => {
+  let url = `/api/${endpoint}`;
+  const query = new URLSearchParams(params).toString();
+  if (query) url += `?${query}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch " + endpoint);
+  return res.json();
+};
 
 const Signup = ({ onSignup }) => {
   const [formData, setFormData] = useState(initialState);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // Dynamic options
+  const [roleOptions, setRoleOptions] = useState([]);
+  const [countryOptions, setCountryOptions] = useState([]);
+  const [stateOptions, setStateOptions] = useState([]);
+  const [cityTownOptions, setCityTownOptions] = useState([]);
+  const [organisationOptions, setOrganisationOptions] = useState([]);
+  const [storeOptions, setStoreOptions] = useState([]);
 
   // useMemo: Memoize the page copy to avoid unnecessary recalculations
   const pageCopy = useMemo(
@@ -59,6 +70,50 @@ const Signup = ({ onSignup }) => {
           },
     [] // Empty dependency array means this will only be calculated once on initial render
   );
+
+  // Fetch Roles, Countries, Organisations on mount
+  useEffect(() => {
+    fetchOptions("roles")
+      .then((data) => setRoleOptions(data))
+      .catch(() => setRoleOptions([]));
+    fetchOptions("countries")
+      .then((data) => setCountryOptions(data))
+      .catch(() => setCountryOptions([]));
+    fetchOptions("organisations")
+      .then((data) => setOrganisationOptions(data))
+      .catch(() => setOrganisationOptions([]));
+  }, []);
+
+  // Fetch States/Regions when Country changes
+  useEffect(() => {
+    if (formData.country) {
+      fetchOptions("states-regions", { country_id: formData.country })
+        .then((data) => setStateOptions(data))
+        .catch(() => setStateOptions([]));
+      setFormData((prev) => ({ ...prev, stateRegion: "", cityTown: "" }));
+      setCityTownOptions([]);
+    }
+  }, [formData.country]);
+
+  // Fetch Cities/Towns when State/Region changes
+  useEffect(() => {
+    if (formData.stateRegion) {
+      fetchOptions("cities-towns", { state_region_id: formData.stateRegion })
+        .then((data) => setCityTownOptions(data))
+        .catch(() => setCityTownOptions([]));
+      setFormData((prev) => ({ ...prev, cityTown: "" }));
+    }
+  }, [formData.stateRegion]);
+
+  // Fetch Stores when Organisation changes
+  useEffect(() => {
+    if (formData.organisationId) {
+      fetchOptions("stores", { organisation_id: formData.organisationId })
+        .then((data) => setStoreOptions(data))
+        .catch(() => setStoreOptions([]));
+      setFormData((prev) => ({ ...prev, storeId: "" }));
+    }
+  }, [formData.organisationId]);
 
   // Function to update form field values. It takes the field name as an argument and returns a function
   // that takes an event (from the input change) and updates the corresponding field in formData state
@@ -91,7 +146,7 @@ const Signup = ({ onSignup }) => {
     if (isCustomerApp) {
       const missingAddress = [
         "addressLine1",
-        "city",
+        "cityTown",
         "stateRegion",
         "postalCode",
       ].filter((field) => !formData[field]);
@@ -128,7 +183,7 @@ const Signup = ({ onSignup }) => {
           address: {
             address_line1: formData.addressLine1,
             address_line2: formData.addressLine2,
-            city: formData.city,
+            city_town: formData.cityTown,
             state_region: formData.stateRegion,
             postal_code: formData.postalCode,
           },
@@ -228,7 +283,7 @@ const Signup = ({ onSignup }) => {
               <h3 className="text-sm font-semibold text-gray-700">Address</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="addressLine1">Address line 1</Label>
+                  <Label htmlFor="addressLine1">Address Line 1</Label>
                   <Input
                     id="addressLine1"
                     type="text"
@@ -240,7 +295,7 @@ const Signup = ({ onSignup }) => {
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="addressLine2">
-                    Address line 2 (optional)
+                    Address Line 2 (optional)
                   </Label>
                   <Input
                     id="addressLine2"
@@ -252,13 +307,13 @@ const Signup = ({ onSignup }) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="cityTown">City/Town</Label>
                   <Input
-                    id="city"
+                    id="cityTown"
                     type="text"
-                    placeholder="City"
-                    value={formData.city}
-                    onChange={updateField("city")}
+                    placeholder="City/Town"
+                    value={formData.cityTown}
+                    onChange={updateField("cityTown")}
                     disabled={isLoading}
                   />
                 </div>
@@ -274,7 +329,7 @@ const Signup = ({ onSignup }) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="postalCode">Postal code</Label>
+                  <Label htmlFor="postalCode">Postal Code</Label>
                   <Input
                     id="postalCode"
                     type="text"
@@ -291,7 +346,7 @@ const Signup = ({ onSignup }) => {
           {!isCustomerApp && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-700">
-                User details
+                User Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -333,7 +388,7 @@ const Signup = ({ onSignup }) => {
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
                     Admin and Supervisor can create users. Agents are
-                    Store-Management-only
+                    Store-Management-Only
                   </p>
                 </div>
               </div>
