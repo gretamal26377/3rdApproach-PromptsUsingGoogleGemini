@@ -203,7 +203,7 @@ export default function SearchBar({
         onChange={handleChange}
         onFocus={() => setShowResults(true)}
         onKeyDown={handlePressedKey}
-        placeholder={placeholder}
+  placeholder={placeholder} style={{ fontStyle: 'italic' }}
         aria-label={placeholder}
         aria-haspopup="listbox"
         aria-expanded={showResults}

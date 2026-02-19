@@ -1,5 +1,7 @@
 // @ts-nocheck
 import React, { useMemo, useState, useEffect } from "react";
+import api from "../services/api";
+import CountryFlag from "react-country-flag";
 import Button from "./ui/button";
 import Input from "./ui/input";
 import Label from "./ui/label";
@@ -32,16 +34,6 @@ const initialState = {
   roleCode: "supervisor",
 };
 
-// Utility fetch function (replace with your API utility if needed)
-const fetchOptions = async (endpoint, params = {}) => {
-  let url = `/api/${endpoint}`;
-  const query = new URLSearchParams(params).toString();
-  if (query) url += `?${query}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch " + endpoint);
-  return res.json();
-};
-
 const Signup = ({ onSignup }) => {
   const [formData, setFormData] = useState(initialState);
   const [error, setError] = useState("");
@@ -49,7 +41,7 @@ const Signup = ({ onSignup }) => {
   // Dynamic options
   const [roleOptions, setRoleOptions] = useState([]);
   const [countryOptions, setCountryOptions] = useState([]);
-  const [stateOptions, setStateOptions] = useState([]);
+  const [stateRegionOptions, setStateRegionOptions] = useState([]);
   const [cityTownOptions, setCityTownOptions] = useState([]);
   const [organisationOptions, setOrganisationOptions] = useState([]);
   const [storeOptions, setStoreOptions] = useState([]);
@@ -73,13 +65,16 @@ const Signup = ({ onSignup }) => {
 
   // Fetch Roles, Countries, Organisations on mount
   useEffect(() => {
-    fetchOptions("roles")
+    api
+      .get("roles")
       .then((data) => setRoleOptions(data))
       .catch(() => setRoleOptions([]));
-    fetchOptions("countries")
+    api
+      .get("countries")
       .then((data) => setCountryOptions(data))
       .catch(() => setCountryOptions([]));
-    fetchOptions("organisations")
+    api
+      .get("organisations")
       .then((data) => setOrganisationOptions(data))
       .catch(() => setOrganisationOptions([]));
   }, []);
@@ -87,9 +82,10 @@ const Signup = ({ onSignup }) => {
   // Fetch States/Regions when Country changes
   useEffect(() => {
     if (formData.country) {
-      fetchOptions("states-regions", { country_id: formData.country })
-        .then((data) => setStateOptions(data))
-        .catch(() => setStateOptions([]));
+      api
+        .get(`states-regions?country_id=${formData.country}`)
+        .then((data) => setStateRegionOptions(data))
+        .catch(() => setStateRegionOptions([]));
       setFormData((prev) => ({ ...prev, stateRegion: "", cityTown: "" }));
       setCityTownOptions([]);
     }
@@ -98,7 +94,8 @@ const Signup = ({ onSignup }) => {
   // Fetch Cities/Towns when State/Region changes
   useEffect(() => {
     if (formData.stateRegion) {
-      fetchOptions("cities-towns", { state_region_id: formData.stateRegion })
+      api
+        .get(`cities-towns?state_region_id=${formData.stateRegion}`)
         .then((data) => setCityTownOptions(data))
         .catch(() => setCityTownOptions([]));
       setFormData((prev) => ({ ...prev, cityTown: "" }));
@@ -108,7 +105,8 @@ const Signup = ({ onSignup }) => {
   // Fetch Stores when Organisation changes
   useEffect(() => {
     if (formData.organisationId) {
-      fetchOptions("stores", { organisation_id: formData.organisationId })
+      api
+        .get(`stores?organisation_id=${formData.organisationId}`)
         .then((data) => setStoreOptions(data))
         .catch(() => setStoreOptions([]));
       setFormData((prev) => ({ ...prev, storeId: "" }));
@@ -226,7 +224,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="name"
                 type="text"
-                placeholder="Jane Doe"
+                placeholder="Jane Doe" style={{ fontStyle: 'italic' }}
                 value={formData.name}
                 onChange={updateField("name")}
                 disabled={isLoading}
@@ -237,7 +235,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="email"
                 type="email"
-                placeholder="jane@example.com"
+                placeholder="jane@example.com" style={{ fontStyle: 'italic' }}
                 value={formData.email}
                 onChange={updateField("email")}
                 disabled={isLoading}
@@ -248,7 +246,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+Country Code Phone Number: +999 999999999"
+                placeholder="+Country Code Phone Number: +999 999999999" style={{ fontStyle: 'italic' }}
                 value={formData.phone}
                 onChange={updateField("phone")}
                 disabled={isLoading}
@@ -259,7 +257,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Enter your password" style={{ fontStyle: 'italic' }}
                 value={formData.password}
                 onChange={updateField("password")}
                 disabled={isLoading}
@@ -270,7 +268,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Re-enter your password"
+                placeholder="Re-enter your password" style={{ fontStyle: 'italic' }}
                 value={formData.confirmPassword}
                 onChange={updateField("confirmPassword")}
                 disabled={isLoading}
@@ -287,7 +285,7 @@ const Signup = ({ onSignup }) => {
                   <Input
                     id="addressLine1"
                     type="text"
-                    placeholder="123 Main St"
+                    placeholder="123 Main St" style={{ fontStyle: 'italic' }}
                     value={formData.addressLine1}
                     onChange={updateField("addressLine1")}
                     disabled={isLoading}
@@ -300,40 +298,73 @@ const Signup = ({ onSignup }) => {
                   <Input
                     id="addressLine2"
                     type="text"
-                    placeholder="Apartment, suite, etc."
+                    placeholder="Apartment, suite, etc." style={{ fontStyle: 'italic' }}
                     value={formData.addressLine2}
                     onChange={updateField("addressLine2")}
                     disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cityTown">City/Town</Label>
-                  <Input
-                    id="cityTown"
-                    type="text"
-                    placeholder="City/Town"
-                    value={formData.cityTown}
-                    onChange={updateField("cityTown")}
+                  <Label htmlFor="country">Country</Label>
+                  <select
+                    id="country"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    value={formData.country || ""}
+                    onChange={updateField("country")}
                     disabled={isLoading}
-                  />
+                  >
+                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select Country</option>
+                    {countryOptions.map((country) => (
+                      <option key={country.value} value={country.value}>
+                        {/* Show flag if country.code exists */}
+                        {country.code && (
+                          <CountryFlag countryCode={country.code} svg style={{ marginRight: 8 }} />
+                        )}
+                        {country.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="stateRegion">State/Region/Province</Label>
-                  <Input
+                  <select
                     id="stateRegion"
-                    type="text"
-                    placeholder="State/Region/Province"
-                    value={formData.stateRegion}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    value={formData.stateRegion || ""}
                     onChange={updateField("stateRegion")}
-                    disabled={isLoading}
-                  />
+                    disabled={isLoading || !formData.country}
+                  >
+                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select State/Region</option>
+                    {stateRegionOptions.map((state) => (
+                      <option key={state.value} value={state.value}>
+                        {state.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cityTown">City/Town</Label>
+                  <select
+                    id="cityTown"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    value={formData.cityTown || ""}
+                    onChange={updateField("cityTown")}
+                    disabled={isLoading || !formData.stateRegion}
+                  >
+                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select City/Town</option>
+                    {cityTownOptions.map((city) => (
+                      <option key={city.value} value={city.value}>
+                        {city.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="postalCode">Postal Code</Label>
                   <Input
                     id="postalCode"
                     type="text"
-                    placeholder="12345"
+                    placeholder="12345" style={{ fontStyle: 'italic' }}
                     value={formData.postalCode}
                     onChange={updateField("postalCode")}
                     disabled={isLoading}
@@ -350,26 +381,41 @@ const Signup = ({ onSignup }) => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="organisation">Organisation ID</Label>
-                  <Input
+                  <Label htmlFor="organisation">Organisation</Label>
+                  <select
                     id="organisation"
-                    type="text"
-                    placeholder="e.g. 12"
-                    value={formData.organisationId}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    value={formData.organisationId || ""}
                     onChange={updateField("organisationId")}
                     disabled={isLoading}
-                  />
+                  >
+                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select Organisation</option>
+                    {organisationOptions.map((org) => (
+                      <option key={org.value} value={org.value}>
+                        {org.icon_path && (
+                          <img src={org.icon_path} alt="icon" style={{ width: 18, height: 18, display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+                        )}
+                        {org.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="store">Store ID</Label>
-                  <Input
+                  <Label htmlFor="store">Store</Label>
+                  <select
                     id="store"
-                    type="text"
-                    placeholder="e.g. 101"
-                    value={formData.storeId}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    value={formData.storeId || ""}
                     onChange={updateField("storeId")}
-                    disabled={isLoading}
-                  />
+                    disabled={isLoading || !formData.organisationId}
+                  >
+                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select Store</option>
+                    {storeOptions.map((store) => (
+                      <option key={store.value} value={store.value}>
+                        {store.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="role">Role</Label>

@@ -5,7 +5,8 @@ from .customer_management import (
     create_customer_logic, get_categories_logic, get_category_products_services_logic, get_store_products_services_logic,
     login_customer_logic, decode_customer_logic, get_featured_stores_logic,
     get_stores_logic, get_store_logic, get_store_product_service_logic, get_stores_for_product_service_logic,
-    create_order_logic, get_orders_logic, get_order_logic, cancel_order_logic, update_order_logic
+    create_order_logic, get_orders_logic, get_order_logic, cancel_order_logic, update_order_logic,
+    get_roles_logic, get_countries_logic, get_states_regions_logic, get_cities_towns_logic, get_organisations_logic
 )
 
 customer_bp = Blueprint('customer_bp', __name__, url_prefix='/api/customer')
@@ -15,6 +16,33 @@ def register_customer():
     #Issue: Check for Role Authorization
     data = request.get_json()
     result, status = create_customer_logic(data)
+    return jsonify(result), status
+
+@customer_bp.route('organisations', methods=['GET'])
+def get_organisations():
+    result, status = get_organisations_logic()
+    return jsonify(result), status
+
+@customer_bp.route('roles', methods=['GET'])
+def get_roles():
+    result, status = get_roles_logic()
+    return jsonify(result), status
+
+@customer_bp.route('countries', methods=['GET'])
+def get_countries():
+    result, status = get_countries_logic()
+    return jsonify(result), status
+
+@customer_bp.route('states-regions', methods=['GET'])
+def get_states_regions():
+    country_id = request.args.get('country_id', type=int)
+    result, status = get_states_regions_logic(country_id)
+    return jsonify(result), status
+
+@customer_bp.route('cities-towns', methods=['GET'])
+def get_cities_towns():
+    state_region_id = request.args.get('state_region_id', type=int)
+    result, status = get_cities_towns_logic(state_region_id)
     return jsonify(result), status
 
 @customer_bp.route('login', methods=['POST'])

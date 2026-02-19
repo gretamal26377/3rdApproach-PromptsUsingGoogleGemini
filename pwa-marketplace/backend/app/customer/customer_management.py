@@ -1,15 +1,13 @@
 import asyncio
 import logging
 from datetime import datetime
-
 import bleach
 from flask import request
 from werkzeug.security import generate_password_hash, check_password_hash
-
 from ..shared.auth import decode_token, generate_token
 from ..shared.database import db
 from ..shared.models import ( Customers, Stores, FeaturedStores, StoresProductsServices, Orders, OrdersDetails,
-    EntityStatuses, OrderStatuses, Categories, ProductsServices )
+    EntityStatuses, OrderStatuses, Categories, ProductsServices, Organisations, Roles, Countries, StatesRegions, CitiesTowns )
 from ..shared.utils import get_temporal_client
 from workflows.order_workflow import OrderWorkflow
 
@@ -56,6 +54,81 @@ def create_customer_logic(data):
         db.session.rollback()
         logging.error(f"Error creating Customer: {e}")
         return {'message': 'Failed to create Customer'}, 500
+    
+def get_organisations_logic():
+    try:
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        # Only return organisations with active status when active_status is found, otherwise return empty list
+        organisations = Organisations.query.filter_by(organisation_status_id=active_status.status_id).all() if active_status else []
+        result = [
+            {"value": o.organisation_id, "label": o.organisation_name, "icon_path": o.organisation_pic_path}
+            for o in organisations
+        ]
+        return result, 200
+    except Exception as e:
+        return {"message": "Failed to fetch Organisations"}, 500
+
+def get_roles_logic():
+    try:
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        roles = Roles.query.filter_by(role_status_id=active_status.status_id).all() if active_status else []
+        result = [
+            {"value": role.role_code, "label": role.role_display}
+            for role in roles
+        ]
+        return result, 200
+    except Exception as e:
+        return {"message": "Failed to fetch roles"}, 500
+
+def get_countries_logic():
+    try:
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        countries = Countries.query.filter_by(country_status_id=active_status.status_id).all() if active_status else []
+        result = [
+            {
+                "value": c.country_id,
+                "label": c.country_name,
+                "code": c.country_code.upper() if c.country_code else None
+            }
+            for c in countries
+        ]
+        return result, 200
+    except Exception as e:
+        return {"message": "Failed to fetch countries"}, 500
+
+def get_states_regions_logic(country_id):
+    try:
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        query = StatesRegions.query
+        if country_id:
+            query = query.filter_by(country_id=country_id)
+        if active_status:
+            query = query.filter_by(state_region_status_id=active_status.status_id)
+        states_regions = query.all()
+        result = [
+            {"value": s_r.state_region_id, "label": s_r.state_region_name}
+            for s_r in states_regions
+        ]
+        return result, 200
+    except Exception as e:
+        return {"message": "Failed to fetch States/Regions"}, 500
+
+def get_cities_towns_logic(state_region_id):
+    try:
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        query = CitiesTowns.query
+        if state_region_id:
+            query = query.filter_by(state_region_id=state_region_id)
+        if active_status:
+            query = query.filter_by(city_town_status_id=active_status.status_id)
+        cities_towns = query.all()
+        result = [
+            {"value": c_t.city_town_id, "label": c_t.city_town_name}
+            for c_t in cities_towns
+        ]
+        return result, 200
+    except Exception as e:
+        return {"message": "Failed to fetch Cities/Towns"}, 500
 
 def login_customer_logic(data):
     if not data:

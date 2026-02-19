@@ -38,6 +38,7 @@ class EntityStatuses(db.Model):
     customers = db.relationship('Customers', back_populates='customer_status')
     stores_products_services = db.relationship('StoresProductsServices', back_populates='status')
     organisations = db.relationship('Organisations', back_populates='organisations_status')
+    roles = db.relationship('Roles', back_populates='role_status')
     stores = db.relationship('Stores', back_populates='store_status')
     products_services = db.relationship('ProductsServices', back_populates='product_service_status')
     stores_users = db.relationship('StoresUsers', back_populates='status')
@@ -400,8 +401,10 @@ class Roles(db.Model):
     # e.g., 'Admin', 'Supervisor', 'Agent'
     role_display = db.Column(db.String(100), nullable=False)
     role_description = db.Column(db.Text)
+    role_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     roles_users = db.relationship('Users', back_populates='role')
+    role_status = db.relationship('EntityStatuses', back_populates='roles')
 
 
 # --- FeaturedStoresHistory Model ---

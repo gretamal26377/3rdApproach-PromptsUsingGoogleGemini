@@ -55,3 +55,14 @@ body {
   color: var(--color-text);
   background-color: var(--color-background);
 }
+
+/* Italic placeholder style globally */
+input::placeholder,
+textarea::placeholder {
+  font-style: italic;
+}
+
+/* Italic style for select placeholder options */
+select option[disabled][value=""] {
+  font-style: italic;
+}
