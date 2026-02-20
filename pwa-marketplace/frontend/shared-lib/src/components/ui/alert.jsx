@@ -11,6 +11,13 @@ const variants = {
     "bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-200",
 };
 
+/**
+ * @typedef {{children?: React.ReactNode, className?: string, variant?: "default"|"destructive"|"success"}} AlertProps
+ */
+
+/**
+ * @param {AlertProps & React.HTMLAttributes<HTMLDivElement>} props
+ */
 export function Alert({
   children,
   className = "",
@@ -27,10 +34,16 @@ export function Alert({
   );
 }
 
+/**
+ * @param {{children?: React.ReactNode, className?: string}} props
+ */
 export function AlertTitle({ children, className = "font-bold" }) {
   return <div className={className}>{children}</div>;
 }
 
+/**
+ * @param {{children?: React.ReactNode, className?: string}} props
+ */
 export function AlertDescription({ children, className = "" }) {
   return <div className={className}>{children}</div>;
 }

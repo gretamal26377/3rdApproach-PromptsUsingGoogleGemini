@@ -1,14 +1,28 @@
 import * as React from "react";
 
-export function Carousel({
-  children,
-  className = "relative w-full overflow-hidden",
-  ...props
-}) {
+export function Carousel(
+  /** @type {{children: React.ReactNode, className?: string, [key: string]: any}} */ {
+    children,
+    className = "relative w-full overflow-hidden",
+    ...props
+  }
+) {
   // Find CarouselContent child
-  const contentChild = React.Children.toArray(children).find(
-    (child) => child.type && child.type.name === "CarouselContent"
-  );
+  const contentChild = React.Children.toArray(children).find((child) => {
+    if (!React.isValidElement(child)) return false;
+    if (typeof child.type !== "function") return false;
+    const type = child.type;
+    // Max safety: check if displayName or name exist and are strings
+    const displayName =
+      typeof (/** @type {any} */ (type).displayName) === "string"
+        ? /** @type {any} */ (type).displayName
+        : undefined;
+    const name =
+      typeof (/** @type {any} */ (type).name) === "string"
+        ? /** @type {any} */ (type).name
+        : undefined;
+    return displayName === "CarouselContent" || name === "CarouselContent";
+  });
   if (!contentChild) {
     return (
       <div className={className} {...props}>
@@ -16,15 +30,19 @@ export function Carousel({
       </div>
     );
   }
-  const itemCount = React.Children.count(contentChild.props.children);
+  // Safely extract children from the CarouselContent element (cast to ReactElement for typing)
+  const contentChildren = React.isValidElement(contentChild)
+    ? /** @type {React.ReactElement} */ (contentChild).props.children
+    : null;
+  const itemCount = React.Children.count(contentChildren);
   const [activeIndex, setActiveIndex] = React.useState(0);
 
-  // Auto-advance slides every 3 seconds
+  // Auto-advance slides every 5 seconds
   React.useEffect(() => {
     if (itemCount <= 1) return;
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % itemCount);
-    }, 3000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [itemCount]);
 
@@ -33,10 +51,12 @@ export function Carousel({
   const goToNext = () => setActiveIndex((prev) => (prev + 1) % itemCount);
 
   // Clone CarouselContent and inject props
-  const content = React.cloneElement(contentChild, {
-    activeIndex,
-    itemCount,
-  });
+  const content = React.isValidElement(contentChild)
+    ? React.cloneElement(
+        /** @type {React.ReactElement<any, any>} */ (contentChild),
+        { activeIndex, itemCount }
+      )
+    : null;
 
   return (
     <div
@@ -142,13 +162,15 @@ export function Carousel({
   );
 }
 
-export function CarouselContent({
-  children,
-  className = "flex transition-transform duration-300 ease-in-out",
-  activeIndex = 0,
-  itemCount = 1,
-  ...props
-}) {
+export function CarouselContent(
+  /** @type {{children: React.ReactNode, className?: string, activeIndex?: number, itemCount?: number, [key: string]: any}} */ {
+    children,
+    className = "flex transition-transform duration-300 ease-in-out",
+    activeIndex = 0,
+    itemCount = 1,
+    ...props
+  }
+) {
   // Calculate transform based on activeIndex
   const transform = `translateX(-${activeIndex * (100 / itemCount)}%)`;
   return (
@@ -158,17 +180,32 @@ export function CarouselContent({
       {...props}
     >
       {React.Children.map(children, (child) =>
-        React.cloneElement(child, { style: { width: `${100 / itemCount}%` } })
+        React.isValidElement(child)
+          ? React.cloneElement(
+              /** @type {React.ReactElement<any, any>} */ (child),
+              {
+                style: {
+                  // preserve any existing inline styles on the child
+                  ...(child.props && /** @type {any} */ (child.props).style
+                    ? /** @type {any} */ (child.props).style
+                    : {}),
+                  width: `${100 / itemCount}%`,
+                },
+              }
+            )
+          : child
       )}
     </div>
   );
 }
 
-export function CarouselItem({
-  children,
-  className = "flex-shrink-0 w-full",
-  ...props
-}) {
+export function CarouselItem(
+  /** @type {{children: React.ReactNode, className?: string, [key: string]: any}} */ {
+    children,
+    className = "flex-shrink-0 w-full",
+    ...props
+  }
+) {
   return (
     <div className={className} {...props}>
       {children}

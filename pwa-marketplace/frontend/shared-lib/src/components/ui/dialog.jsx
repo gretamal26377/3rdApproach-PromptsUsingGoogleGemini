@@ -1,13 +1,23 @@
 import * as React from "react";
 
 // Dialog context for open/close state
-const DialogContext = React.createContext();
+const DialogContext = React.createContext(
+  /** @type {{ open: boolean, setOpen: (open: boolean) => void }} */ ({
+    open: false,
+    setOpen: (open) => {},
+  })
+);
 
+/**
+ * Dialog component
+ * @param {{ open?: boolean, onOpenChange?: (open: boolean) => void, children?: React.ReactNode }} props
+ */
 export function Dialog({ open, onOpenChange, children }) {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const isControlled = open !== undefined;
   const actualOpen = isControlled ? open : internalOpen;
-  const setOpen = isControlled ? onOpenChange : setInternalOpen;
+  // Ensure setOpen is always a function; default controlled handler to a no-op if not provided
+  const setOpen = isControlled ? onOpenChange ?? (() => {}) : setInternalOpen;
 
   return (
     <DialogContext.Provider value={{ open: actualOpen, setOpen }}>
@@ -16,16 +26,25 @@ export function Dialog({ open, onOpenChange, children }) {
   );
 }
 
+/**
+ * DialogTrigger component
+ * @param {{ children: React.ReactElement }} props
+ */
 export function DialogTrigger({ children }) {
   const { setOpen } = React.useContext(DialogContext);
   return React.cloneElement(children, {
-    onClick: (e) => {
+    onClick: /** @param {React.MouseEvent} e */ (e) => {
       if (children.props.onClick) children.props.onClick(e);
-      setOpen(true);
+      // ?.: Optional chaining to call setOpen only if it exists. If not, it will simply do nothing instead of throwing an error
+      setOpen?.(true);
     },
   });
 }
 
+/**
+ * DialogContent component
+ * @param {{ children?: React.ReactNode, className?: string, [key: string]: any }} props
+ */
 export function DialogContent({
   children,
   className = "fixed inset-0 z-50 flex items-center justify-center bg-black/40",
@@ -39,7 +58,7 @@ export function DialogContent({
         <button
           aria-label="Close dialog"
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
-          onClick={() => setOpen(false)}
+          onClick={() => setOpen?.(false)}
         >
           ×
         </button>
@@ -49,10 +68,18 @@ export function DialogContent({
   );
 }
 
+/**
+ * DialogHeader component
+ * @param {{ children?: React.ReactNode, className?: string }} props
+ */
 export function DialogHeader({ children, className = "mb-4" }) {
   return <div className={className}>{children}</div>;
 }
 
+/**
+ * DialogTitle component
+ * @param {{ children?: React.ReactNode, className?: string }} props
+ */
 export function DialogTitle({
   children,
   className = "text-xl font-bold mb-2",
@@ -60,6 +87,10 @@ export function DialogTitle({
   return <div className={className}>{children}</div>;
 }
 
+/**
+ * DialogDescription component
+ * @param {{ children?: React.ReactNode, className?: string }} props
+ */
 export function DialogDescription({
   children,
   className = "text-gray-600 mb-4",
@@ -67,6 +98,10 @@ export function DialogDescription({
   return <div className={className}>{children}</div>;
 }
 
+/**
+ * DialogFooter component
+ * @param {{ children?: React.ReactNode, className?: string }} props
+ */
 export function DialogFooter({
   children,
   className = "flex justify-end gap-2 mt-6",

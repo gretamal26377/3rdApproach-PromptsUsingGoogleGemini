@@ -8,8 +8,17 @@ const variants = {
   error: "bg-red-100 text-red-800",
 };
 
-const Badge = ({ children, className = "", variant = "secondary", ...props }) => (
-  <span className={[base, variants[variant] || "", className].join(" ")} {...props}>
+/**
+ * JSDoc types for checkJS/TypeScript: children is a React node, className is a string, variant is one of the keys in the variants object, and ...props can be any other HTML attributes for a span element
+ */
+const Badge = (
+  /** @type {{children?: React.ReactNode, className?: string, variant?: "outline"|"secondary"|"success"|"error", [key: string]: any}} */
+  { children, className = "", variant = "secondary", ...props }
+) => (
+  <span
+    className={[base, variants[variant] || "", className].join(" ")}
+    {...props}
+  >
     {children}
   </span>
 );
