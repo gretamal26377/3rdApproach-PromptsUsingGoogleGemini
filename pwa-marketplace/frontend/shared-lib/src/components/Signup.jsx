@@ -6,6 +6,7 @@ import Button from "./ui/button";
 import Input from "./ui/input";
 import Label from "./ui/label";
 import Checkbox from "./ui/checkbox";
+import Dropdown from "./ui/dropdown";
 import {
   Card,
   CardContent,
@@ -16,8 +17,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { AlertCircle } from "lucide-react";
 
-const appType = (import.meta.env.VITE_APP_TYPE || "customer").toLowerCase();
-const isCustomerApp = appType === "customer";
+const APP_TYPE = (import.meta.env.VITE_APP_TYPE || "customer").toLowerCase();
+const isCustomerApp = APP_TYPE === "customer";
 
 const initialState = {
   name: "",
@@ -320,9 +321,8 @@ const Signup = ({ onSignup }) => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="country">Country</Label>
-                  <select
+                  <Dropdown
                     id="country"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     value={formData.country || ""}
                     onChange={updateField("country")}
                     disabled={isLoading}
@@ -343,13 +343,12 @@ const Signup = ({ onSignup }) => {
                         {country.label}
                       </option>
                     ))}
-                  </select>
+                  </Dropdown>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="stateRegion">State/Region/Province</Label>
-                  <select
+                  <Dropdown
                     id="stateRegion"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     value={formData.stateRegion || ""}
                     onChange={updateField("stateRegion")}
                     disabled={isLoading || !formData.country}
@@ -362,13 +361,12 @@ const Signup = ({ onSignup }) => {
                         {state.label}
                       </option>
                     ))}
-                  </select>
+                  </Dropdown>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cityTown">City/Town</Label>
-                  <select
+                  <Dropdown
                     id="cityTown"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     value={formData.cityTown || ""}
                     onChange={updateField("cityTown")}
                     disabled={isLoading || !formData.stateRegion}
@@ -381,7 +379,7 @@ const Signup = ({ onSignup }) => {
                         {city.label}
                       </option>
                     ))}
-                  </select>
+                  </Dropdown>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="postalCode">Postal Code</Label>
@@ -406,9 +404,8 @@ const Signup = ({ onSignup }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="organisation">Organisation</Label>
-                  <select
+                  <Dropdown
                     id="organisation"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     value={formData.organisationId || ""}
                     onChange={updateField("organisationId")}
                     disabled={isLoading}
@@ -434,7 +431,7 @@ const Signup = ({ onSignup }) => {
                         {org.label}
                       </option>
                     ))}
-                  </select>
+                  </Dropdown>
                 </div>
                 <div className="space-y-2">
                   <Label>Store(s)</Label>
@@ -466,9 +463,8 @@ const Signup = ({ onSignup }) => {
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="role">Role</Label>
-                  <select
+                  <Dropdown
                     id="role"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     value={formData.roleCode}
                     onChange={updateField("roleCode")}
                     disabled={isLoading}
@@ -478,7 +474,7 @@ const Signup = ({ onSignup }) => {
                         {role.label}
                       </option>
                     ))}
-                  </select>
+                  </Dropdown>
                 </div>
               </div>
             </div>

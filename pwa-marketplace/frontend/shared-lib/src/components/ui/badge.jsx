@@ -9,6 +9,7 @@ const variants = {
 };
 
 /**
+ * Badge Component for displaying small status indicators or labels, with support for multiple variants and additional props
  * JSDoc types for checkJS/TypeScript: children is a React node, className is a string, variant is one of the keys in the variants object, and ...props can be any other HTML attributes for a span element
  */
 const Badge = (

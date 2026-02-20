@@ -16,6 +16,8 @@ const variants = {
  */
 
 /**
+ * Alert Component for displaying important messages or notifications, with support for multiple variants and additional props
+ * JSDoc types for checkJS/TypeScript: children is a React node, className is a string, variant is one of "default", "destructive", or "success", and ...props can be any other HTML attributes for a div element
  * @param {AlertProps & React.HTMLAttributes<HTMLDivElement>} props
  */
 export function Alert({
@@ -35,6 +37,8 @@ export function Alert({
 }
 
 /**
+ * AlertTitle Component for displaying the title of an alert, with support for custom styling through className
+ * JSDoc types for checkJS/TypeScript: children is a React node, className is a string, and ...props can be any other HTML attributes for a div element
  * @param {{children?: React.ReactNode, className?: string}} props
  */
 export function AlertTitle({ children, className = "font-bold" }) {

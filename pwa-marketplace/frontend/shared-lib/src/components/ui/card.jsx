@@ -1,6 +1,10 @@
 import * as React from "react";
 
 /**
+ * Card Component for displaying content in a card layout, with support for header, title, content, footer, and description sections
+ * JSDoc types for checkJS/TypeScript:
+ * children?: React.ReactNode: This means that the component can accept any valid React node as children, which will be rendered inside the card. This allows for flexible content within the card.
+ * className?: string: This means that the component can accept an optional className prop, which is a string. This allows users to pass custom CSS classes to style the card as needed.
  * Record<string, any>: This means that the component can accept any additional props, which will be passed down to the root element.
  * This is useful for allowing users to add custom attributes or event handlers without TypeScript complaining about it
  * @param {{children?: React.ReactNode, className?: string} & Record<string, any>} props

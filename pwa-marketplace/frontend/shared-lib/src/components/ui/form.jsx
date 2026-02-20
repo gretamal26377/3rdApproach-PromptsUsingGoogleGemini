@@ -1,5 +1,10 @@
 import * as React from "react";
+import Label from "./label";
+import { Alert } from "./alert";
 
+/**
+ * @param {{children?: React.ReactNode, className?: string} & React.FormHTMLAttributes<HTMLFormElement>} props
+ */
 export function Form({ children, className = "space-y-4", ...props }) {
   return (
     <form
@@ -11,40 +16,47 @@ export function Form({ children, className = "space-y-4", ...props }) {
   );
 }
 
+/**
+ * @param {{children?: React.ReactNode}} props
+ */
 export function FormField({ children }) {
   return <div className="space-y-2">{children}</div>;
 }
 
+/**
+ * @param {{children?: React.ReactNode, className?: string}} props
+ */
 export function FormItem({ children, className = "space-y-1" }) {
   return <div className={className}>{children}</div>;
 }
 
-export function FormLabel({
-  children,
-  htmlFor,
-  className = "block text-sm font-medium text-gray-700",
-}) {
+/**
+ * @param {{children?: React.ReactNode, htmlFor?: string, className?: string}} props
+ */
+// Use the shared Label component for consistency
+export function FormLabel({ children, htmlFor, className = "" }) {
   return (
-    <label
-      htmlFor={htmlFor}
-      className={`block text-gray-700 dark:text-gray-200 mb-2 ${className}`}
-    >
+    <Label htmlFor={htmlFor} className={className}>
       {children}
-    </label>
+    </Label>
   );
 }
 
+/**
+ * @param {{children?: React.ReactNode}} props
+ */
 export function FormControl({ children }) {
   return <div>{children}</div>;
 }
 
-export function FormMessage({
-  children,
-  className = "text-xs text-red-700 mt-1",
-}) {
+/**
+ * @param {{children?: React.ReactNode, className?: string}} props
+ */
+// Use Alert for error messages for consistent look & feel
+export function FormMessage({ children, className = "text-xs mt-1" }) {
   return children ? (
-    <div className={`text-red-700 dark:text-red-300 ${className}`}>
+    <Alert variant="destructive" className={className}>
       {children}
-    </div>
+    </Alert>
   ) : null;
 }

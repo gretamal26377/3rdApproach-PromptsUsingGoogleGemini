@@ -1,4 +1,5 @@
 import * as React from "react";
+import Button from "./button";
 
 // Dialog context for open/close state
 const DialogContext = React.createContext(
@@ -9,7 +10,7 @@ const DialogContext = React.createContext(
 );
 
 /**
- * Dialog component
+ * Dialog Component to manage open/close State and provide context to its Children
  * @param {{ open?: boolean, onOpenChange?: (open: boolean) => void, children?: React.ReactNode }} props
  */
 export function Dialog({ open, onOpenChange, children }) {
@@ -55,13 +56,15 @@ export function DialogContent({
   return (
     <div className={className} {...props}>
       <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded p-4 max-w-full w-full sm:w-[500px] relative">
-        <button
+        <Button
           aria-label="Close dialog"
-          className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 px-2 py-0 h-7 w-7 min-w-0 min-h-0 rounded-full text-lg"
+          type="button"
           onClick={() => setOpen?.(false)}
+          variant="ghost"
         >
           ×
-        </button>
+        </Button>
         {children}
       </div>
     </div>

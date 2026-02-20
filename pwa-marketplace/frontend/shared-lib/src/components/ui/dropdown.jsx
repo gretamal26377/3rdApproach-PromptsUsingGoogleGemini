@@ -10,23 +10,27 @@ import React from "react";
  *   <option value="foo">Foo</option>
  * </Dropdown>
  */
-const Dropdown = React.forwardRef(({ className = "", children, ...props }, ref) => (
-  <select
-    ref={ref}
-    className={
-      [
-        // Base Tailwind styles for consistent look & feel
-        "w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white dark:bg-gray-900",
-        "focus:outline-none focus:ring-2 focus:ring-blue-500",
-        "disabled:opacity-50 disabled:cursor-not-allowed",
-        className
-      ].join(" ")
-    }
-    {...props}
-  >
-    {children}
-  </select>
-));
+/** @typedef {import('react').SelectHTMLAttributes<HTMLSelectElement>} SelectProps */
+/** @type {import('react').ForwardRefExoticComponent<import('react').RefAttributes<HTMLSelectElement> & SelectProps>} */
+const Dropdown = React.forwardRef(
+  /** @type {import('react').ForwardRefRenderFunction<HTMLSelectElement, SelectProps>} */ (
+    ({ className = "", children, ...props }, ref) => (
+      <select
+        ref={ref}
+        className={[
+          // Base Tailwind styles for consistent look & feel
+          "w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white dark:bg-gray-900",
+          "focus:outline-none focus:ring-2 focus:ring-blue-500",
+          "disabled:opacity-50 disabled:cursor-not-allowed",
+          className,
+        ].join(" ")}
+        {...props}
+      >
+        {children}
+      </select>
+    )
+  )
+);
 
 Dropdown.displayName = "Dropdown";
 

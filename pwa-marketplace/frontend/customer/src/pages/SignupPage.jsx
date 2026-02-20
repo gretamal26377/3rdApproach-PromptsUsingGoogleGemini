@@ -10,12 +10,12 @@ const SignupPage = () => {
   // Purpose: To navigate programmatically. For example, navigate("/login") to trigger navigating to the login page
   const navigate = useNavigate();
   
-  const appType = (import.meta.env.VITE_APP_TYPE || "customer").toLowerCase();
+  const APP_TYPE = (import.meta.env.VITE_APP_TYPE || "customer").toLowerCase();
 
   const handleSignup = async (payload) => {
     const created = await signup(payload);
     // Redirect only for the customer app; admins typically stay on the user creation screen
-    if (appType === "customer") {
+    if (APP_TYPE === "customer") {
       /**
        * Keep in mind that navigate redirect has priority over any component rerendering
        * (and its father and sons component rerendering) triggered by setting any
@@ -23,6 +23,7 @@ const SignupPage = () => {
        */
       navigate("/");
     }
+    // Return the created customer or user in case the caller component needs it
     return created;
   };
 
