@@ -5,6 +5,7 @@ import CountryFlag from "react-country-flag";
 import Button from "./ui/button";
 import Input from "./ui/input";
 import Label from "./ui/label";
+import Checkbox from "./ui/checkbox";
 import {
   Card,
   CardContent,
@@ -30,12 +31,13 @@ const initialState = {
   stateRegion: "",
   postalCode: "",
   organisationId: "",
-  storeId: "",
   roleCode: "supervisor",
 };
 
 const Signup = ({ onSignup }) => {
   const [formData, setFormData] = useState(initialState);
+  // For multi-Store selection
+  const [selectedStoreIds, setSelectedStoreIds] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   // Dynamic options
@@ -109,7 +111,7 @@ const Signup = ({ onSignup }) => {
         .get(`stores?organisation_id=${formData.organisationId}`)
         .then((data) => setStoreOptions(data))
         .catch(() => setStoreOptions([]));
-      setFormData((prev) => ({ ...prev, storeId: "" }));
+      setSelectedStoreIds([]);
     }
   }, [formData.organisationId]);
 
@@ -158,6 +160,18 @@ const Signup = ({ onSignup }) => {
     return "";
   };
 
+  const handleStoreCheckboxChange = (storeId) => {
+    setSelectedStoreIds((prev) => {
+      if (prev.includes(storeId)) {
+        // if prev includes storeId means the checkbox is being unchecked, so we return a new array
+        // that filters out that storeId from the selectedStoreIds
+        return prev.filter((id) => id !== storeId);
+      } else {
+        return [...prev, storeId];
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault(); // Prevent default form submission
     setError("");
@@ -192,7 +206,7 @@ const Signup = ({ onSignup }) => {
           user_password: formData.password,
           user_phone: formData.phone,
           user_role_code: formData.roleCode,
-          user_store_id: formData.storeId,
+          user_store_ids: selectedStoreIds,
           user_organisation_id: formData.organisationId,
         };
 
@@ -224,7 +238,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="name"
                 type="text"
-                placeholder="Jane Doe" style={{ fontStyle: 'italic' }}
+                placeholder="Jane Doe"
                 value={formData.name}
                 onChange={updateField("name")}
                 disabled={isLoading}
@@ -235,7 +249,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="email"
                 type="email"
-                placeholder="jane@example.com" style={{ fontStyle: 'italic' }}
+                placeholder="jane@example.com"
                 value={formData.email}
                 onChange={updateField("email")}
                 disabled={isLoading}
@@ -246,7 +260,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+Country Code Phone Number: +999 999999999" style={{ fontStyle: 'italic' }}
+                placeholder="+Country Code Phone Number: +999 999999999"
                 value={formData.phone}
                 onChange={updateField("phone")}
                 disabled={isLoading}
@@ -257,7 +271,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password" style={{ fontStyle: 'italic' }}
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={updateField("password")}
                 disabled={isLoading}
@@ -268,7 +282,7 @@ const Signup = ({ onSignup }) => {
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Re-enter your password" style={{ fontStyle: 'italic' }}
+                placeholder="Re-enter your password"
                 value={formData.confirmPassword}
                 onChange={updateField("confirmPassword")}
                 disabled={isLoading}
@@ -285,7 +299,7 @@ const Signup = ({ onSignup }) => {
                   <Input
                     id="addressLine1"
                     type="text"
-                    placeholder="123 Main St" style={{ fontStyle: 'italic' }}
+                    placeholder="123 Main St"
                     value={formData.addressLine1}
                     onChange={updateField("addressLine1")}
                     disabled={isLoading}
@@ -298,7 +312,7 @@ const Signup = ({ onSignup }) => {
                   <Input
                     id="addressLine2"
                     type="text"
-                    placeholder="Apartment, suite, etc." style={{ fontStyle: 'italic' }}
+                    placeholder="Apartment, suite, etc."
                     value={formData.addressLine2}
                     onChange={updateField("addressLine2")}
                     disabled={isLoading}
@@ -313,12 +327,18 @@ const Signup = ({ onSignup }) => {
                     onChange={updateField("country")}
                     disabled={isLoading}
                   >
-                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select Country</option>
+                    <option value="" disabled>
+                      Select Country
+                    </option>
                     {countryOptions.map((country) => (
                       <option key={country.value} value={country.value}>
                         {/* Show flag if country.code exists */}
                         {country.code && (
-                          <CountryFlag countryCode={country.code} svg style={{ marginRight: 8 }} />
+                          <CountryFlag
+                            countryCode={country.code}
+                            svg
+                            style={{ marginRight: 8 }}
+                          />
                         )}
                         {country.label}
                       </option>
@@ -334,7 +354,9 @@ const Signup = ({ onSignup }) => {
                     onChange={updateField("stateRegion")}
                     disabled={isLoading || !formData.country}
                   >
-                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select State/Region</option>
+                    <option value="" disabled>
+                      Select State/Region
+                    </option>
                     {stateRegionOptions.map((state) => (
                       <option key={state.value} value={state.value}>
                         {state.label}
@@ -351,7 +373,9 @@ const Signup = ({ onSignup }) => {
                     onChange={updateField("cityTown")}
                     disabled={isLoading || !formData.stateRegion}
                   >
-                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select City/Town</option>
+                    <option value="" disabled>
+                      Select City/Town
+                    </option>
                     {cityTownOptions.map((city) => (
                       <option key={city.value} value={city.value}>
                         {city.label}
@@ -364,7 +388,7 @@ const Signup = ({ onSignup }) => {
                   <Input
                     id="postalCode"
                     type="text"
-                    placeholder="12345" style={{ fontStyle: 'italic' }}
+                    placeholder="12345"
                     value={formData.postalCode}
                     onChange={updateField("postalCode")}
                     disabled={isLoading}
@@ -389,11 +413,23 @@ const Signup = ({ onSignup }) => {
                     onChange={updateField("organisationId")}
                     disabled={isLoading}
                   >
-                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select Organisation</option>
+                    <option value="" disabled>
+                      Select Organisation
+                    </option>
                     {organisationOptions.map((org) => (
                       <option key={org.value} value={org.value}>
                         {org.icon_path && (
-                          <img src={org.icon_path} alt="icon" style={{ width: 18, height: 18, display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+                          <img
+                            src={org.icon_path}
+                            alt="icon"
+                            style={{
+                              width: 18,
+                              height: 18,
+                              display: "inline",
+                              marginRight: 6,
+                              verticalAlign: "middle",
+                            }}
+                          />
                         )}
                         {org.label}
                       </option>
@@ -401,21 +437,32 @@ const Signup = ({ onSignup }) => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="store">Store</Label>
-                  <select
-                    id="store"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                    value={formData.storeId || ""}
-                    onChange={updateField("storeId")}
-                    disabled={isLoading || !formData.organisationId}
-                  >
-                    <option value="" disabled style={{ fontStyle: 'italic' }}>Select Store</option>
+                  <Label>Store(s)</Label>
+                  <div className="flex flex-col gap-2 border rounded-md px-3 py-2 bg-white dark:bg-gray-900">
+                    {storeOptions.length === 0 && (
+                      <span className="text-gray-400 italic text-sm">
+                        No Stores available
+                      </span>
+                    )}
                     {storeOptions.map((store) => (
-                      <option key={store.value} value={store.value}>
-                        {store.label}
-                      </option>
+                      <label
+                        key={store.value}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={selectedStoreIds.includes(store.value)}
+                          onChange={() =>
+                            handleStoreCheckboxChange(store.value)
+                          }
+                          disabled={isLoading || !formData.organisationId}
+                        />
+                        <span>{store.label}</span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 italic">
+                    Select one or more Stores where the User will have access
+                  </p>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="role">Role</Label>
@@ -432,10 +479,6 @@ const Signup = ({ onSignup }) => {
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Admin and Supervisor can create users. Agents are
-                    Store-Management-Only
-                  </p>
                 </div>
               </div>
             </div>

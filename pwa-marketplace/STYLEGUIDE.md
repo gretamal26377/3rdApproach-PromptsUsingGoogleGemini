@@ -1,4 +1,4 @@
-# Project Style Guide
+# Project Style Guide (GRL: Need update)
 
 ## 1. CSS Framework
 
@@ -69,7 +69,20 @@
 
 - For the full color palette, spacing, and breakpoints, see `frontend/tailwind.config.js`
 
-## 11. More in depth analysis asked to GitHub Copilot (raw copy&paste)
+## 11. Dropdowns
+
+- Use the `Dropdown` component from `shared-lib` for all select menus.
+- Accepts all native `<select>` props and children `<option>` elements.
+- Example:
+  ```jsx
+  <Dropdown value={selected} onChange={handleChange}>
+    <option value="">Select an option</option>
+    <option value="foo">Foo</option>
+    <option value="bar">Bar</option>
+  </Dropdown>
+  ```
+
+## 12. More in depth analysis asked to GitHub Copilot (raw copy&paste)
 
 Can you summarise for me the Tailwind classes and patterns already present in the project?
 
