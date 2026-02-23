@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from ..shared.auth import token_required, admin_required
 from .admin_management import (
-    get_users_logic, get_user_logic, update_user_logic, inactivate_user_logic,
+    get_users_logic, get_user_logic, create_user_logic, update_user_logic, inactivate_user_logic,
     create_store_logic, update_store_logic, inactivate_store_logic,
     create_product_logic, update_product_logic, inactivate_product_logic,
     mark_order_shipped_logic, refund_order_logic, accept_order_logic
@@ -22,6 +22,14 @@ def get_users(current_user):
 @admin_required
 def get_user(current_user, user_id):
     result, status = get_user_logic(user_id)
+    return jsonify(result), status
+
+@admin_bp.route('users', methods=['POST'])
+@token_required
+@admin_required
+def create_user(current_user):
+    data = request.get_json()
+    result, status = create_user_logic(data)
     return jsonify(result), status
 
 @admin_bp.route('users/<int:user_id>', methods=['PUT'])

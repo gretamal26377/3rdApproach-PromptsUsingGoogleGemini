@@ -8,8 +8,8 @@ const authService = {
       APP_TYPE === "customer"
         ? { customer_email: email, customer_password: password }
         : { user_email: email, user_password: password };
-
-    const response = await api.post(`${APP_TYPE}/login`, payload);
+    // api calls login endpoint based on VITE_API_BASE_URL env var value, which is set in docker-compose.yml for each service (customer, admin)
+    const response = await api.post(`login`, payload);
     return response;
   },
 
@@ -67,8 +67,13 @@ const authService = {
       // Backend will read the auth_token HttpOnly cookie and decode it
       // This api call is passed an empty body {} since the token is in the cookie
       const response = await api.post(`${APP_TYPE}/decode`, {});
-      if (response && (response.customer || response.user)) {
-        return response.customer || response.user;
+      let userObj = response && (response.customer || response.user);
+      if (userObj) {
+        // Ensure role_code is present for AuthContext
+        if (!userObj.role_code && userObj.role && userObj.role.role_code) {
+          userObj.role_code = userObj.role.role_code;
+        }
+        return userObj;
       }
       return null;
     } catch (error) {

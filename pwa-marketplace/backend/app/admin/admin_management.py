@@ -1,3 +1,58 @@
+def create_user_logic(data):
+    """
+    Logic to create a new admin user. Expects keys:
+      user_name, user_email, user_password, user_phone, user_organisation_id, user_role_code, user_store_ids (list)
+    """
+    required_fields = [
+        'user_name', 'user_email', 'user_password', 'user_phone', 'user_organisation_id', 'user_role_code', 'user_store_ids'
+    ]
+    if not all(field in data for field in required_fields):
+        return {"error": "Missing required fields"}, 400
+    try:
+        # Sanitize inputs
+        import bleach
+        name = bleach.clean(data['user_name'], strip=True)
+        email = bleach.clean(data['user_email'], strip=True)
+        password = bleach.clean(data['user_password'], strip=True)
+        phone = bleach.clean(data['user_phone'], strip=True)
+        organisation_id = data['user_organisation_id']
+        role_code = data['user_role_code']
+        store_ids = data['user_store_ids'] if isinstance(data['user_store_ids'], list) else []
+
+        # Check for existing user
+        existing = Users.query.filter_by(email=email).first()
+        if existing:
+            return {"error": "User with this email already exists"}, 409
+
+        # Get active status
+        active_status = EntityStatuses.query.filter_by(status_code='active').first()
+        if not active_status:
+            return {"error": "Active status not found"}, 500
+
+        # Create user
+        new_user = Users()
+        new_user.username = name
+        new_user.email = email
+        new_user.password = password  # TODO: hash password in production
+        new_user.phone = phone
+        new_user.organisation_id = organisation_id
+        new_user.role_code = role_code
+        new_user.user_status_id = active_status.status_id
+        db.session.add(new_user)
+        db.session.flush()  # Get user_id
+
+        # Link user to stores (if applicable)
+        # TODO: Implement UserStoreRoles or similar association if model exists
+        # for store_id in store_ids:
+        #     ...
+
+        db.session.commit()
+        return {"message": "User created", "user_id": new_user.id}, 201
+    except Exception as e:
+        db.session.rollback()
+        import logging
+        logging.error(f"Error creating user: {e}")
+        return {"error": "Failed to create user"}, 500
 import os
 from ..shared.database import db
 from ..shared.models import (

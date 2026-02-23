@@ -40,6 +40,7 @@ export const AuthContext = createContext({
   isLoggedIn: false,
   user: null,
   isAdmin: false,
+  isSupervisor: false,
   /**
    * Defines login function signature, it takes a single arg named payload of type LoginPayload and
    * returns a Promise that resolves to any value. This function signature (empty at the moment) accepts
@@ -65,7 +66,8 @@ export const AuthContext = createContext({
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false); // Issue: Change all logic for Role approach
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isSupervisor, setIsSupervisor] = useState(false);
   // Purpose: To navigate programmatically. For example, navigate("/login") to trigger navigating to the login page
   //const navigate = useNavigate();
 
@@ -77,7 +79,12 @@ export const AuthProvider = ({ children }) => {
       if (isMounted && currentUser) {
         setUser(currentUser);
         setIsLoggedIn(true);
-        setIsAdmin(currentUser.is_admin || false);
+        // Role-based logic
+        const roleCode =
+          currentUser.role_code ||
+          (currentUser.role && currentUser.role.role_code);
+        setIsAdmin(roleCode === "admin");
+        setIsSupervisor(roleCode === "supervisor");
       }
     };
     fetchUser();
@@ -94,7 +101,11 @@ export const AuthProvider = ({ children }) => {
     if (currentUser) {
       setIsLoggedIn(true);
       setUser(currentUser);
-      setIsAdmin(currentUser.is_admin || false);
+      const roleCode =
+        currentUser.role_code ||
+        (currentUser.role && currentUser.role.role_code);
+      setIsAdmin(roleCode === "admin");
+      setIsSupervisor(roleCode === "supervisor");
     }
     return currentUser;
   };
@@ -105,7 +116,11 @@ export const AuthProvider = ({ children }) => {
     if (currentUser) {
       setIsLoggedIn(true);
       setUser(currentUser);
-      setIsAdmin(currentUser.is_admin || false);
+      const roleCode =
+        currentUser.role_code ||
+        (currentUser.role && currentUser.role.role_code);
+      setIsAdmin(roleCode === "admin");
+      setIsSupervisor(roleCode === "supervisor");
     }
     return currentUser;
   };
@@ -123,6 +138,7 @@ export const AuthProvider = ({ children }) => {
     isLoggedIn,
     user,
     isAdmin,
+    isSupervisor,
     login: handleLogin,
     signup: handleSignup,
     logout: handleLogout,

@@ -35,12 +35,19 @@ This monorepo contains a marketplace application with a microservices-inspired s
   - Only introduce new UI primitives if there is no suitable existing component, and update `STYLEGUIDE.md` accordingly.
 
 ### Dropdowns and Checkboxes: Animation & Accessibility
+
 - All dropdowns must use smooth open/close animation (opacity, scale) and support keyboard navigation (Tab, Arrow keys, Enter/Space).
 - All dropdowns must use ARIA roles (`listbox`, `option`, `aria-expanded`, `aria-controls`) and trap focus when open.
 - All checkboxes must have visible focus outlines, ARIA attributes, and animated checkmark feedback.
 - Use shared UI primitives for dropdowns and checkboxes to ensure these features are applied project-wide.
 
 ## Project-Specific Conventions
+
+If form validation fails, display a clear error message (e.g., Alert or FormMessage).
+Do NOT clear or reset the form or its input values on validation failure.
+Keep all user input intact so the user can immediately fix any wrong or incomplete fields and resubmit.
+Only calls form.reset() after successful create/update.
+This applies to all forms (signup, login, checkout, etc.) in both admin and customer apps.
 
 - **No global `create_app()` in `app/__init__.py` by default**; import from the relevant submodule.
 - **Shared code** (models, DB logic) lives in `app/shared/`.

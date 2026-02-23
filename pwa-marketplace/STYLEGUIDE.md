@@ -27,12 +27,23 @@
 
 ## 6. Forms & Inputs
 
-- Use the `Input`, `Form`, `FormLabel`, etc. components from `shared-lib`
-- Example:
-  ```jsx
-  <FormLabel htmlFor="email">Email</FormLabel>
-  <Input id="email" type="email" />
-  ```
+Use the `Input`, `Form`, `FormLabel`, etc. components from `shared-lib`
+Example:
+
+```jsx
+<FormLabel htmlFor="email">Email</FormLabel>
+<Input id="email" type="email" />
+```
+
+### Form Validation: User Experience
+
+- If form validation fails, display a clear error message (e.g., Alert or FormMessage).
+- Do NOT clear or reset the form or its input values on validation failure.
+- Keep all user input intact so the user can immediately fix any wrong or incomplete fields and resubmit.
+- Only calls form.reset() after successful create/update.
+- This applies to all forms (signup, login, checkout, etc.) in both admin and customer apps.
+
+Rationale: This ensures a smooth user experience and prevents frustration from lost input.
 
 ## 7. Tables
 
@@ -69,21 +80,21 @@
 
 - For the full color palette, spacing, and breakpoints, see `frontend/tailwind.config.js`
 
-
 ## 11. Dropdowns
 
 - Use the `Dropdown` component from `shared-lib` for all select menus.
-   - Accepts all native `<select>` props and children `<option>` elements.
-   - Example:
-      ```jsx
-      <Dropdown value={selected} onChange={handleChange}>
-         <option value="">Select an option</option>
-         <option value="foo">Foo</option>
-         <option value="bar">Bar</option>
-      </Dropdown>
-      ```
+  - Accepts all native `<select>` props and children `<option>` elements.
+  - Example:
+    ```jsx
+    <Dropdown value={selected} onChange={handleChange}>
+      <option value="">Select an option</option>
+      <option value="foo">Foo</option>
+      <option value="bar">Bar</option>
+    </Dropdown>
+    ```
 
 ### Dropdowns and Checkboxes: Animation & Accessibility
+
 - All dropdowns must use smooth open/close animation (opacity, scale) and support keyboard navigation (Tab, Arrow keys, Enter/Space).
 - All dropdowns must use ARIA roles (`listbox`, `option`, `aria-expanded`, `aria-controls`) and trap focus when open.
 - All checkboxes must have visible focus outlines, ARIA attributes, and animated checkmark feedback.
