@@ -1,4 +1,6 @@
 import React from "react";
+import Label from "./label";
+import Checkbox from "./checkbox";
 
 /**
  * ToggleSwitch UI component
@@ -9,37 +11,38 @@ import React from "react";
  * - label: string (optional)
  * - className: string (optional)
  */
+/**
+ * @param {{ checked: boolean, onChange: import('react').ChangeEventHandler<HTMLInputElement>, label?: string, className?: string, id?: string, [key: string]: any }} props
+ */
 export default function ToggleSwitch({
   checked,
   onChange,
   label = "",
   className = "",
+  id,
+  ...props
 }) {
   return (
-    <label
+    <Label
       className={`flex items-center cursor-pointer gap-2 select-none ${className}`}
+      htmlFor={id}
     >
-      {/* <span> for the label */}
       <span className="text-gray-800 dark:text-gray-200 text-sm">{label}</span>
-      {/* <span> for the toggle switch */}
-      {/* Diff between <div> and <span> is that <span> is inline by default and
-          <div> is a block starting in a new line */}
       <span className="relative">
-        <input
-          type="checkbox"
+        <Checkbox
+          id={id}
           checked={checked}
           onChange={onChange}
           className="sr-only peer"
+          {...props}
         />
-        {/* <div> for the track */}
         <div className="w-10 h-6 bg-gray-300 dark:bg-gray-700 rounded-full peer-focus:ring-2 peer-focus:ring-blue-500 transition-colors duration-200"></div>
-        {/* <div> for the thumb */}
         <div
           className={`absolute top-0 left-0 w-6 h-6 bg-white dark:bg-gray-900 rounded-full shadow transform transition-transform duration-200 ${
             checked ? "translate-x-4" : ""
           }`}
         ></div>
       </span>
-    </label>
+    </Label>
   );
 }

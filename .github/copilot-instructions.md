@@ -34,6 +34,12 @@ This monorepo contains a marketplace application with a microservices-inspired s
   - Use and prefer UI primitives from the `frontend/shared-lib/src/components/ui/` folder whenever possible, instead of creating new base components or duplicating styles.
   - Only introduce new UI primitives if there is no suitable existing component, and update `STYLEGUIDE.md` accordingly.
 
+### Dropdowns and Checkboxes: Animation & Accessibility
+- All dropdowns must use smooth open/close animation (opacity, scale) and support keyboard navigation (Tab, Arrow keys, Enter/Space).
+- All dropdowns must use ARIA roles (`listbox`, `option`, `aria-expanded`, `aria-controls`) and trap focus when open.
+- All checkboxes must have visible focus outlines, ARIA attributes, and animated checkmark feedback.
+- Use shared UI primitives for dropdowns and checkboxes to ensure these features are applied project-wide.
+
 ## Project-Specific Conventions
 
 - **No global `create_app()` in `app/__init__.py` by default**; import from the relevant submodule.

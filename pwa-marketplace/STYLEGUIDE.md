@@ -69,18 +69,25 @@
 
 - For the full color palette, spacing, and breakpoints, see `frontend/tailwind.config.js`
 
+
 ## 11. Dropdowns
 
 - Use the `Dropdown` component from `shared-lib` for all select menus.
-- Accepts all native `<select>` props and children `<option>` elements.
-- Example:
-  ```jsx
-  <Dropdown value={selected} onChange={handleChange}>
-    <option value="">Select an option</option>
-    <option value="foo">Foo</option>
-    <option value="bar">Bar</option>
-  </Dropdown>
-  ```
+   - Accepts all native `<select>` props and children `<option>` elements.
+   - Example:
+      ```jsx
+      <Dropdown value={selected} onChange={handleChange}>
+         <option value="">Select an option</option>
+         <option value="foo">Foo</option>
+         <option value="bar">Bar</option>
+      </Dropdown>
+      ```
+
+### Dropdowns and Checkboxes: Animation & Accessibility
+- All dropdowns must use smooth open/close animation (opacity, scale) and support keyboard navigation (Tab, Arrow keys, Enter/Space).
+- All dropdowns must use ARIA roles (`listbox`, `option`, `aria-expanded`, `aria-controls`) and trap focus when open.
+- All checkboxes must have visible focus outlines, ARIA attributes, and animated checkmark feedback.
+- Use shared UI primitives for dropdowns and checkboxes to ensure these features are applied project-wide.
 
 ## 12. More in depth analysis asked to GitHub Copilot (raw copy&paste)
 
