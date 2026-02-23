@@ -13,7 +13,6 @@ customer_bp = Blueprint('customer_bp', __name__, url_prefix='/api/customer')
 
 @customer_bp.route('register', methods=['POST'])
 def register_customer():
-    #Issue: Check for Role Authorization
     data = request.get_json()
     result, status = create_customer_logic(data)
     return jsonify(result), status

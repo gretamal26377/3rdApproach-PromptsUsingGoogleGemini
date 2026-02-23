@@ -7,7 +7,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from ..shared.auth import decode_token, generate_token
 from ..shared.database import db
 from ..shared.models import ( Customers, Stores, FeaturedStores, StoresProductsServices, Orders, OrdersDetails,
-    EntityStatuses, OrderStatuses, Categories, ProductsServices, Organisations, Roles, Countries, StatesRegions, CitiesTowns )
+    EntityStatuses, OrderStatuses, Categories, ProductsServices, Organisations, Roles, Countries, StatesRegions, CitiesTowns,
+    CustomersAddresses )
 from ..shared.utils import get_temporal_client
 from workflows.order_workflow import OrderWorkflow
 
@@ -37,7 +38,6 @@ def create_customer_logic(data):
         logging.error("Active Status not found during create_customer_logic")
         return {'message': 'Active Status not found'}, 500
     try:
-    
         password_hash = generate_password_hash(data['customer_password'])
         # Instantiate without kwargs to avoid constructor signature mismatch, then assign attributes
         new_customer = Customers()
@@ -48,6 +48,34 @@ def create_customer_logic(data):
         new_customer.customer_status_id = active_status.status_id
         db.session.add(new_customer)
         db.session.commit()
+
+        # Handle customer_addresses if present
+        addresses = data.get('customer_addresses', [])
+        # Defensive: check if addresses is a list
+        if isinstance(addresses, list):
+            for addr in addresses:
+                # Defensive: check required address fields
+                address_line1 = bleach.clean(addr.get('address_line1', ''), strip=True)
+                address_line2 = bleach.clean(addr.get('address_line2', ''), strip=True)
+                country_id = addr.get('country_id')
+                state_region_id = addr.get('state_region_id')
+                city_town_id = addr.get('city_town_id')
+                postal_code = bleach.clean(addr.get('postal_code', ''), strip=True)
+                # Only create address if minimum required fields are present
+                if address_line1 and city_town_id and state_region_id and country_id:
+                    # Find active status for address
+                    address_status = EntityStatuses.query.filter_by(status_code='active').first()
+                    # Create CustomersAddresses record
+                    new_address = CustomersAddresses()
+                    new_address.customer_id = new_customer.customer_id
+                    new_address.address_line1 = address_line1
+                    new_address.address_line2 = address_line2
+                    new_address.city_town_id = city_town_id
+                    new_address.postal_code = postal_code
+                    new_address.address_status_id = address_status.status_id if address_status else None
+                    db.session.add(new_address)
+            db.session.commit()
+
         token = generate_token(new_customer.customer_id)
         return {'message': 'Customer created successfully', 'token': token}, 201
     except Exception as e:

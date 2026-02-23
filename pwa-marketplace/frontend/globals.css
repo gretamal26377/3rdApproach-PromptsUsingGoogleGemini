@@ -66,3 +66,37 @@ textarea::placeholder {
 select option[disabled][value=""] {
   font-style: italic;
 }
+
+/* Dropdown animation and accessibility */
+.dropdown-menu {
+  transition: opacity 0.2s, transform 0.2s;
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.dropdown-menu.open {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.dropdown-menu:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Checkbox accessibility */
+.checkbox:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.checkbox {
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+.checkbox:checked {
+  box-shadow: 0 0 0 2px #2563eb;
+  background: #2563eb;
+}

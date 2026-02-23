@@ -33,7 +33,7 @@ const authService = {
       };
 
       // Create Customer, then immediately log in to set the HttpOnly cookie
-      await api.post(`${APP_TYPE}/register`, payload);
+      await api.post(`register`, payload);
       await authService.login(
         payload.customer_email,
         payload.customer_password
@@ -54,7 +54,7 @@ const authService = {
         : [],
     };
 
-    return api.post(`${APP_TYPE}/users`, adminPayload);
+    return api.post(`users`, adminPayload);
   },
 
   logout: () => {
