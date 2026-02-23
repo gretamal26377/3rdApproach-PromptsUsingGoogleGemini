@@ -71,9 +71,9 @@ class CitiesTowns(db.Model):
     state_region_id = db.Column(db.Integer, db.ForeignKey('states_regions.state_region_id'), nullable=False)
     city_town_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
-    state_region = db.relationship('StatesRegions', back_populates='cities')
-    city_town_status = db.relationship('EntityStatuses', back_populates='cities')
-    customers_addresses = db.relationship('CustomersAddresses', back_populates='city')
+    state_region = db.relationship('StatesRegions', back_populates='cities_towns')
+    city_town_status = db.relationship('EntityStatuses', back_populates='cities_towns')
+    customers_addresses = db.relationship('CustomersAddresses', back_populates='city_town')
 
 
 class StatesRegions(db.Model):
@@ -118,7 +118,7 @@ class CitiesTownsHistory(db.Model):
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
-    city_id = db.Column(db.Integer)
+    city_town_id = db.Column(db.Integer)
     op_type = db.Column(db.Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
     changed_by = db.Column(db.String(100))
     changed_at = db.Column(db.DateTime)
@@ -153,10 +153,10 @@ class CustomersAddresses(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.customer_id'), nullable=False)
     address_line1 = db.Column(db.String(255), nullable=False)
     address_line2 = db.Column(db.String(255))
-    city_id = db.Column(db.Integer, db.ForeignKey('cities.city_id'), nullable=False)
+    city_town_id = db.Column(db.Integer, db.ForeignKey('cities_towns.city_town_id'), nullable=False)
     google_maps_url = db.Column(db.String(255), nullable=False)
     address_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
-    postal_code = db.Column(db.String(20), nullable=False)
+    postal_code = db.Column(db.String(20))
     created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     customer = db.relationship('Customers', back_populates='customers_addresses')

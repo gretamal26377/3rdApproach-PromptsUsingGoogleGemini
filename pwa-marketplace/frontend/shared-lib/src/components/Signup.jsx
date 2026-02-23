@@ -33,6 +33,7 @@ const emptyAddress = {
   countryId: "",
   cityTownId: "",
   stateRegionId: "",
+  google_maps_url: "",
   postalCode: "",
 };
 
@@ -205,9 +206,10 @@ const Signup = ({ onSignup }) => {
       const hasValidAddress = formData.addresses.some(
         (addr) =>
           addr.addressLine1 &&
-          addr.cityTownId &&
+          addr.countryId &&
           addr.stateRegionId &&
-          addr.postalCode
+          addr.cityTownId &&
+          addr.google_maps_url
       );
       if (!hasValidAddress) {
         return "Please complete at least one Address";
@@ -257,8 +259,9 @@ const Signup = ({ onSignup }) => {
             address_line1: addr.addressLine1,
             address_line2: addr.addressLine2,
             country_id: addr.countryId,
-            city_town_id: addr.cityTownId,
             state_region_id: addr.stateRegionId,
+            city_town_id: addr.cityTownId,
+            google_maps_url: addr.google_maps_url,
             postal_code: addr.postalCode,
           })),
         }
@@ -526,6 +529,24 @@ const Signup = ({ onSignup }) => {
                         </option>
                       ))}
                     </Dropdown>
+                  </FormControl>
+                </FormField>
+                <FormField>
+                  <FormLabel htmlFor="google_maps_url">
+                    Google Maps URL
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      id="google_maps_url"
+                      type="url"
+                      placeholder="Paste Google Maps URL here"
+                      value={
+                        formData.addresses[activeAddressIdx]?.google_maps_url ||
+                        ""
+                      }
+                      onChange={(e) => updateAddressField("google_maps_url", e)}
+                      disabled={isLoading}
+                    />
                   </FormControl>
                 </FormField>
                 <FormField>

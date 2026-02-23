@@ -30,7 +30,7 @@ def create_customer_logic(data):
     customer_name = bleach.clean(data['customer_name'], strip=True)
     customer_email = bleach.clean(data['customer_email'], strip=True)
     customer_phone = bleach.clean(data['customer_phone'], strip=True)
-    # Only allow registration if email is unique and status is active
+    # Only allow registration if email is unique and "active" status exists in DB
     if Customers.query.filter_by(customer_email=customer_email).first():
         return {'message': 'Email already exists'}, 400
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
@@ -51,30 +51,30 @@ def create_customer_logic(data):
 
         # Handle customer_addresses if present
         addresses = data.get('customer_addresses', [])
-        # Defensive: check if addresses is a list
-        if isinstance(addresses, list):
-            for addr in addresses:
-                # Defensive: check required address fields
-                address_line1 = bleach.clean(addr.get('address_line1', ''), strip=True)
-                address_line2 = bleach.clean(addr.get('address_line2', ''), strip=True)
-                country_id = addr.get('country_id')
-                state_region_id = addr.get('state_region_id')
-                city_town_id = addr.get('city_town_id')
-                postal_code = bleach.clean(addr.get('postal_code', ''), strip=True)
-                # Only create address if minimum required fields are present
-                if address_line1 and city_town_id and state_region_id and country_id:
-                    # Find active status for address
-                    address_status = EntityStatuses.query.filter_by(status_code='active').first()
-                    # Create CustomersAddresses record
-                    new_address = CustomersAddresses()
-                    new_address.customer_id = new_customer.customer_id
-                    new_address.address_line1 = address_line1
-                    new_address.address_line2 = address_line2
-                    new_address.city_town_id = city_town_id
-                    new_address.postal_code = postal_code
-                    new_address.address_status_id = address_status.status_id if address_status else None
-                    db.session.add(new_address)
-            db.session.commit()
+        for addr in addresses:
+            # Defensive: check required address fields
+            address_line1 = bleach.clean(addr.get('address_line1', ''), strip=True)
+            address_line2 = bleach.clean(addr.get('address_line2', ''), strip=True)
+            country_id = addr.get('country_id')
+            state_region_id = addr.get('state_region_id')
+            city_town_id = addr.get('city_town_id')
+            postal_code = bleach.clean(addr.get('postal_code', ''), strip=True)
+            # Only create address if minimum required fields are present. If not, it just jumps to the next address in the list
+            # (if any) without failing the whole Customer creation. Keep in mind this is little likely to happen since frontend
+            # enforce at least one address with required fields, but this is kept because it's considered best practice to have
+            # this checking at backend 
+            if address_line1 and city_town_id and state_region_id and country_id:
+                # Create CustomersAddresses record
+                new_address = CustomersAddresses()
+                new_address.customer_id = new_customer.customer_id
+                new_address.address_line1 = address_line1
+                new_address.address_line2 = address_line2
+                new_address.city_town_id = city_town_id
+                new_address.google_maps_url = google_maps_url
+                new_address.postal_code = postal_code
+                new_address.address_status_id = active_status.status_id
+                db.session.add(new_address)
+        db.session.commit()
 
         token = generate_token(new_customer.customer_id)
         return {'message': 'Customer created successfully', 'token': token}, 201
