@@ -68,6 +68,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSupervisor, setIsSupervisor] = useState(false);
+  // Fix: Move APP_TYPE outside component to avoid redeclaration and lint errors
+  const APP_TYPE =
+    typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_APP_TYPE
+      ? import.meta.env.VITE_APP_TYPE
+      : "customer";
   // Purpose: To navigate programmatically. For example, navigate("/login") to trigger navigating to the login page
   //const navigate = useNavigate();
 
@@ -79,12 +86,16 @@ export const AuthProvider = ({ children }) => {
       if (isMounted && currentUser) {
         setUser(currentUser);
         setIsLoggedIn(true);
-        // Role-based logic
-        const roleCode =
-          currentUser.role_code ||
-          (currentUser.role && currentUser.role.role_code);
-        setIsAdmin(roleCode === "admin");
-        setIsSupervisor(roleCode === "supervisor");
+        if (APP_TYPE === "admin") {
+          const roleCode =
+            currentUser.role_code ||
+            (currentUser.role && currentUser.role.role_code);
+          setIsAdmin(roleCode === "admin");
+          setIsSupervisor(roleCode === "supervisor");
+        } else {
+          setIsAdmin(false);
+          setIsSupervisor(false);
+        }
       }
     };
     fetchUser();
@@ -101,11 +112,16 @@ export const AuthProvider = ({ children }) => {
     if (currentUser) {
       setIsLoggedIn(true);
       setUser(currentUser);
-      const roleCode =
-        currentUser.role_code ||
-        (currentUser.role && currentUser.role.role_code);
-      setIsAdmin(roleCode === "admin");
-      setIsSupervisor(roleCode === "supervisor");
+      if (APP_TYPE === "admin") {
+        const roleCode =
+          currentUser.role_code ||
+          (currentUser.role && currentUser.role.role_code);
+        setIsAdmin(roleCode === "admin");
+        setIsSupervisor(roleCode === "supervisor");
+      } else {
+        setIsAdmin(false);
+        setIsSupervisor(false);
+      }
     }
     return currentUser;
   };
@@ -116,11 +132,16 @@ export const AuthProvider = ({ children }) => {
     if (currentUser) {
       setIsLoggedIn(true);
       setUser(currentUser);
-      const roleCode =
-        currentUser.role_code ||
-        (currentUser.role && currentUser.role.role_code);
-      setIsAdmin(roleCode === "admin");
-      setIsSupervisor(roleCode === "supervisor");
+      if (APP_TYPE === "admin") {
+        const roleCode =
+          currentUser.role_code ||
+          (currentUser.role && currentUser.role.role_code);
+        setIsAdmin(roleCode === "admin");
+        setIsSupervisor(roleCode === "supervisor");
+      } else {
+        setIsAdmin(false);
+        setIsSupervisor(false);
+      }
     }
     return currentUser;
   };
@@ -129,7 +150,8 @@ export const AuthProvider = ({ children }) => {
     authService.logout();
     setIsLoggedIn(false);
     setUser(null);
-    // setIsAdmin(false);
+    setIsAdmin(false);
+    setIsSupervisor(false);
     // navigate("/");
   };
 

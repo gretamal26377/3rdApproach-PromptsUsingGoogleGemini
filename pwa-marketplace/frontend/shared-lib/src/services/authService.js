@@ -58,21 +58,18 @@ const authService = {
   },
 
   logout: () => {
-    // With HttpOnly auth cookies, logout is typically handled server-side (e.g., by expiring the cookie).
-    // Optionally, you could call a logout endpoint here if implemented
+    // With HttpOnly auth cookies, logout is typically handled server-side (eg: by expiring the cookie).
+    // Logout is managed in AuthContext.handleLogout.
+    // Optionally, you could call a logout endpoint here if needed
   },
 
   getCurrentUser: async () => {
     try {
       // Backend will read the auth_token HttpOnly cookie and decode it
       // This api call is passed an empty body {} since the token is in the cookie
-      const response = await api.post(`${APP_TYPE}/decode`, {});
+      const response = await api.post(`decode`, {});
       let userObj = response && (response.customer || response.user);
       if (userObj) {
-        // Ensure role_code is present for AuthContext
-        if (!userObj.role_code && userObj.role && userObj.role.role_code) {
-          userObj.role_code = userObj.role.role_code;
-        }
         return userObj;
       }
       return null;
