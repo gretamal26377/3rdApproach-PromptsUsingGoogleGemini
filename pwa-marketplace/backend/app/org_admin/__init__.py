@@ -1,7 +1,7 @@
 from flask import Flask
 from ..shared.config import Config
 from ..shared.database import init_extensions, register_request_hooks
-from .admin_routes import admin_bp
+from .org_admin_routes import admin_bp
 
 def create_app(config_class=Config):
     app = Flask(__name__)

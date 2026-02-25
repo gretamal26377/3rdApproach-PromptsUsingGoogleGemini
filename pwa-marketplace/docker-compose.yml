@@ -192,7 +192,7 @@ services:
       - default # Or your defined backend network
     restart: always
 
-  backend-admin:
+  org_backend-admin:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -205,13 +205,37 @@ services:
       - backend-search
 
     working_dir: /pwa-marketplace/backend
-
-    command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5001", "app.admin.wsgi:app"]
+    command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5001", "app.org_admin.wsgi:app"]
 
     environment:
       <<: *database-credentials
       <<: *temporal
-      BACKEND_TYPE: admin
+      BACKEND_TYPE: org_admin
+      SECRET_KEY_FILE: /run/secrets/secret_key
+    secrets:
+      - mysql_db_user_password
+      - secret_key
+    restart: always
+
+  platform-backend-admin:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.platform_admin
+    ports:
+      - "5050:5000"
+    volumes:
+      - ./backend:/pwa-marketplace/backend:rw
+    depends_on:
+      - db
+      - backend-search
+
+    working_dir: /pwa-marketplace/backend
+    command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5050", "app.platform_admin.wsgi:app"]
+    
+    environment:
+      <<: *database-credentials
+      <<: *temporal
+      BACKEND_TYPE: platform_admin
       SECRET_KEY_FILE: /run/secrets/secret_key
     secrets:
       - mysql_db_user_password

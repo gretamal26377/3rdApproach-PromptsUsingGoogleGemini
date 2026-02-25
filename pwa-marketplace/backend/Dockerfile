@@ -58,7 +58,9 @@ ENV BACKEND_TYPE=${BACKEND_TYPE}
 ENTRYPOINT ["./scripts/entrypoint.sh"]
 
 # Set default CMD based on BACKEND_TYPE 
-CMD ["/bin/sh", "-c", "if [ '$BACKEND_TYPE' = 'admin' ]; \
-     then exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.admin.wsgi:app; \
+CMD ["/bin/sh", "-c", "if [ '$BACKEND_TYPE' = 'org_admin' ]; \
+     then exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.org_admin.wsgi:app; \
+     else if [ '$BACKEND_TYPE' = 'platform_admin' ]; \
+     then exec gunicorn --workers=3 --bind=0.0.0.0:5050 app.platform_admin.wsgi:app; \
      else exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.customer.wsgi:app; \
      fi"]
