@@ -68,13 +68,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSupervisor, setIsSupervisor] = useState(false);
-  // Fix: Move APP_TYPE outside component to avoid redeclaration and lint errors
-  const APP_TYPE =
-    typeof import.meta !== "undefined" &&
-    import.meta.env &&
-    import.meta.env.VITE_APP_TYPE
-      ? import.meta.env.VITE_APP_TYPE
-      : "customer";
+
+  const APP_TYPE = import.meta.env.VITE_APP_TYPE || "customer";
+
   // Purpose: To navigate programmatically. For example, navigate("/login") to trigger navigating to the login page
   //const navigate = useNavigate();
 
