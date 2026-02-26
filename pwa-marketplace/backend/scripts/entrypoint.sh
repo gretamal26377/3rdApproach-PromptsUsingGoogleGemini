@@ -3,7 +3,7 @@
 # For production use: #!/bin/sh
 # For debugging (with bashdb): #!/usr/bin/env bash
  
-# Entrypoint: assemble runtime environment and then exec the provided CMD
+# Entrypoint: Assemble runtime environment and then exec the provided CMD
 # Priority:
 #  1) If DATABASE_URL is already set, leave it untouched
 #  2) Otherwise read DB password from a Docker secret file (preferred) or env var

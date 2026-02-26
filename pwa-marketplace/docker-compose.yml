@@ -34,9 +34,9 @@ services:
       # First number is host machine's port and second is container's port
       - "3000:3000"
     environment:
-      - VITE_APP_TYPE=customer
-      - NODE_ENV=production
-      - VITE_API_BASE_URL=http://backend-customer:5000/api/customer
+      VITE_APP_TYPE: customer
+      NODE_ENV: production
+      VITE_API_BASE_URL: http://backend-customer:5000/api/customer
       <<: *search-engine
     # Mounting host machine's path to container's path. This way,
     # changes in host machine's path are reflected in container's path without rebuilding the image.
@@ -47,8 +47,9 @@ services:
       - ./frontend:/pwa-marketplace/frontend:/app:ro
     depends_on:
       - backend-customer
-    restart: always
+
     command: ["node", "server.js"]
+    restart: always
 
   frontend-admin:
     build:
@@ -61,8 +62,8 @@ services:
       # each frontend run in different container, they can use the same port
       - "3001:3000"
     environment:
-      - VITE_APP_TYPE=admin
-      - VITE_API_BASE_URL=http://backend-admin:5000/api/admin
+      VITE_APP_TYPE: admin
+      VITE_API_BASE_URL: http://backend-admin:5000/api/admin
       <<: *search-engine
     volumes:
       - ./frontend:/pwa-marketplace/frontend:ro
@@ -97,8 +98,7 @@ services:
     
     # Use mapping style so we can merge the shared DB credentials via YAML anchor
     environment:
-      <<: *database-credentials
-      <<: *temporal
+      <<: [*database-credentials, *temporal]
       BACKEND_TYPE: customer
     # Make the DB user password secret available inside the backend container
     secrets:
@@ -119,11 +119,12 @@ services:
     depends_on:
       - db
       - meilisearch
+
     working_dir: /pwa-marketplace/backend
     command: ["gunicorn", "--workers=2", "--bind=0.0.0.0:5002", "app.shared.search_wsgi:app"]
+
     environment:
-      <<: *database-credentials
-      <<: *search-engine
+      <<: [*database-credentials, *search-engine]
       # YAML & Docker Compose don't support if/else statements
       # App check SEARCH_ENGINE and use the correct variables
       # SEARCH_ENGINE == 'meili'
@@ -134,7 +135,6 @@ services:
       GOOGLE_SEARCH_CX: your_google_search_cx_value_here
       # Use Docker secret for Google Search API key
       GOOGLE_SEARCH_API_KEY_FILE: /run/secrets/google_search_api_key
-    restart: always
     secrets:
       - meilisearch_api_key
       - google_search_api_key
@@ -178,12 +178,13 @@ services:
     image: backend-temporal-worker # Give it a descriptive name
     environment:
       # Use the same environment variables needed to access the DB (if Activities need it)
-      <<: *database-credentials
+      <<: [*database-credentials, *temporal]
       # Temporal Host is temporal-server:7233
-      <<: *temporal
     secrets:
       - mysql_db_user_password
+
     command: ["python", "workflows/worker_runner.py"] # Command to execute the startup file
+    
     depends_on:
       # Must start after the Temporal Server is ready
       - temporal-server
@@ -208,8 +209,7 @@ services:
     command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5001", "app.org_admin.wsgi:app"]
 
     environment:
-      <<: *database-credentials
-      <<: *temporal
+      <<: [*database-credentials, *temporal]
       BACKEND_TYPE: org_admin
       SECRET_KEY_FILE: /run/secrets/secret_key
     secrets:
@@ -220,7 +220,7 @@ services:
   platform-backend-admin:
     build:
       context: ./backend
-      dockerfile: Dockerfile.platform_admin
+      dockerfile: Dockerfile
     ports:
       - "5050:5000"
     volumes:
@@ -233,8 +233,7 @@ services:
     command: ["gunicorn", "--workers=3", "--bind=0.0.0.0:5050", "app.platform_admin.wsgi:app"]
     
     environment:
-      <<: *database-credentials
-      <<: *temporal
+      <<: [*database-credentials, *temporal]
       BACKEND_TYPE: platform_admin
       SECRET_KEY_FILE: /run/secrets/secret_key
     secrets:
