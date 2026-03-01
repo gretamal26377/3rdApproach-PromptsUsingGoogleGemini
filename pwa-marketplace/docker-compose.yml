@@ -51,7 +51,7 @@ services:
     command: ["node", "server.js"]
     restart: always
 
-  frontend-admin:
+  frontend-org-admin:
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -62,7 +62,7 @@ services:
       # each frontend run in different container, they can use the same port
       - "3001:3000"
     environment:
-      VITE_APP_TYPE: admin
+      VITE_APP_TYPE: org-admin
       VITE_API_BASE_URL: http://backend-admin:5000/api/admin
       <<: *search-engine
     volumes:
@@ -184,7 +184,7 @@ services:
       - mysql_db_user_password
 
     command: ["python", "workflows/worker_runner.py"] # Command to execute the startup file
-    
+
     depends_on:
       # Must start after the Temporal Server is ready
       - temporal-server
