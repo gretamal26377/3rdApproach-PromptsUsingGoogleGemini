@@ -13,7 +13,8 @@ ENV PYTHONUNBUFFERED=1
 # Notice: WORKDIR sets the default working folder in Docker image/container
 # affecting only commands like RUN, CMD, and ENTRYPOINT
 # Align WORKDIR with compose paths and application layout
-WORKDIR /pwa-marketplace/backend
+# WORKDIR /pwa-marketplace/backend
+WORKDIR /app
 
 # COPY and ADD:
 # Source Path (1st argument): Always relative to the build context, and is not affected by WORKDIR
@@ -25,11 +26,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 
 # Copy shared code and scripts that are common to both backends, except the Search Engine implementation
-COPY ./app/shared ./app/shared
-COPY ./scripts ./scripts
+COPY ./app/shared ./shared
+COPY ./scripts /scripts
 
 # Ensure scripts are executable
-RUN chmod +x ./scripts/entrypoint.sh ./scripts/wait-for-it.sh
+RUN chmod +x /scripts/entrypoint.sh /scripts/wait-for-it.sh
 
 # Stage 2: Create a builder for the 'admin' backend
 # FROM base AS builder-admin
@@ -45,9 +46,9 @@ RUN chmod +x ./scripts/entrypoint.sh ./scripts/wait-for-it.sh
 # Notice: In Dockerfile(s) can't have inline comments, just above or below the code
 # ARG: var definition available at build-time (for docker build)
 ARG BACKEND_TYPE=customer
-# Below line is equivalent to: COPY ./app/${BACKEND_TYPE} ./app/${BACKEND_TYPE}
+# Below line is equivalent to: COPY ./app/${BACKEND_TYPE} ./${BACKEND_TYPE}
 # FROM builder-${BACKEND_TYPE} AS final
-COPY ./app/${BACKEND_TYPE} ./app/${BACKEND_TYPE}
+COPY ./app/${BACKEND_TYPE} ./${BACKEND_TYPE}
 
 # ENV: var definition available at runtime (for Docker run)
 # You need both to pass the value from build-time into the running container
@@ -55,12 +56,12 @@ ENV BACKEND_TYPE=${BACKEND_TYPE}
 
 # Entrypoint builds runtime secrets/ENV (DATABASE_URL) and then execs the CMD
 # (if CMD isn't overridden for docker-compose having a command: directive)
-ENTRYPOINT ["./scripts/entrypoint.sh"]
+ENTRYPOINT ["/scripts/entrypoint.sh"]
 
-# Set default CMD based on BACKEND_TYPE 
+# Set default CMD based on BACKEND_TYPE. Ports here correspond to container ports, not localhost ports 
 CMD ["/bin/sh", "-c", "if [ '$BACKEND_TYPE' = 'org_admin' ]; \
      then exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.org_admin.wsgi:app; \
      else if [ '$BACKEND_TYPE' = 'platform_admin' ]; \
-     then exec gunicorn --workers=3 --bind=0.0.0.0:5050 app.platform_admin.wsgi:app; \
+     then exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.platform_admin.wsgi:app; \
      else exec gunicorn --workers=3 --bind=0.0.0.0:5000 app.customer.wsgi:app; \
      fi"]

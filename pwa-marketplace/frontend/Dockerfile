@@ -44,9 +44,14 @@ COPY ./shared-lib ./shared-lib
 # This was best solution advised by vsCode Copilot (there're others but more error prone)
 COPY ./${APP_TYPE} ./${APP_TYPE}
 
-# Build and bundle shared-lib to SSR customer frontend app
+# Build and bundle shared-lib and selected frontend app based on APP_TYPE build argument
 RUN pnpm --filter ./shared-lib build
 RUN pnpm --filter ./${APP_TYPE} build
+
+# Always copy server.js as supposing we're building Customer Frontend build image, as it's the only SSR,
+# which will be deleted in runtime stage if APP_TYPE is not customer (This is needed because Docker doesn't
+# support conditional COPY based on ARG, so we copy it here and then remove it in runtime if not needed)
+COPY ./customer/server.js ./customer/server.js
 
 # Remove dev deps listed in package.json devDependencies, keep production modules only (so node_modules contains prod deps)
 RUN pnpm prune --prod
@@ -66,14 +71,18 @@ WORKDIR /app
 # RUN corepack enable
 
 ARG APP_TYPE=customer
+
 # Copy only built artifacts and minimal runtime dependencies (client + server bundles)
 COPY --from=build /app/${APP_TYPE}/dist ./dist
-# (Optional) If your server entry is a separate file at root of customer build, copy it: (# issue?: Not sure if needed)
-COPY --from=build /app/${APP_TYPE}/server.js ./${APP_TYPE}/server.js
+
+# Always copy server.js from build stage, then remove file and folder if not needed
+COPY --from=build /app/customer/server.js ./customer/server.js
+RUN if [ "$APP_TYPE" != "customer" ]; then rm -rf ./customer; fi
+
 # Copy production node_modules from build stage (pruned to prod only)
 COPY --from=build /app/node_modules ./node_modules
 # Copy package manifest + lockfile into runtime (useful for reproducibility & runtime metadata)
-COPY --from=build /app/${APP_TYPE}/package.json ./
+COPY --from=build /app/${APP_TYPE}/package.json ./${APP_TYPE}/
 COPY --from=build /app/pnpm-lock.yaml ./
 
 # Install only production dependencies (commented out because we already copied pruned node_modules)
