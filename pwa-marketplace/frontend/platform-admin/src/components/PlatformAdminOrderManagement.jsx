@@ -98,7 +98,7 @@ const deleteOrder = async (id) => {
   return true; // Indicate success
 };
 
-const AdminOrderManagement = () => {
+const PlatformAdminOrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false); // Tracks whether the create/edit order dialog is open
   const [editOrderId, setEditOrderId] = useState(null); // Stores the ID of the order being edited, or null for a new order
@@ -245,7 +245,10 @@ const AdminOrderManagement = () => {
           </TableHeader>
           <TableBody>
             {orders.map((order) => (
-              <TableRow key={order.id} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <TableRow
+                key={order.id}
+                className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
                 <TableCell>{order.id}</TableCell>
                 <TableCell>{order.userId}</TableCell>
                 <TableCell>{format(order.orderDate, "PPPpp")}</TableCell>
@@ -458,4 +461,4 @@ const AdminOrderManagement = () => {
   );
 };
 
-export default AdminOrderManagement;
+export default PlatformAdminOrderManagement;

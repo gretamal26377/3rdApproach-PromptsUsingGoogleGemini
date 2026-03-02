@@ -36,7 +36,7 @@ services:
     environment:
       VITE_APP_TYPE: customer
       NODE_ENV: production
-      VITE_API_BASE_URL: http://backend-customer:5000/api/customer
+      VITE_API_BASE_URL: http://backend-customer:5000/api/customer  # Port 5000 corresponds to the container, not the host machine
       <<: *search-engine
     # Mounting host machine's path to container's path. This way,
     # changes in host machine's path are reflected in container's path without rebuilding the image.
@@ -63,12 +63,32 @@ services:
       - "3001:3000"
     environment:
       VITE_APP_TYPE: org-admin
-      VITE_API_BASE_URL: http://backend-admin:5000/api/admin
+      VITE_API_BASE_URL: http://backend-org-admin:5000/api/admin
       <<: *search-engine
     volumes:
       - ./frontend:/pwa-marketplace/frontend:ro
     depends_on:
-      - backend-admin
+      - backend-org-admin
+    restart: always
+
+  frontend-platform-admin:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        APP_TYPE: VITE_APP_TYPE
+    ports:
+      # As host machine is just one, port must be different. However, as in this case
+      # each frontend run in different container, they can use the same port
+      - "3050:3000"
+    environment:
+      VITE_APP_TYPE: platform-admin
+      VITE_API_BASE_URL: http://backend-platform-admin:5000/api/admin
+      <<: *search-engine
+    volumes:
+      - ./frontend:/pwa-marketplace/frontend:ro
+    depends_on:
+      - backend-platform-admin
     restart: always
 
   backend-customer:
@@ -193,7 +213,7 @@ services:
       - default # Or your defined backend network
     restart: always
 
-  org_backend-admin:
+  backend-org-admin:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -217,7 +237,7 @@ services:
       - secret_key
     restart: always
 
-  platform-backend-admin:
+  backend-platform-admin:
     build:
       context: ./backend
       dockerfile: Dockerfile

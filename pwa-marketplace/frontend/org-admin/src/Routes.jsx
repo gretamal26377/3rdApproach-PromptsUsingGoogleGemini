@@ -1,21 +1,27 @@
 // Admin-specific routes
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import AdminDashboard from "./components/AdminDashboard";
-import AdminUserManagement from "./components/AdminUserManagement";
-import AdminStoreManagement from "./components/AdminStoreManagement";
-import AdminProductManagement from "./components/AdminProductManagement";
-import AdminOrderManagement from "./components/AdminOrderManagement";
+import OrgAdminDashboard from "./components/OrgAdminDashboard";
+import OrgAdminUserManagement from "./components/OrgAdminUserManagement";
+import OrgAdminOrgStoreManagement from "./components/OrgAdminOrgStoreManagement";
+import OrgAdminProductServiceManagement from "./components/OrgAdminProductServiceManagement";
+import OrgAdminOrderManagement from "./components/OrgAdminOrderManagement";
 import { LoginPage } from "shared-lib";
 
 export default function AdminRoutes() {
   return (
     <Routes>
-      <Route path="/admin" element={<AdminDashboard />} />
-      <Route path="/admin/users" element={<AdminUserManagement />} />
-      <Route path="/admin/stores" element={<AdminStoreManagement />} />
-      <Route path="/admin/products" element={<AdminProductManagement />} />
-      <Route path="/admin/orders" element={<AdminOrderManagement />} />
+      <Route path="/admin" element={<OrgAdminDashboard />} />
+      <Route path="/admin/users" element={<OrgAdminUserManagement />} />
+      <Route
+        path="/admin/orgs-stores"
+        element={<OrgAdminOrgStoreManagement />}
+      />
+      <Route
+        path="/admin/products-services"
+        element={<OrgAdminProductServiceManagement />}
+      />
+      <Route path="/admin/orders" element={<OrgAdminOrderManagement />} />
       <Route path="/admin/login" element={<LoginPage />} />
     </Routes>
   );

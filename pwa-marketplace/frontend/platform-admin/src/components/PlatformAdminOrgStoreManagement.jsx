@@ -73,7 +73,7 @@ const deleteStore = async (id) => {
   return true; // Indicate success
 };
 
-const AdminStoreManagement = () => {
+const PlatformAdminOrgStoreManagement = () => {
   const [stores, setStores] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editStoreId, setEditStoreId] = (useState < string) | (null > null);
@@ -205,7 +205,10 @@ const AdminStoreManagement = () => {
           </TableHeader>
           <TableBody>
             {stores.map((store) => (
-              <TableRow key={store.id} className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+              <TableRow
+                key={store.id}
+                className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
                 <TableCell>{store.name}</TableCell>
                 <TableCell>{store.description}</TableCell>
                 <TableCell>{store.ownerId}</TableCell>
@@ -349,4 +352,4 @@ const AdminStoreManagement = () => {
   );
 };
 
-export default AdminStoreManagement;
+export default PlatformAdminOrgStoreManagement;

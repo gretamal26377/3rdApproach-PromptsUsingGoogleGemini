@@ -17,7 +17,7 @@ import {
 import { cn } from "shared-lib";
 import { Link } from "react-router-dom";
 
-const AdminDashboard = () => {
+const PlatformAdminDashboard = () => {
   const dashboardItems = [
     {
       title: "Users",
@@ -109,4 +109,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default PlatformAdminDashboard;
