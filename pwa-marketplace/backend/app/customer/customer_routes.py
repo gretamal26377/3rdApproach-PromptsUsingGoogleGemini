@@ -9,7 +9,7 @@ from .customer_management import (
     get_roles_logic, get_countries_logic, get_states_regions_logic, get_cities_towns_logic, get_organisations_logic
 )
 
-customer_bp = Blueprint('customer_bp', __name__, url_prefix='/api/customer')
+customer_bp = Blueprint('customer_bp', __name__, url_prefix='')
 
 @customer_bp.route('register', methods=['POST'])
 def register_customer():

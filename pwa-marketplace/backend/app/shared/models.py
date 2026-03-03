@@ -396,9 +396,9 @@ class Roles(db.Model):
     )
 
     role_id = db.Column(db.Integer, primary_key=True)
-    # e.g., 'admin', 'supervisor', 'agent'
+    # e.g., 'admin', 'supervisor', 'staff'
     role_code = db.Column(db.String(50), nullable=False)
-    # e.g., 'Admin', 'Supervisor', 'Agent'
+    # e.g., 'Admin', 'Supervisor', 'Staff'
     role_display = db.Column(db.String(100), nullable=False)
     role_description = db.Column(db.Text)
     role_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)

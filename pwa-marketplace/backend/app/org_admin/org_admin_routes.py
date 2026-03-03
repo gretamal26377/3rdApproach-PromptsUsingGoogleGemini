@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from ..shared.auth import token_required, admin_required
-from .org_admin_management import (
+from ..shared.management import (
     get_users_logic, get_user_logic, create_user_logic, update_user_logic, inactivate_user_logic,
     create_store_logic, update_store_logic, inactivate_store_logic,
     create_product_logic, update_product_logic, inactivate_product_logic,
@@ -8,7 +8,7 @@ from .org_admin_management import (
 )
 
 
-org_admin_bp = Blueprint('org_admin_bp', __name__, url_prefix='api/org_admin')
+org_admin_bp = Blueprint('org_admin_bp', __name__, url_prefix='')
 
 @org_admin_bp.route('users', methods=['GET'])
 @token_required
@@ -18,8 +18,7 @@ def get_users(current_user):
     return jsonify(result), status
 
 @org_admin_bp.route('users/<int:user_id>', methods=['GET'])
-@token_required
-@admin_required
+@token_required(roles=['admin', 'supervisor', 'staff'])
 def get_user(current_user, user_id):
     result, status = get_user_logic(user_id)
     return jsonify(result), status
