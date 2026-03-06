@@ -591,7 +591,7 @@ class StoresUsers(db.Model):
 class Users(db.Model):
     __tablename__ = 'users'
     __table_args__ = (
-        Index('user_email', 'user_email', unique=True),
+        Index('user_email_organisation', 'user_email', 'user_organisation_id', unique=True),
     )
 
     user_id = db.Column(db.Integer, primary_key=True)

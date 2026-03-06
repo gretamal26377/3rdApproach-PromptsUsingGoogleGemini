@@ -1,7 +1,9 @@
+import logging
 import jwt  # importing jwt (json web token) for token generation and decoding
 from flask import jsonify, request, current_app
 from functools import wraps  # for creating decorators
 from .models import Users
+from .management import get_user_logic
 import datetime  # for handling date and time
 
 def generate_token(id):
@@ -27,16 +29,17 @@ def decode_token(token):
     except jwt.InvalidTokenError:
         return None
 
-def token_required(roles=None):
+def token_required(org_id=None, role_codes_required=None):
     """
-    Decorator to require a valid token for authentication and optional role-based access control.
+    Decorator to require a valid token for authentication and optional org_id and role-based access control to Users types (Org Admin, Platform Admin)
     This is gral purpose decorator, so that's the reason for both checks. Authorization header and cookie.
         Authorization is used when tokens are stored in localStorage/sessionStorage at frontend side
         Cookies store tokens at backend side and are considered more secure against XSS attacks because of features
         like HttpOnly and Secure flags
     Usage:
-      @token_required()  # Any logged-in user
-      @token_required(roles=['admin', 'supervisor'])  # Only admin/supervisor
+      @token_required()  # Customer logged-in
+      @token_required(org_id=1, role_codes_required=['admin'])  # Org Admin logged-in for org_id 1
+      @token_required(role_codes_required=['admin', 'supervisor'])  # Platform level: Only admin/supervisor admitted
     """
     def decorator(f):
         @wraps(f)
@@ -56,18 +59,33 @@ def token_required(roles=None):
             
             user_id = decode_token(token)
             if not user_id:
-                return jsonify({'message': 'Invalid or expired token'}), 401
+                return jsonify({'message': 'Invalid or expired Token'}), 401
 
-            current_user = Users.query.get(user_id)
-            if not current_user:
-                return jsonify({'message': 'User not found'}), 401
+            # Detect frontend type from request path or header
+            # Can't use VITE_APP_TYPE env var because it's only visible at frontend side by Vite 
+            # Convention: /api/admin/... -> org-admin, /api/platform/... -> platform-admin, /api/customer/... -> customer
+            path = request.path
+            if 'backend-org-admin' in path and role_codes_required:
+                app_type = 'org-admin'
+            elif 'backend-platform-admin' in path and role_codes_required:
+                app_type = 'platform-admin'
+            elif 'backend-customer' in path and not role_codes_required:
+                app_type = 'customer'
+            else:
+                logging.error("There's no matching between App Types and Required Roles: %s", path, role_codes_required)
+                return jsonify({'error': 'Unexpected Authentication Error'}), 500
+
+            # For Customer, user_id is actually customer_id
+            user_data, status = get_user_logic(app_type, org_id, user_id)
+            if status != 200:
+                return jsonify(user_data), status
 
             # Role-based Access Control
-            if roles:
-                user_role = getattr(current_user, 'role_code', None) or (getattr(current_user, 'role', None) and getattr(current_user.role, 'role_code', None))
-                if user_role not in roles:
-                    return jsonify({"error": f"Insufficient Role: Requires {roles} Role(s)"}), 403
+            if role_codes_required:
+                user_role_code = user_data.get('role_code')
+                if user_role_code not in role_codes_required:
+                    return jsonify({"error": f"Insufficient Role: Requires {role_codes_required} Role(s)"}), 403
 
-            return f(current_user, *args, **kwargs)
+            return f(user_data, *args, **kwargs)
         return decorated_function
     return decorator

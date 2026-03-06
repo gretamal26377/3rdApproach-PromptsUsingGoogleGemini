@@ -77,16 +77,55 @@ def get_users_logic():
     users_data = [{'id': user.id, 'username': user.username, 'email': user.email, 'is_admin': user.is_admin} for user in users]
     return users_data, 200
 
-def get_user_logic(user_id):
-    user = Users.query.get(user_id)
-    if not user:
-        logging.warning(f"User: {user_id} not found during get_user_logic")
-        return {'message': 'User not found'}, 404
+def get_user_logic(app_type, org_id, user_id):
+    """
+    Retrieve User Logic based on app_type and org_id
+    - app_type: 'org-admin', 'platform-admin', or 'customer'
+    - org_id: organisation_id for org-admin, None for platform-admin/customer
+    - user_id: user_id (or customer_id for customer app)
+    """
+    user = None
+    active_status = EntityStatuses.query.filter_by(status_code='active').first()
+    if not active_status:
+        logging.error("Active Status not found during get_user_logic")
+        return {'message': 'Active Status not found'}, 500
+    active_status_id = active_status.status_id
+
+    if app_type == 'org-admin':
+        # Only allow User if he belongs to the given Organisation and is active
+        user = Users.query.filter_by(id=user_id, organisation_id=org_id, user_status_id=active_status_id).first()
+        if not user:
+            logging.warning(f"User: {user_id} not found or Inactive in Org {org_id} during get_user_logic (org-admin)")
+            return {'message': 'User not found or Inactive in Organisation'}, 404
+    elif app_type == 'platform-admin':
+        # Platform Admin can access any active User
+        user = Users.query.filter_by(id=user_id, user_status_id=active_status_id).first()
+        if not user:
+            logging.warning(f"User: {user_id} not found or Inactive during get_user_logic (platform-admin)")
+            return {'message': 'User not found or Inactive'}, 404
+    elif app_type == 'customer':
+        # For Customer, user_id is actually customer_id
+        customer = Customers.query.filter_by(customer_id=user_id, customer_status_id=active_status_id).first()
+        if not customer:
+            logging.warning(f"Customer: {user_id} not found or Inactive during get_user_logic (customer)")
+            return {'message': 'Customer not found or Inactive'}, 404
+        # Return Customer data in user_data format for compatibility
+        user_data = {
+            'id': customer.customer_id,
+            'user_name': customer.customer_name,
+            'email': customer.customer_email
+        }
+        return user_data, 200
+    else:
+        logging.warning(f"Unknown app_type: {app_type} in get_user_logic")
+        return {'message': 'Invalid app_type'}, 400
+
     user_data = {
         'id': user.id,
         'username': user.username,
         'email': user.email,
-        'is_admin': user.is_admin
+        'organisation_id': user.organisation_id,
+        'role_code': user.role.role_code if user.role else None
     }
     return user_data, 200
 
@@ -119,8 +158,8 @@ def inactivate_user_logic(user_id):
     try:
         inactive = EntityStatuses.query.filter_by(status_code='inactive').first()
         if not inactive:
-            logging.error("Inactive status not found")
-            return {'message': 'Inactive status not configured'}, 500
+            logging.error("Inactive Status not found")
+            return {'message': 'Inactive Status not found'}, 500
         user.user_status_id = inactive.status_id
         db.session.commit()
         return {'message': 'User Inactivated successfully'}, 200
@@ -141,8 +180,8 @@ def create_store_logic(current_user, data):
         store_address = bleach.clean(data['store_address'], strip=True)
         active_status = EntityStatuses.query.filter_by(status_code='active').first()
         if not active_status:
-            logging.error("Active status not found")
-            return {'message': 'Active status not configured'}, 500
+            logging.error("Active Status not found")
+            return {'message': 'Active Status not found'}, 500
         new_store = Stores()
         # Map to model fields; fill required columns with provided data where possible
         new_store.store_name = name
@@ -193,7 +232,7 @@ def inactivate_store_logic(current_user, store_id):
         inactive = EntityStatuses.query.filter_by(status_code='inactive').first()
         if not inactive:
             logging.error("Inactive Status not found")
-            return {'message': 'Inactive Status not configured'}, 500
+            return {'message': 'Inactive Status not found'}, 500
         store.store_status_id = inactive.status_id
         # Also inactivate linked store_products_services
         StoreProductsServices.query.filter_by(store_id=store_id).update({'status_id': inactive.status_id})
@@ -205,55 +244,46 @@ def inactivate_store_logic(current_user, store_id):
         logging.error(f"Error Inactivating Store: {e}")
         return {'message': 'Failed to Inactivate Store'}, 500
 
-def create_product_service_logic(current_customer, data):
-    required_fields = ['product_service_name', 'product_service_description', 'product_service_category_id', 'product_service_pic_path', 'store_id', 'price', 'stock']
+def create_store_product_service_logic(current_user, data):
+    required_fields = ['store_id', 'product_service_id', 'price', 'stock']
     if not all(field in data for field in required_fields):
         return {'message': 'Missing required fields'}, 400
     try:
         # Sanitize fields
-        name = bleach.clean(data['product_service_name'], strip=True)
-        description = bleach.clean(data['product_service_description'], strip=True)
-        pic_path = bleach.clean(data['product_service_pic_path'], strip=True)
+        store_id = bleach.clean(data['store_id'], strip=True)
+        product_service_id = bleach.clean(data['product_service_id'], strip=True)
+        price = bleach.clean(data['price'], strip=True)
+        stock = bleach.clean(data['stock'], strip=True)
         active_status = EntityStatuses.query.filter_by(status_code='active').first()
         if not active_status:
             logging.error("Active Status not found")
-            return {'message': 'Active Status not configured'}, 500
+            return {'message': 'Active Status not found'}, 500
         active_status_id = active_status.status_id
         # Check store exists and is active
         store = Stores.query.filter_by(store_id=data['store_id'], store_status_id=active_status_id).first()
         if not store:
             return {'message': 'Store not found or Inactive'}, 404
-        # Create product/service
-        new_product_service = ProductsServices()
-        new_product_service.product_service_name = name
-        new_product_service.product_service_description = description
-        new_product_service.product_service_pic_path = pic_path
-        new_product_service.product_service_category_id = data['product_service_category_id']
-        new_product_service.product_service_status_id = active_status_id
-        db.session.add(new_product_service)
-        db.session.flush()  # Get product_service_id
 
-        # Create store-product-service link
-        # Issue: There would be another function to handle linking SPS
+        # Create Store Product/Service
         sps = StoreProductsServices()
         sps.store_id = store.store_id
-        sps.product_service_id = new_product_service.product_service_id
+        sps.product_service_id = product_service_id
         sps.price = data['price']
         sps.stock = data['stock']
         sps.status_id = active_status_id
         db.session.add(sps)
         db.session.commit()
-        return {'message': 'Product/Service created successfully', 'product_service_id': new_product_service.product_service_id}, 201
+        return {'message': 'Product/Service created successfully at Store'}, 201
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error creating Product/Service: {e}")
-        return {'message': 'Failed to create Product/Service'}, 500
+        logging.error(f"Error creating Store Product/Service: {e}")
+        return {'message': 'Failed to create Product/Service at Store'}, 500
 
 def update_product_service_logic(current_customer, product_service_id, data):
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
         logging.error("Active Status not found")
-        return {'message': 'Active Status not configured'}, 500
+        return {'message': 'Active Status not found'}, 500
     product_service = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status.status_id).first()
     if not product_service:
         return {'message': 'Product/Service not found or Inactive'}, 404
@@ -277,7 +307,7 @@ def inactivate_product_service_logic(current_customer, product_service_id):
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
     if not active_status:
         logging.error("Active Status not found")
-        return {'message': 'Active Status not configured'}, 500
+        return {'message': 'Active Status not found'}, 500
     product_service = ProductsServices.query.filter_by(product_service_id=product_service_id, product_service_status_id=active_status.status_id).first()
     if not product_service:
         return {'message': 'Product/Service not found or Inactive'}, 404
@@ -285,7 +315,7 @@ def inactivate_product_service_logic(current_customer, product_service_id):
         inactive = EntityStatuses.query.filter_by(status_code='inactive').first()
         if not inactive:
             logging.error("Inactive Status not found")
-            return {'message': 'Inactive Status not configured'}, 500
+            return {'message': 'Inactive Status not found'}, 500
         product_service.product_service_status_id = inactive.status_id
         # Inactivate linked store products/services rows
         StoreProductsServices.query.filter_by(product_service_id=product_service_id).update({'status_id': inactive.status_id})
