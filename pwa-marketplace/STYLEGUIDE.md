@@ -1,15 +1,14 @@
-# Project Style Guide (GRL: Need update)
+# Project Style Guide
 
 ## 1. CSS Framework
 
 - This project uses **Tailwind CSS** for all styling
-- Utility classes are preferred for layout, spacing, color, and typography
+- Utility classes are preferred for layout, spacing, color, typography and all customisations
 
 ## 2. Component Patterns
 
-- All UI primitives (Button, Input, Table, Card, etc.) are implemented as React components in `frontend/shared-lib/src/components/ui/`
+- All UI primitives (Button, Input, Table, Card, etc) are implemented as React components in `frontend/shared-lib/src/components/ui/`
 - Components accept a `className` prop for further customization
-- Use Tailwind utility classes for all customizations
 
 ## 3. Layout & Spacing
 
@@ -18,7 +17,7 @@
 
 ## 4. Typography
 
-- Use Tailwind classes for font size, weight, and color (e.g., `text-xl`, `font-bold`, `text-gray-700`)
+- Use Tailwind classes for font size, weight, and color (eg: `text-xl`, `font-bold`, `text-gray-700`)
 
 ## 5. Colors & Theme
 
@@ -37,11 +36,11 @@ Example:
 
 ### Form Validation: User Experience
 
-- If form validation fails, display a clear error message (e.g., Alert or FormMessage).
-- Do NOT clear or reset the form or its input values on validation failure.
-- Keep all user input intact so the user can immediately fix any wrong or incomplete fields and resubmit.
-- Only calls form.reset() after successful create/update.
-- This applies to all forms (signup, login, checkout, etc.) in both admin and customer apps.
+- If form validation fails, display a clear error message (eg: Alert or FormMessage)
+- Do NOT clear or reset the form or its input values on validation failure
+- Keep all user input intact so the user can immediately fix any wrong or incomplete fields and resubmit
+- Only calls form.reset() after successful create/update
+- This applies to all forms (signup, login, checkout, etc) in both Admins and Customer apps
 
 Rationale: This ensures a smooth user experience and prevents frustration from lost input.
 
@@ -82,7 +81,7 @@ Rationale: This ensures a smooth user experience and prevents frustration from l
 
 ## 11. Dropdowns
 
-- Use the `Dropdown` component from `shared-lib` for all select menus.
+- Use the `Dropdown` component from `shared-lib` for all select menus
   - Accepts all native `<select>` props and children `<option>` elements.
   - Example:
     ```jsx
@@ -95,12 +94,13 @@ Rationale: This ensures a smooth user experience and prevents frustration from l
 
 ### Dropdowns and Checkboxes: Animation & Accessibility
 
-- All dropdowns must use smooth open/close animation (opacity, scale) and support keyboard navigation (Tab, Arrow keys, Enter/Space).
-- All dropdowns must use ARIA roles (`listbox`, `option`, `aria-expanded`, `aria-controls`) and trap focus when open.
-- All checkboxes must have visible focus outlines, ARIA attributes, and animated checkmark feedback.
-- Use shared UI primitives for dropdowns and checkboxes to ensure these features are applied project-wide.
+- All dropdowns must use smooth open/close animation (opacity, scale) and support keyboard navigation (Tab, Arrow keys, Enter/Space)
+- All dropdowns must use ARIA roles (`listbox`, `option`, `aria-expanded`, `aria-controls`) and trap focus when open
+- All checkboxes must have visible focus outlines, ARIA attributes, and animated checkmark feedback
 
-## 12. More in depth analysis asked to GitHub Copilot (raw copy&paste)
+- Use shared-lib UI primitives for dropdowns and checkboxes to ensure these features are applied project-wide
+
+## 12. More in depth analysis asked to GitHub Copilot (raw copy&paste)(GRL: Need review & update)
 
 Can you summarise for me the Tailwind classes and patterns already present in the project?
 
@@ -157,7 +157,7 @@ Patterns:
 Consistent use of utility classes for spacing, color, and layout.
 Responsive design with Tailwind’s breakpoint prefixes (sm:, md:, lg:).
 Component props often accept className for further customization.
-Minimal or no custom CSS—almost all styling is via Tailwind classes.
+Minimal custom CSS, almost all styling is via Tailwind classes.
 
 Summary:
 Your project uses a modern, utility-first Tailwind approach for all UI, focusing on spacing, color, layout, and responsive design, with consistent patterns across components
@@ -207,8 +207,8 @@ And in tailwind.config.js:
 3. Where These Are Used
    App.jsx:
    Uses bg-background, text-text, dark:bg-background-dark, dark:text-text-dark
-   Button, Card, Alert, Table, etc. (shared-lib):
-   Use both custom and default Tailwind classes, e.g. bg-background, text-text, dark:bg-background-dark, dark:text-text-dark, and also bg-white, text-gray-800, etc.
+   Button, Card, Alert, Table, etc.
+   (shared-lib): Use both custom and default Tailwind classes, eg: bg-background, text-text, dark:bg-background-dark, dark:text-text-dark, and also bg-white, text-gray-800, etc.
    HomePage.jsx, ProductList, StoreList, etc.:
    Use mostly default Tailwind classes (bg-white, text-gray-800, etc.), but may also use custom ones if passed via props or variants.
    Summary Table
@@ -226,7 +226,6 @@ And in tailwind.config.js:
    Keep using custom tokens for background, text, primary, etc. for consistency and easy theming.
    Make sure all custom classes are defined in both tailwind.config.js and your global CSS as CSS variables.
    Fallback to Tailwind defaults for utility classes and quick styling.
-   If you want a ready-to-paste config for your custom tokens, let me know!
 
 ##
 

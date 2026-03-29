@@ -5,7 +5,8 @@ import typography from "@tailwindcss/typography";
 export default {
   darkMode: "class", // Enable dark mode via class strategy
   content: [
-    "./admin/src/**/*.{js,jsx,ts,tsx}",
+    "./org_admin/src/**/*.{js,jsx,ts,tsx}",
+    "./platform_admin/src/**/*.{js,jsx,ts,tsx}",
     "./customer/src/**/*.{js,jsx,ts,tsx}",
     "./shared-lib/src/**/*.{js,jsx,ts,tsx}",
     "./shared-lib/src/**/*.mdx",

@@ -1,39 +1,44 @@
 # Marketplace Application (under development)
-## Needs to be updated (GRL) 
+
+## Needs to be updated (GRL)
 
 ## Description
 
-This is a multi-vendor e-commerce marketplace application built with React, Node.js, and other modern technologies. It allows multiple stores to sell their products through a single platform.
-
+This is a multi-vendor e-commerce Marketplace Application built with React, Node.js, Python, MySQL, Docker microservices and other modern technologies. It allows multiple Stores, belonging to an Organisation, to sell their Products/Services through a single Platform
 
 ## Features
 
-- **Store Management:** Store owners can manage their store information, products, and orders.
-- **Product Management:** Store owners can add, update, and delete products, including details like name, description, price, and category.
-- **User Authentication:** Users can create accounts, log in, and manage their profiles.
-- **User Roles for simplicity assigned by Store:**
-    Admin: All Management Power
-    Supervisor: Operational Management
-    Seller: Daily Paperwork
-    Viewver: Just view no modification at all 
-- **Shopping Cart:** Users can add products to their cart and proceed to checkout.
-- **Order Management:** Users can view their order history.
-- **Admin Panel:** A dedicated admin panel for managing users, stores, products, and orders.
-- **Search:** Users can search for products and stores.
-- **PWA Support:** Progressive Web App features for offline access and improved performance.
+- **Organisation's Store Management:** Organisations can manage their own Stores, information, Products/Services, and Customer Orders
+- **Product/Service Management:** Stores can add, update, and delete Products/Services, including details like name, description, price, and Category
+- **User Authentication:** Users log in their profiles
+- **User Roles assigned at Organisation level:**
+  Admin: All Management Power
+  Supervisor: Operational Management
+  Staff: Daily Paperwork Management
+  Viewer: Just read-only access view, no allow modification at all
+- **Shopping Cart:** Customers can add Products/Services to their Cart and proceed to Checkout
+- **Order Management:** Customers can view their Order history
+
+- **Admin Panel:** A dedicated admin panel for managing users, stores, products, and orders
+
+- **Search:** Customers & Users can Search for Products/Services, Organisations, Stores and Categories
+- **PWA Support:** The Customer Frontend App is a Progressive Web App with offline access and improved performance features
 
 ## Technologies Used
 
 - **Frontend:** React
-- **Backend:** Node.js, Express (GRL: Not sure about Express)
+- **Backend:** Python Flask
+
+- **Monorepo:** shared-lib
+
 - **Database:** MySQL
-- **State Management:** React Context
-- **UI Components:** Radix UI
+- **Order State Management:** Temporal Workflow Engine
+- **UI Components:** Following STYLEGUIDE.md definitions
 - **Form Validation:** Zod, React Hook Form
 - **Icons:** Lucide React
 - **Containerization:** Docker
 
-## Project Structure
+## Project Structure (GRL: Need update)
 
 ```
 marketplace/
@@ -73,7 +78,7 @@ marketplace/
 
     ```bash
     git clone <repository_url>
-    cd marketplace
+    cd pwa-marketplace
     ```
 
 2.  **Navigate to the `database` folder and start the database:**
@@ -94,37 +99,24 @@ marketplace/
     The frontend will be accessible at `http://localhost:3000`.
 
 4.  **Set up the backend:**
-    - The `backend` folder is outlined in the project structure, but the implementation details are not provided in this code. You would need to set up a Node.js/Express.js backend, create the necessary API endpoints, and connect it to the MySQL database. The `setupProxy.js` in the `frontend` folder is configured to proxy API requests to `http://backend:5000`, so your backend should be running at that address (or you should change the proxy configuration).
-    - You'll need to install the necessary dependencies for your backend (e.g., `express`, `mysql2`), define your models, controllers, and routes, and handle database connections.
+    - The `backend` folder is outlined in the project structure.
+    - You'll need to install the necessary dependencies for your backend (eg: `mysql2`), define your models, controllers, and routes, and handle database connections
 
 ## Database Setup
 
-The `database/init.sql` file contains the SQL schema for the application. The `database/docker-compose.yml` file sets up a MySQL database using Docker. When you run `docker-compose up -d` in the `database` directory, it will create a containerized MySQL instance with the schema defined in `init.sql`.
+The `database/init.sql` file contains the SQL schema for the application. The `.database/Dockerfile` and `.docker-compose.yml` files are provided for containerising a MySQL database using Docker.
 
 ## Frontend Setup
 
-The `frontend` folder contains the React application. `npm install` installs the necessary dependencies, and `npm start` starts the development server. The `Dockerfile` and `docker-compose.yml` files are provided for containerizing the frontend application.
+The `frontend` folder contains the React Frontend applications (Customer, Organisation-Admin and Platform-Admin apps). `npm install` installs the necessary dependencies, and `npm start` starts the development server. The `.frontend/Dockerfile` and `.docker-compose.yml` files are provided for containerising the frontend applications using Docker.
 
-## Backend Setup (Conceptual)
+## Backend Setup
 
-The `backend` folder 
+The `backend` folder contains the Python-Flask Backends applications (Customer, Organisation-Admin and Platform-Admin apps). The `.backend/Dockerfile` and `.docker-compose.yml` files are provided for containerising the backend applications using Docker.
 
-1.  Creating a Node.js/Express.js application.
-2.  Installing dependencies  
-    python -m pip install -r backend\requirements.txt  
-3.  Connecting to the MySQL database using a library like `mysql2`.
-4.  Defining API endpoints for:
-    - User authentication (login, signup, logout)
-    - Store management (create, get, update, delete)
-    - Product management (create, get, update, delete)
-    - Order management (create, get)
-    - User management (get, update, delete) - for admins
-5.  Implementing business logic for each endpoint.
-6.  Securing the API endpoints.
+## Docker Setup (GRL: update till here)
 
-## Docker Setup
-
-Docker is used to containerize the application, making it easier to set up and deploy.
+Docker is used to containerise the application, making it easier to set up and deploy.
 
 - `frontend/Dockerfile` defines how to build a Docker image for the frontend.
 - `frontend/docker-compose.yml` defines how to run the frontend container.
@@ -138,14 +130,9 @@ The provided Dockerfiles and `docker-compose.yml` files can be used to deploy th
 
 ## Future Enhancements
 
-- Implement the backend.
-- Add unit and integration tests.
-- Implement user roles and permissions.
-- Implement payment processing.
-- Add more advanced search features.
-- Improve the UI/UX.
-- Add support for multiple languages.
-- Implement a review system.
+- Add unit and integration tests
+- Improve the UI/UX
+- Add support for multiple languages
 
 ## Gral Notes
 

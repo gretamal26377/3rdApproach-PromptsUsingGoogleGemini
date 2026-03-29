@@ -79,10 +79,10 @@ def get_users_logic():
 
 def get_user_logic(app_type, org_id, user_id):
     """
-    Retrieve User Logic based on app_type and org_id
+    Retrieve User based on app_type and org_id
     - app_type: 'org-admin', 'platform-admin', or 'customer'
     - org_id: organisation_id for org-admin, None for platform-admin/customer
-    - user_id: user_id (or customer_id for customer app)
+    - user_id: user_id (or customer_id for Customer app)
     """
     user = None
     active_status = EntityStatuses.query.filter_by(status_code='active').first()
