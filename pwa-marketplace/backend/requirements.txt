@@ -14,6 +14,9 @@ meilisearch
 bleach
 eralchemy2
 pygraphviz
+# Popular Python library used to make HTTP requests easily. It allows the backend code
+# to send HTTP/HTTPS requests (like GET, POST, etc.) to external APIs or services and
+# handle their responses
 requests
 # Add Temporal Python SDK for workflow engine
 # See: https://docs.temporal.io/docs/python/introduction

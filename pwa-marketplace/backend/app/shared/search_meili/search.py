@@ -13,7 +13,7 @@ INDEX_NAME = 'products_services_stores_categories'
 
 # No need of sanitisation here as Meilisearch client handles that internally
 @search_bp.route('/search', methods=['GET'])
-def search_products():
+def search_products_services():
     """
     Performs a search query against the Meilisearch 'products_services_stores_categories' index
 
@@ -201,5 +201,5 @@ def get_product_service_listings(base_product_service_id):
         return jsonify(search_results.hits), 200
 
     except Exception as e:
-        current_app.logger.error(f"Meilisearch product listings query failed: {e}")
+        current_app.logger.error(f"Meilisearch product/service listings query failed: {e}")
         return jsonify({'message': 'Search service is currently unavailable'}), 503

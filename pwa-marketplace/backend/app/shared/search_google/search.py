@@ -10,7 +10,7 @@ from flask import Blueprint, jsonify, request, current_app
 search_bp = Blueprint('search_bp', __name__, url_prefix='/api-search')
 
 @search_bp.route('/search', methods=['GET'])
-def search_products():
+def search_products_services():
     search_term = request.args.get('q', '').strip()
     if not search_term:
         return jsonify({
