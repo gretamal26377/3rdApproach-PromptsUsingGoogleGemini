@@ -2,7 +2,7 @@
 
 ## Description
 
-This is a multi-vendor e-commerce Marketplace Application built with React, Node.js, Python, MySQL, Docker microservices and other modern technologies. It allows multiple Stores, belonging to an Organisation, to sell their Products/Services through a single Platform
+This is a Multi-Vendor e-commerce Marketplace Application built with React, Node.js, Python, MySQL, Docker microservices and other modern technologies. It allows multiple Stores, belonging to an Organisation, to sell their Products/Services through a single Platform
 
 ## Features
 
