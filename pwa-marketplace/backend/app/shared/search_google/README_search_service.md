@@ -1,93 +1,47 @@
-# Backend Search Service (GRL: Outdated! Needs review)
-
-This service exposes the search API for the marketplace, leveraging Meilisearch for fast, relevant search results. It is designed to be used by both the customer and admin backends, as well as directly by frontend clients if needed.
-
-## How it works
-
-- The service runs as a standalone Flask app, exposing endpoints under `/api-search` (e.g., `/api-search/search`)
-- It connects to Meilisearch using the `MEILISEARCH_URL` and `MEILISEARCH_API_KEY` environment variables
-- It is deployed as its own container (`backend-search`) in `docker-compose.yml`
-
-## Usage
-
-- **Customer and Admin backends**: Make HTTP requests to `http://backend-search:5002/api-search/...` for search functionality.
-- **Frontend**: Set the Vite environment variable `VITE_SEARCH_API_BASE_URL` to point to the search service (e.g., `http://localhost:5002/api-search`).
-
-## Development
-
-- The entrypoint is `app/shared/search_wsgi.py`
-- The Dockerfile for this service is `backend/Dockerfile-search`
-- The service is started with Gunicorn on port 5002
-
-## Example docker-compose service
-
-```
-backend-search:
-  build:
-    context: ./backend
-    dockerfile: Dockerfile-search
-  ports:
-    - "5002:5002"
-  environment:
-    MEILISEARCH_URL: http://meilisearch:7700
-    # MEILISEARCH_API_KEY: <your-key>
-  depends_on:
-    - meilisearch
-```
-
-## Example frontend .env
-
-```
-VITE_SEARCH_API_BASE_URL=http://localhost:5002/api-search
-```
-
-## Example usage in frontend code
-
-```js
-import api from "shared-lib/src/services/api";
-
-// For search requests:
-const results = await api.getSearch("search?q=shoes");
-```
-
----
+# Backend Search Service
 
 ## Google Search API Setup
 
-To use the Google Search JSON API integration:
+Use this setup to enable Google-based search for the marketplace backend.
 
-1. **Obtain Credentials:**
+### 1. Obtain credentials
 
 - Create a Programmable Search Engine at https://programmablesearchengine.google.com/
-- Get your Search Engine ID (CX) and enable the Custom Search API in Google Cloud Console
+- Enable the Custom Search API in Google Cloud Console
 - Create an API key in Google Cloud Console
+- Copy your Search Engine ID (CX)
 
-2. **Set Environment Variables:**
+### 2. Set environment variables
 
-- `GOOGLE_SEARCH_API_KEY`: Your Google API key
-- `GOOGLE_SEARCH_CX`: Your Programmable Search Engine ID
-- Set these in your environment, Docker Compose, or deployment config
+Add these values to your environment, Docker Compose file, or deployment configuration:
 
-3. **Install Dependencies:**
+- `GOOGLE_SEARCH_API_KEY`: your Google API key
+- `GOOGLE_SEARCH_CX`: your Programmable Search Engine ID
 
-- Ensure `requests` is present in `requirements.txt`
+### 3. Install dependencies
 
-4. **Build and Run:**
+Make sure the `requests` package is available in `requirements.txt`.
 
-- Build with `SEARCH_ENGINE=google` as shown above
-- The backend will use the Google Search API for requests at url prefix `/api-search/search`
+### 4. Build and run
 
-5. **Response Format:**
+Build the backend with the Google search engine enabled:
 
-- The API will always return a normalized structure:
-  ```json
-  {
-   "products_services": [...],
-   "stores": [],
-   "categories": []
-  }
-  ```
+```sh
+docker build --build-arg SEARCH_ENGINE=google -t my-backend:google .
+```
 
----
+The backend will use the Google Search API for requests under `/api-search/search`.
 
-The Google Search Engine implementation returns real results from Google Custom Search
+### 5. Response format
+
+The API returns a normalized structure like this:
+
+```json
+{
+  "products_services": [],
+  "stores": [],
+  "categories": []
+}
+```
+
+This implementation returns real results from Google Custom Search and formats them for the marketplace app.

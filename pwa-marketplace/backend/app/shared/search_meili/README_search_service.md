@@ -1,6 +1,6 @@
 # Backend Search Service (GRL: Outdated! Needs review)
 
-This service exposes the search API for the marketplace, leveraging Meilisearch for fast, relevant search results. It is designed to be used by both the customer and admin backends, as well as directly by frontend clients if needed.
+This service exposes the search API for the marketplace, leveraging Meilisearch for fast, relevant search results. It is designed to be used by all Backendds the Customer, Organisation-Admin and Platform-Admin Apps.
 
 ## How it works
 
