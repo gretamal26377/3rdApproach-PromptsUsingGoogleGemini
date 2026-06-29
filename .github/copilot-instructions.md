@@ -2,16 +2,16 @@
 
 ## Project Overview
 
-This monorepo contains a marketplace application with a microservices-inspired structure:
+This monorepo contains a Marketplace Application with a microservices-inspired structure:
 
-- **backend/**: Python Flask (admin/customer APIs, SQLAlchemy models, ERD scripts)
-- **frontend/**: React (admin, customer, shared-lib)
+- **backend/**: Python Flask (Customer, Organisation-Admin and Platform-Admin App APIs, SQLAlchemy models, ERD scripts)
+- **frontend/**: React (Customer, Organisation-Admin, Platform-Admin Apps, shared-lib)
 - **database/**: SQL scripts and Docker Compose for DB setup
 
 ## Key Architectural Patterns
 
-- **Backend**: Modular Flask apps for admin and customer, each with their own `create_app()` in `app.admin` and `app.customer`. Shared models and DB logic live in `app.shared`.
-- **Frontend**: Each frontend (admin, customer) is a separate React app, with a shared component library (`shared-lib`).
+- **Backend**: Modular Flask apps for Customer, Organisation-Admin and Platform-Admin Apps, each with their own `create_app()` in `app.org_admin`, `app.platform_admin`, and `app.customer`. Shared models and DB logic live in `app.shared`.
+- **Frontend**: Each frontend (Customer, Organisation-Admin and Platform-Admin) is a separate React App, with a shared component library (`shared-lib`).
 - **Database**: Managed via SQL scripts and Docker Compose. Models are defined in Python and can be auto-documented with ERD scripts.
 
 ## Developer Workflows
@@ -19,9 +19,9 @@ This monorepo contains a marketplace application with a microservices-inspired s
 - **Backend**:
   - Use `python -m scripts.generate_er_diagram` to generate ER diagrams (requires Graphviz and eralchemy2).
   - Run all unittests: `python -m unittest discover -s pwa-marketplace/backend/tests -p '*_test.py' -v`
-  - Use the correct `create_app()` import: `from app.admin import create_app` for admin, `from app.customer import create_app` for customer, or define a project-wide one in `app/__init__.py` if needed.
+  - Use the correct `create_app()` import: `from app.org_admin import create_app` for org_admin,  `from app.platform_admin import create_app` for platform_admin and `from app.customer import create_app` for customer.
 - **Frontend**:
-  - Each app (`admin`, `customer`, `shared-lib`) has its own `package.json` and build process.
+  - Each app (`org_admin`, `platform_admin`, `customer`, `shared-lib`) has its own `package.json` and build process.
   - Use Storybook for UI development in `shared-lib`.
 - **Database**:
   - Start with Docker Compose in `database/`.
@@ -52,7 +52,7 @@ This applies to all forms (signup, login, checkout, etc.) in both admin and cust
 - **No global `create_app()` in `app/__init__.py` by default**; import from the relevant submodule.
 - **Shared code** (models, DB logic) lives in `app/shared/`.
 - **Scripts** (like ERD generation) may need to adjust their `create_app` import depending on which app context is required.
-- **Frontend shared-lib** is used by both admin and customer frontends; keep components generic.
+- **Frontend shared-lib** is used by all admin and customer frontends; keep components generic.
 - **Dockerfiles** and `docker-compose.yml` files are present for both backend and frontend, supporting local and containerized workflows.
 
 ## Integration Points
@@ -63,9 +63,9 @@ This applies to all forms (signup, login, checkout, etc.) in both admin and cust
 
 ## Examples
 
-- To generate an ER diagram for the admin backend:
+- To generate an ER diagram for the Organisation-Admin backend:
   ```python
-  from app.admin import create_app
+  from app.org_admin import create_app
   # ...
   ```
 - To run all backend tests:

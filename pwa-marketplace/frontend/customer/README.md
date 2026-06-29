@@ -37,7 +37,7 @@ This app uses vite-plugin-ssr for SEO-friendly SSR, while keeping centralized ro
   - `_default.page.client.jsx` (hydration)
   - `index.page.jsx` (points to your App)
 - Your existing App.jsx and Routes.jsx remain unchanged and manage all routes
-- Service worker registration and BrowserRouter are only used on the client
+- Service Worker registration and BrowserRouter are only used on the client
 - StaticRouter is used on the server for SSR
 
 ### Development

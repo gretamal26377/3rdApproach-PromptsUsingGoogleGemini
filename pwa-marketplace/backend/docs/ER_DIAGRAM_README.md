@@ -16,13 +16,14 @@ The ER diagram provides a visual representation of:
 The database consists of the following main entity groups:
 
 ### Core Business Entities
-- **Categories**: Product/service categories
-- **ProductsServices**: Base products/services catalog
-- **Stores**: Seller/store information
-- **StoreProductsServices**: Junction table linking stores to products with pricing
-- **Customers**: Customer accounts
-- **Orders**: Customer orders
-- **OrderDetails**: Line items within orders
+- **Categories**: Product/Service Categories
+- **ProductsServices**: Base Products/Services Catalog
+- **Organisations**: Organisations having Stores
+- **Stores**: Seller/Store Information
+- **StoreProductsServices**: Junction table linking Stores to Products/Services with pricing
+- **Customers**: Customer Accounts
+- **Orders**: Customer Orders
+- **OrderDetails**: Line Items within Orders
 
 ### Geographic Entities
 - **Countries**: Country master data
@@ -132,7 +133,7 @@ Example: `er_diagram_20241029_143022.pdf`
 
 1. **Store-Product Relationship**:
    - `Stores` ← `StoreProductsServices` → `ProductsServices`
-   - A store can sell many products, and a product can be sold by many stores
+   - A Store can sell many Products/Services, and a Product/Service can be sold by many Stores
 
 2. **Order Management**:
    - `Customers` → `Orders` → `OrderDetails` → `StoreProductsServices`
