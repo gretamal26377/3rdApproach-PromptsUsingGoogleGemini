@@ -3,7 +3,7 @@ from ..shared.auth import token_required
 from ..shared.management import (
     get_users_logic, get_user_logic, create_user_logic, update_user_logic, inactivate_user_logic,
     create_store_logic, update_store_logic, inactivate_store_logic,
-    create_store_product_service_logic, create_product_logic, update_product_logic, inactivate_product_logic,
+    create_store_product_service_logic, update_store_product_service_logic, inactivate_store_product_service_logic,
     mark_order_shipped_logic, refund_order_logic, accept_order_logic
 )
 
@@ -69,30 +69,28 @@ def create_store_product_service(current_user):
     result, status = create_store_product_service_logic(current_user, data)
     return jsonify(result), status
 
-@org_admin_bp.route('update-product-service/<int:product_service_id>', methods=['PUT'])
-@token_required
-def update_product_service(current_user, product_service_id):
+@org_admin_bp.route('update-store-product-service/<int:store_product_service_id>', methods=['PUT'])
+@token_required('org_admin', roles=['admin', 'supervisor'])
+def update_store_product_service(current_user, store_product_service_id):
     data = request.get_json()
-    result, status = update_product_service_logic(current_user, product_service_id, data)
+    result, status = update_store_product_service_logic(current_user, store_product_service_id, data)
     return jsonify(result), status
 
-@org_admin_bp.route('inactivate-product-service/<int:product_service_id>', methods=['POST'])
-@token_required
-def inactivate_product_service(current_user, product_service_id):
-    result, status = inactivate_product_service_logic(current_user, product_service_id)
+@org_admin_bp.route('inactivate-store-product-service/<int:store_product_service_id>', methods=['POST'])
+@token_required('org_admin', roles=['admin', 'supervisor'])
+def inactivate_store_product_service(current_user, store_product_service_id):
+    result, status = inactivate_store_product_service_logic(current_user, store_product_service_id)
     return jsonify(result), status
 
 @org_admin_bp.route('orders/<int:order_id>/ship', methods=['PATCH'])
-@token_required
-@admin_required
+@token_required('org_admin', roles=['admin', 'supervisor', 'staff'])
 def mark_order_shipped(current_user, order_id):
     """Signals the OrderWorkflow to handle shipping"""
     result, status = mark_order_shipped_logic(order_id)
     return jsonify(result), status
 
 @org_admin_bp.route('orders/<int:order_id>/refund', methods=['PATCH'])
-@token_required
-@admin_required
+@token_required('org_admin', roles=['admin', 'supervisor'])
 def refund_order(current_user, order_id):
     """Signals the OrderWorkflow to initiate a refund"""
     result, status = refund_order_logic(order_id)
