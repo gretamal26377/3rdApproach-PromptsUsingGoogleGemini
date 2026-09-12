@@ -1,4 +1,5 @@
 # from venv import create
+import platform
 from .database import db
 from sqlalchemy import Index, ForeignKeyConstraint, text
 
@@ -43,7 +44,7 @@ class EntityStatuses(db.Model):
     products_services = db.relationship('ProductsServices', back_populates='product_service_status')
     stores_users = db.relationship('StoresUsers', back_populates='status')
     users = db.relationship('Users', back_populates='user_status')
-
+    platform_users = db.relationship('PlatformUsers', back_populates='platform_user_status')
 
 class CategoriesHistory(db.Model):
     __tablename__ = 'categories_history'
@@ -587,14 +588,30 @@ class StoresUsers(db.Model):
     user = db.relationship('Users', back_populates='stores_user')
     status = db.relationship('EntityStatuses', back_populates='stores_users')
 
+class PlatformUsers(db.Model):
+    __tablename__ = 'platform_users'
+    __table_args__ = (
+        Index('platform_user_email', 'platform_user_email', unique=True),
+    )
 
-class Users(db.Model):
-    __tablename__ = 'users'
+    platform_user_id = db.Column(db.Integer, primary_key=True)
+    platform_user_email = db.Column(db.String(100), nullable=False)
+    platform_user_name = db.Column(db.String(50), nullable=False)
+    platform_user_password_hash = db.Column(db.String(255), nullable=False)
+    platform_user_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    platform_user_role_id = db.Column(db.Integer, db.ForeignKey('platform_roles.platform_role_id'), nullable=False)
+    platform_user_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
+
+    platform_user_status = db.relationship('EntityStatuses', back_populates='platform_users')
+    platform_role = db.relationship('Roles', back_populates='platform_users')
+
+class OrgUsers(db.Model):
+    __tablename__ = 'org_users'
     __table_args__ = (
         Index('user_email_organisation', 'user_email', 'user_organisation_id', unique=True),
     )
 
-    user_id = db.Column(db.Integer, primary_key=True)
+    org_user_id = db.Column(db.Integer, primary_key=True)
     user_email = db.Column(db.String(100), nullable=False)
     user_name = db.Column(db.String(50), nullable=False)
     user_password_hash = db.Column(db.String(255), nullable=False)

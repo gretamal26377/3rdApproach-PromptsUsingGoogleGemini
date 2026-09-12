@@ -1,3 +1,20 @@
+import os
+from .database import db
+from .models import (
+    Customers, Users, Stores, ProductsServices, StoreProductsServices,
+    EntityStatuses, Orders
+)
+from .utils import get_temporal_client
+import logging
+from temporalio.client import Client
+import asyncio
+from workflows.order_workflow import OrderWorkflow
+from workflows.item_workflow import ItemWorkflow
+# bleach is used to sanitize inputs to prevent XSS attacks
+import bleach
+
+TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
+
 def create_user_logic(data):
     """
     Logic to create a new admin user. Expects keys:
@@ -54,24 +71,6 @@ def create_user_logic(data):
         logging.error(f"Error creating user: {e}")
         return {"error": "Failed to create user"}, 500
     
-
-import os
-from .database import db
-from .models import (
-    Customers, Users, Stores, ProductsServices, StoreProductsServices,
-    EntityStatuses, Orders
-)
-from .utils import get_temporal_client
-import logging
-from temporalio.client import Client
-import asyncio
-from workflows.order_workflow import OrderWorkflow
-from workflows.item_workflow import ItemWorkflow
-# bleach is used to sanitize inputs to prevent XSS attacks
-import bleach
-
-TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
-
 def get_users_logic():
     users = Users.query.all()
     users_data = [{'id': user.id, 'username': user.username, 'email': user.email, 'is_admin': user.is_admin} for user in users]
