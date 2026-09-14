@@ -20,7 +20,16 @@ Three distinct user audiences, each with their own dedicated frontend and backen
 
 ---
 
-## User Roles (at Organisation level)
+## User Roles
+
+There are two separate User tables — `OrgUsers` and `PlatformUsers` — because
+they represent fundamentally different scopes: an Organisation User's access
+is confined to their own Organisation (`OrgUsers.org_user_organisation_id` is
+always set), while a Platform User oversees the entire Platform across all
+Organisations and has no Organisation of their own.
+
+**They share the same `Roles` table and Role Catalog**, since both audiences
+use the same four tiers:
 
 | Role       | Access                                      |
 |------------|---------------------------------------------|
@@ -28,6 +37,17 @@ Three distinct user audiences, each with their own dedicated frontend and backen
 | Supervisor | Operational management                      |
 | Staff      | Daily paperwork/task management             |
 | Viewer     | Read-only, no modifications allowed         |
+
+**Important: scope comes from the table, not the Role.** The same `Roles` row
+means something different depending on which User table it's attached to —
+e.g. "Admin" on an `OrgUsers` row means full management power over *that one
+organisation*; "Admin" on a `PlatformUsers` row means full management power
+over *every Organisation on the Platform*. Application code must always
+branch on which User table a session belongs to before interpreting the
+Role — never assume a Role name alone implies a fixed blast radius.
+
+`Customers` remain a fully separate table with no Role concept — they are
+never assigned an `OrgUsers`/`PlatformUsers` Role.
 
 ---
 
