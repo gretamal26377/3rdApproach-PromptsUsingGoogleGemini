@@ -1,5 +1,4 @@
 # from venv import create
-import platform
 from .database import db
 from sqlalchemy import Index, ForeignKeyConstraint, text
 
@@ -17,7 +16,6 @@ class Categories(db.Model):
 
     category_status = db.relationship('EntityStatuses', back_populates='categories')
     products_services = db.relationship('ProductsServices', back_populates='product_service_category')
-
 
 class EntityStatuses(db.Model):
     __tablename__ = 'entity_statuses'
@@ -43,7 +41,7 @@ class EntityStatuses(db.Model):
     stores = db.relationship('Stores', back_populates='store_status')
     products_services = db.relationship('ProductsServices', back_populates='product_service_status')
     stores_users = db.relationship('StoresUsers', back_populates='status')
-    users = db.relationship('Users', back_populates='user_status')
+    org_users = db.relationship('OrgUsers', back_populates='org_user_status')
     platform_users = db.relationship('PlatformUsers', back_populates='platform_user_status')
 
 class CategoriesHistory(db.Model):
@@ -63,7 +61,6 @@ class CategoriesHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class CitiesTowns(db.Model):
     __tablename__ = 'cities_towns'
 
@@ -75,7 +72,6 @@ class CitiesTowns(db.Model):
     state_region = db.relationship('StatesRegions', back_populates='cities_towns')
     city_town_status = db.relationship('EntityStatuses', back_populates='cities_towns')
     customers_addresses = db.relationship('CustomersAddresses', back_populates='city_town')
-
 
 class StatesRegions(db.Model):
     __tablename__ = 'states_regions'
@@ -93,7 +89,6 @@ class StatesRegions(db.Model):
     state_region_status = db.relationship('EntityStatuses', back_populates='states_regions')
     cities_towns = db.relationship('CitiesTowns', back_populates='state_region')
 
-
 class Countries(db.Model):
     __tablename__ = 'countries'
     __table_args__ = (
@@ -107,7 +102,6 @@ class Countries(db.Model):
 
     country_status = db.relationship('EntityStatuses', back_populates='countries')
     states_regions = db.relationship('StatesRegions', back_populates='country')
-
 
 class CitiesTownsHistory(db.Model):
     __tablename__ = 'cities_towns_history'
@@ -126,8 +120,6 @@ class CitiesTownsHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
-
 class CountriesHistory(db.Model):
     __tablename__ = 'countries_history'
     __table_args__ = (
@@ -144,8 +136,6 @@ class CountriesHistory(db.Model):
     changed_at = db.Column(db.DateTime)
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
-
-
 
 class CustomersAddresses(db.Model):
     __tablename__ = 'customers_addresses'
@@ -164,7 +154,6 @@ class CustomersAddresses(db.Model):
     city_town = db.relationship('CitiesTowns', back_populates='customers_addresses')
     # address_status = db.relationship('EntityStatuses', back_populates='customers_addresses')
 
-
 class Customers(db.Model):
     __tablename__ = 'customers'
     __table_args__ = (
@@ -182,7 +171,6 @@ class Customers(db.Model):
     customer_status = db.relationship('EntityStatuses', back_populates='customers')
     customers_addresses = db.relationship('CustomersAddresses', back_populates='customer')
     orders = db.relationship('Orders', back_populates='customer')
-
 
 class CustomersAddressesHistory(db.Model):
     __tablename__ = 'customers_addresses_history'
@@ -203,7 +191,6 @@ class CustomersAddressesHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class CustomersHistory(db.Model):
     __tablename__ = 'customers_history'
     __table_args__ = (
@@ -221,7 +208,6 @@ class CustomersHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class EntityStatusesHistory(db.Model):
     __tablename__ = 'entity_statuses_history'
     __table_args__ = (
@@ -238,7 +224,6 @@ class EntityStatusesHistory(db.Model):
     changed_at = db.Column(db.DateTime)
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
-
 
 class OrdersDetails(db.Model):
     __tablename__ = 'orders_details'
@@ -263,7 +248,6 @@ class OrdersDetails(db.Model):
     stores_product_service = db.relationship('StoresProductsServices', back_populates='orders_details')
     product_service_status = db.relationship('OrderStatuses', back_populates='orders_details')
 
-
 class OrderStatuses(db.Model):
     __tablename__ = 'order_statuses'
     __table_args__ = (
@@ -281,7 +265,6 @@ class OrderStatuses(db.Model):
 
     orders_details = db.relationship('OrdersDetails', back_populates='product_service_status')
     orders = db.relationship('Orders', back_populates='order_status')
-
 
 class Orders(db.Model):
     __tablename__ = 'orders'
@@ -305,7 +288,6 @@ class Orders(db.Model):
     order_status = db.relationship('OrderStatuses', back_populates='orders')
     orders_details = db.relationship('OrdersDetails', back_populates='order')
 
-
 class Organisations(db.Model):
     __tablename__ = 'organisations'
     __table_args__ = (
@@ -324,8 +306,7 @@ class Organisations(db.Model):
 
     organisations_status = db.relationship('EntityStatuses', back_populates='organisations')
     organisations_stores = db.relationship('Stores', back_populates='organisation')
-    organisations_users = db.relationship('Users', back_populates='organisation')
-
+    organisations_users = db.relationship('OrgUsers', back_populates='organisation')
 
 class Stores(db.Model):
     __tablename__ = 'stores'
@@ -351,7 +332,6 @@ class Stores(db.Model):
     stores_users = db.relationship('StoresUsers', back_populates='store')
     organisation = db.relationship('Organisations', back_populates='organisations_stores')
 
-
 class StoresProductsServices(db.Model):
     __tablename__ = 'stores_products_services'
     __table_args__ = (
@@ -370,7 +350,6 @@ class StoresProductsServices(db.Model):
     product_service = db.relationship('ProductsServices', back_populates='stores_products_services')
     status = db.relationship('EntityStatuses', back_populates='stores_products_services')
     orders_details = db.relationship('OrdersDetails', back_populates='stores_product_service')
-
 
 # --- FeaturedStores Model ---
 class FeaturedStores(db.Model):
@@ -404,9 +383,9 @@ class Roles(db.Model):
     role_description = db.Column(db.Text)
     role_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
-    roles_users = db.relationship('Users', back_populates='role')
+    org_users = db.relationship('OrgUsers', back_populates='org_role')
+    platform_users = db.relationship('PlatformUsers', back_populates='platform_role')
     role_status = db.relationship('EntityStatuses', back_populates='roles')
-
 
 # --- FeaturedStoresHistory Model ---
 class FeaturedStoresHistory(db.Model):
@@ -426,7 +405,6 @@ class FeaturedStoresHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class ProductsServices(db.Model):
     __tablename__ = 'products_services'
     __table_args__ = (
@@ -443,7 +421,6 @@ class ProductsServices(db.Model):
     product_service_category = db.relationship('Categories', back_populates='products_services')
     product_service_status = db.relationship('EntityStatuses', back_populates='products_services')
     stores_products_services = db.relationship('StoresProductsServices', back_populates='product_service')
-
 
 class OrdersDetailsHistory(db.Model):
     __tablename__ = 'orders_details_history'
@@ -464,7 +441,6 @@ class OrdersDetailsHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class OrderStatusesHistory(db.Model):
     __tablename__ = 'order_statuses_history'
     __table_args__ = (
@@ -481,7 +457,6 @@ class OrderStatusesHistory(db.Model):
     changed_at = db.Column(db.DateTime)
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
-
 
 class OrdersHistory(db.Model):
     __tablename__ = 'orders_history'
@@ -500,7 +475,6 @@ class OrdersHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class ProductsServicesHistory(db.Model):
     __tablename__ = 'products_services_history'
     __table_args__ = (
@@ -517,7 +491,6 @@ class ProductsServicesHistory(db.Model):
     changed_at = db.Column(db.DateTime)
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
-
 
 class RolesHistory(db.Model):
     __tablename__ = 'roles_history'
@@ -536,7 +509,6 @@ class RolesHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class StatesRegionsHistory(db.Model):
     __tablename__ = 'states_regions_history'
     __table_args__ = (
@@ -553,7 +525,6 @@ class StatesRegionsHistory(db.Model):
     changed_at = db.Column(db.DateTime)
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
-
 
 class StoresProductsServicesHistory(db.Model):
     __tablename__ = 'stores_products_services_history'
@@ -576,17 +547,37 @@ class StoresProductsServicesHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class StoresUsers(db.Model):
     __tablename__ = 'stores_users'
 
     store_id = db.Column(db.Integer, db.ForeignKey('stores.store_id'), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('org_users.org_user_id'), primary_key=True)
     status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
 
     store = db.relationship('Stores', back_populates='stores_users')
-    user = db.relationship('Users', back_populates='stores_user')
+    user = db.relationship('OrgUsers', back_populates='stores_user')
     status = db.relationship('EntityStatuses', back_populates='stores_users')
+
+class OrgUsers(db.Model):
+    __tablename__ = 'org_users'
+    __table_args__ = (
+        Index('org_user_email', 'org_user_email', unique=True),
+    )
+
+    org_user_id = db.Column(db.Integer, primary_key=True)
+    org_user_email = db.Column(db.String(100), nullable=False)
+    org_user_name = db.Column(db.String(50), nullable=False)
+    org_user_password_hash = db.Column(db.String(255), nullable=False)
+    org_user_phone = db.Column(db.String(20), nullable=False)
+    org_user_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
+    org_user_organisation_id = db.Column(db.Integer, db.ForeignKey('organisations.organisation_id'), nullable=False)
+    org_user_role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'), nullable=False)
+    org_user_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
+
+    org_user_status = db.relationship('EntityStatuses', back_populates='org_users')
+    stores_user = db.relationship('StoresUsers', back_populates='user')
+    organisation = db.relationship('Organisations', back_populates='organisations_users')
+    org_role = db.relationship('Roles', back_populates='org_users')
 
 class PlatformUsers(db.Model):
     __tablename__ = 'platform_users'
@@ -597,35 +588,16 @@ class PlatformUsers(db.Model):
     platform_user_id = db.Column(db.Integer, primary_key=True)
     platform_user_email = db.Column(db.String(100), nullable=False)
     platform_user_name = db.Column(db.String(50), nullable=False)
+    platform_user_phone = db.Column(db.String(20), nullable=False)
     platform_user_password_hash = db.Column(db.String(255), nullable=False)
     platform_user_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
-    platform_user_role_id = db.Column(db.Integer, db.ForeignKey('platform_roles.platform_role_id'), nullable=False)
+    # Shared with OrgUsers: Same role catalog, scope comes from which
+    # table the user belongs to (see CLAUDE.md "User Roles" section)
+    platform_user_role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'), nullable=False)
     platform_user_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
 
     platform_user_status = db.relationship('EntityStatuses', back_populates='platform_users')
     platform_role = db.relationship('Roles', back_populates='platform_users')
-
-class OrgUsers(db.Model):
-    __tablename__ = 'org_users'
-    __table_args__ = (
-        Index('user_email_organisation', 'user_email', 'user_organisation_id', unique=True),
-    )
-
-    org_user_id = db.Column(db.Integer, primary_key=True)
-    user_email = db.Column(db.String(100), nullable=False)
-    user_name = db.Column(db.String(50), nullable=False)
-    user_password_hash = db.Column(db.String(255), nullable=False)
-    user_phone = db.Column(db.String(20), nullable=False)
-    user_status_id = db.Column(db.Integer, db.ForeignKey('entity_statuses.status_id'), nullable=False)
-    user_organisation_id = db.Column(db.Integer, db.ForeignKey('organisations.organisation_id'), nullable=False)
-    user_role_id = db.Column(db.Integer, db.ForeignKey('roles.role_id'), nullable=False)
-    user_created_at = db.Column(db.DateTime, server_default=text('CURRENT_TIMESTAMP'), nullable=False)
-
-    user_status = db.relationship('EntityStatuses', back_populates='users')
-    stores_user = db.relationship('StoresUsers', back_populates='user')
-    organisation = db.relationship('Organisations', back_populates='organisations_users')
-    role = db.relationship('Roles', back_populates='roles_users')
-
 
 class StoresUsersHistory(db.Model):
     __tablename__ = 'stores_users_history'
@@ -646,7 +618,6 @@ class StoresUsersHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
 class OrganisationsHistory(db.Model):
     __tablename__ = 'organisations_history'
     __table_args__ = (
@@ -663,7 +634,6 @@ class OrganisationsHistory(db.Model):
     changed_at = db.Column(db.DateTime)
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
-
 
 class StoresHistory(db.Model):
     __tablename__ = 'stores_history'
@@ -682,18 +652,17 @@ class StoresHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
-
-class UsersHistory(db.Model):
-    __tablename__ = 'users_history'
+class OrgUsersHistory(db.Model):
+    __tablename__ = 'org_users_history'
     __table_args__ = (
-        Index('idx_users_history_user', 'user_id'),
-        Index('idx_users_history_time', 'changed_at'),
-        Index('idx_users_history_changed_by', 'changed_by'),
-        Index('idx_users_history_op', 'op_type'),
+        Index('idx_org_users_history_user', 'org_user_id'),
+        Index('idx_org_users_history_time', 'changed_at'),
+        Index('idx_org_users_history_changed_by', 'changed_by'),
+        Index('idx_org_users_history_op', 'op_type'),
     )
 
     hist_id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(db.Integer)
+    org_user_id = db.Column(db.Integer)
     op_type = db.Column(db.Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
     changed_by = db.Column(db.String(100))
     changed_at = db.Column(db.DateTime)
