@@ -1,7 +1,7 @@
 import os
 from .database import db
 from .models import (
-    Customers, Users, Stores, ProductsServices, StoreProductsServices,
+    Customers, Users, Stores, ProductsServices, StoresProductsServices,
     EntityStatuses, Orders
 )
 from .utils import get_temporal_client
@@ -234,7 +234,7 @@ def inactivate_store_logic(current_user, store_id):
             return {'message': 'Inactive Status not found'}, 500
         store.store_status_id = inactive.status_id
         # Also inactivate linked store_products_services
-        StoreProductsServices.query.filter_by(store_id=store_id).update({'status_id': inactive.status_id})
+        StoresProductsServices.query.filter_by(store_id=store_id).update({'status_id': inactive.status_id})
         # Issue?: Shouldn't we also inactivate Store User Roles
         db.session.commit()
         return {'message': 'Store Inactivated successfully'}, 200
@@ -264,7 +264,7 @@ def create_store_product_service_logic(current_user, data):
             return {'message': 'Store not found or Inactive'}, 404
 
         # Create Store Product/Service
-        sps = StoreProductsServices()
+        sps = StoresProductsServices()
         sps.store_id = store.store_id
         sps.product_service_id = product_service_id
         sps.price = data['price']
@@ -317,7 +317,7 @@ def inactivate_product_service_logic(current_customer, product_service_id):
             return {'message': 'Inactive Status not found'}, 500
         product_service.product_service_status_id = inactive.status_id
         # Inactivate linked store products/services rows
-        StoreProductsServices.query.filter_by(product_service_id=product_service_id).update({'status_id': inactive.status_id})
+        StoresProductsServices.query.filter_by(product_service_id=product_service_id).update({'status_id': inactive.status_id})
         db.session.commit()
         return {'message': 'Product/Service Inactivated successfully'}, 200
     except Exception as e:

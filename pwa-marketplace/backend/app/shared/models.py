@@ -669,3 +669,19 @@ class OrgUsersHistory(db.Model):
     data_before = db.Column(db.JSON)
     data_after = db.Column(db.JSON)
 
+class PlatformUsersHistory(db.Model):
+    __tablename__ = 'platform_users_history'
+    __table_args__ = (
+        Index('idx_platform_users_history_user', 'platform_user_id'),
+        Index('idx_platform_users_history_time', 'changed_at'),
+        Index('idx_platform_users_history_changed_by', 'changed_by'),
+        Index('idx_platform_users_history_op', 'op_type'),
+    )
+
+    hist_id = db.Column(db.BigInteger, primary_key=True)
+    platform_user_id = db.Column(db.Integer)
+    op_type = db.Column(db.Enum('INSERT', 'UPDATE', 'DELETE'), nullable=False)
+    changed_by = db.Column(db.String(100))
+    changed_at = db.Column(db.DateTime)
+    data_before = db.Column(db.JSON)
+    data_after = db.Column(db.JSON)
