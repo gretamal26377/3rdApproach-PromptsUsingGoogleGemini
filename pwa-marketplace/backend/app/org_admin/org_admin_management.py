@@ -1,3 +1,20 @@
+import os
+from ..shared.database import db
+from ..shared.models import (
+    Customers, OrgUsers, Stores, ProductsServices, StoresProductsServices,
+    EntityStatuses, Orders
+)
+from ..shared.utils import get_temporal_client
+import logging
+from temporalio.client import Client
+import asyncio
+from workflows.order_workflow import OrderWorkflow
+from workflows.item_workflow import ItemWorkflow
+# bleach is used to sanitize inputs to prevent XSS attacks
+import bleach
+
+TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
+
 def create_user_logic(data):
     """
     Logic to create a new admin user. Expects keys:
@@ -19,8 +36,8 @@ def create_user_logic(data):
         role_code = data['user_role_code']
         store_ids = data['user_store_ids'] if isinstance(data['user_store_ids'], list) else []
 
-        # Check for existing user
-        existing = Users.query.filter_by(email=email).first()
+        # Check for existing User
+        existing = OrgUsers.query.filter_by(email=email).first()
         if existing:
             return {"error": "User with this email already exists"}, 409
 
@@ -30,7 +47,7 @@ def create_user_logic(data):
             return {"error": "Active status not found"}, 500
 
         # Create user
-        new_user = Users()
+        new_user = OrgUsers()
         new_user.username = name
         new_user.email = email
         new_user.password = password  # TODO: hash password in production
@@ -53,30 +70,14 @@ def create_user_logic(data):
         import logging
         logging.error(f"Error creating user: {e}")
         return {"error": "Failed to create user"}, 500
-import os
-from ..shared.database import db
-from ..shared.models import (
-    Customers, Users, Stores, ProductsServices, StoreProductsServices,
-    EntityStatuses, Orders
-)
-from ..shared.utils import get_temporal_client
-import logging
-from temporalio.client import Client
-import asyncio
-from workflows.order_workflow import OrderWorkflow
-from workflows.item_workflow import ItemWorkflow
-# bleach is used to sanitize inputs to prevent XSS attacks
-import bleach
 
-TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
-
-def get_users_logic():
-    users = Users.query.all()
-    users_data = [{'id': user.id, 'username': user.username, 'email': user.email, 'is_admin': user.is_admin} for user in users]
-    return users_data, 200
+def get_org_users_logic():
+    org_users = OrgUsers.query.all()
+    org_users_data = [{'id': org_user.org_user_id, 'username': org_user.org_user_name, 'email': org_user.org_user_email} for org_user in org_users]
+    return org_users_data, 200
 
 def get_user_logic(user_id):
-    user = Users.query.get(user_id)
+    user = OrgUsers.query.get(user_id)
     if not user:
         logging.warning(f"User: {user_id} not found during get_user_logic")
         return {'message': 'User not found'}, 404
@@ -89,7 +90,7 @@ def get_user_logic(user_id):
     return user_data, 200
 
 def update_user_logic(user_id, data):
-    user = Users.query.get(user_id)
+    user = OrgUsers.query.get(user_id)
     if not user:
         logging.warning(f"User: {user_id} not found during update_user_logic")
         return {'message': 'User not found'}, 404
@@ -110,7 +111,7 @@ def update_user_logic(user_id, data):
         return {'message': 'Failed to update user'}, 500
 
 def inactivate_user_logic(user_id):
-    user = Users.query.get(user_id)
+    user = OrgUsers.query.get(user_id)
     if not user:
         logging.warning(f"User: {user_id} not found during inactivate_user_logic")
         return {'message': 'User not found'}, 404
@@ -194,7 +195,7 @@ def inactivate_store_logic(current_user, store_id):
             return {'message': 'Inactive Status not configured'}, 500
         store.store_status_id = inactive.status_id
         # Also inactivate linked store_products_services
-        StoreProductsServices.query.filter_by(store_id=store_id).update({'status_id': inactive.status_id})
+        StoresProductsServices.query.filter_by(store_id=store_id).update({'status_id': inactive.status_id})
         # Issue?: Shouldn't we also inactivate Store User Roles
         db.session.commit()
         return {'message': 'Store Inactivated successfully'}, 200
@@ -233,7 +234,7 @@ def create_product_service_logic(current_customer, data):
 
         # Create store-product-service link
         # Issue: There would be another function to handle linking SPS
-        sps = StoreProductsServices()
+        sps = StoresProductsServices()
         sps.store_id = store.store_id
         sps.product_service_id = new_product_service.product_service_id
         sps.price = data['price']
@@ -286,7 +287,7 @@ def inactivate_product_service_logic(current_customer, product_service_id):
             return {'message': 'Inactive Status not configured'}, 500
         product_service.product_service_status_id = inactive.status_id
         # Inactivate linked store products/services rows
-        StoreProductsServices.query.filter_by(product_service_id=product_service_id).update({'status_id': inactive.status_id})
+        StoresProductsServices.query.filter_by(product_service_id=product_service_id).update({'status_id': inactive.status_id})
         db.session.commit()
         return {'message': 'Product/Service Inactivated successfully'}, 200
     except Exception as e:

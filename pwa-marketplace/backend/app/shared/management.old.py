@@ -1,3 +1,9 @@
+
+"""
+GRL: This file is outdated because we're moving from here to using separate Platform
+and Org Management Logic in their respective modules. Shared folder will only contain
+shared primitive logic (eg: utility functions) and models, not management logic 
+"""
 import os
 from .database import db
 from .models import (
