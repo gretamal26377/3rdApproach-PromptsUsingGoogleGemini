@@ -47,7 +47,6 @@ def create_customer_logic(data):
         new_customer.customer_phone = customer_phone
         new_customer.customer_status_id = active_status.status_id
         db.session.add(new_customer)
-        db.session.commit()
 
         # Handle customer_addresses if present
         addresses = data.get('customer_addresses', [])
@@ -74,7 +73,10 @@ def create_customer_logic(data):
                 new_address.postal_code = postal_code
                 new_address.address_status_id = active_status.status_id
                 db.session.add(new_address)
-        db.session.commit()
+        # It's harmless if there are no addresses to commit. Besides, place only one commit here makes
+        # the whole operation atomic, so if any error occurs creating the customer or addresses, the whole
+        # transaction will be rolled back and no partial data will be left in the DB
+        db.session.commit() 
 
         token = generate_token(new_customer.customer_id)
         return {'message': 'Customer created successfully', 'token': token}, 201

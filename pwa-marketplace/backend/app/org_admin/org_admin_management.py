@@ -17,17 +17,17 @@ TEMPORAL_HOST = os.environ.get('TEMPORAL_HOST', "localhost:7233")
 
 def create_user_logic(data):
     """
-    Logic to create a new admin user. Expects keys:
+    Logic to create a New User. Expects keys:
       user_name, user_email, user_password, user_phone, user_organisation_id, user_role_code, user_store_ids (list)
     """
     required_fields = [
         'user_name', 'user_email', 'user_password', 'user_phone', 'user_organisation_id', 'user_role_code', 'user_store_ids'
     ]
     if not all(field in data for field in required_fields):
+        logging.warning("Missing required fields during create_user_logic")
         return {"error": "Missing required fields"}, 400
     try:
         # Sanitize inputs
-        import bleach
         name = bleach.clean(data['user_name'], strip=True)
         email = bleach.clean(data['user_email'], strip=True)
         password = bleach.clean(data['user_password'], strip=True)
@@ -46,7 +46,7 @@ def create_user_logic(data):
         if not active_status:
             return {"error": "Active status not found"}, 500
 
-        # Create user
+        # Create User
         new_user = OrgUsers()
         new_user.username = name
         new_user.email = email
@@ -64,11 +64,10 @@ def create_user_logic(data):
         #     ...
 
         db.session.commit()
-        return {"message": "User created", "user_id": new_user.id}, 201
+        return {"message": "User Created", "user_id": new_user.id}, 201
     except Exception as e:
         db.session.rollback()
-        import logging
-        logging.error(f"Error creating user: {e}")
+        logging.error(f"Error creating User: {e}")
         return {"error": "Failed to create user"}, 500
 
 def get_org_users_logic():
