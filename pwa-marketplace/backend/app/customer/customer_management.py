@@ -23,7 +23,7 @@ def create_customer_logic(data):
     """
     Logic to create a New Customer, including validation, sanitization, and DB insertion
     """
-    if not data:
+    if not data: # Defensive: Check if data is None or empty
         logging.warning("No data provided during create_customer_logic")
         return {'message': 'No data provided'}, 400
     required_fields = ['customer_name', 'customer_password', 'customer_email', 'customer_phone']

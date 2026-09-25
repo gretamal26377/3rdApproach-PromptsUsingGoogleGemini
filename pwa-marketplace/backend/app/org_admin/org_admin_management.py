@@ -20,6 +20,9 @@ def create_user_logic(data):
     Logic to create a New User. Expects keys:
       user_name, user_email, user_password, user_phone, user_organisation_id, user_role_code, user_store_ids (list)
     """
+    if not data: # Defensive: Check if data is None or empty
+        logging.warning("No data provided during create_user_logic")
+        return {"error": "No data provided"}, 400
     required_fields = [
         'user_name', 'user_email', 'user_password', 'user_phone', 'user_organisation_id', 'user_role_code', 'user_store_ids'
     ]
