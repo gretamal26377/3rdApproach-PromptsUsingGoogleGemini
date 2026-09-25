@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
+import re
 import bleach
 from flask import request
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -19,6 +20,9 @@ VALID_STATUS_CODES = [
     ]
 
 def create_customer_logic(data):
+    """
+    Logic to create a New Customer, including validation, sanitization, and DB insertion
+    """
     if not data:
         logging.warning("No data provided during create_customer_logic")
         return {'message': 'No data provided'}, 400
@@ -26,7 +30,8 @@ def create_customer_logic(data):
     if not all(field in data for field in required_fields):
         logging.warning("Missing required fields during create_customer_logic")
         return {'message': 'Missing required fields'}, 400
-    # Sanitize name and email
+    # Sanitize some of the input fields to prevent XSS attacks,
+    # especially if they are displayed in the frontend
     customer_name = bleach.clean(data['customer_name'], strip=True)
     customer_email = bleach.clean(data['customer_email'], strip=True)
     customer_phone = bleach.clean(data['customer_phone'], strip=True)
@@ -50,6 +55,9 @@ def create_customer_logic(data):
 
         # Handle customer_addresses if present
         addresses = data.get('customer_addresses', [])
+        if not addresses:
+            logging.warning("No Customer Addresses provided during create_customer_logic")
+            return {'message': 'At least one Customer Address is required'}, 400
         for addr in addresses:
             # Defensive: check required address fields
             address_line1 = bleach.clean(addr.get('address_line1', ''), strip=True)
@@ -58,9 +66,10 @@ def create_customer_logic(data):
             state_region_id = addr.get('state_region_id')
             city_town_id = addr.get('city_town_id')
             postal_code = bleach.clean(addr.get('postal_code', ''), strip=True)
+            google_maps_url = bleach.clean(addr.get('google_maps_url', ''), strip=True)
             # Only create address if minimum required fields are present. If not, it just jumps to the next address in the list
             # (if any) without failing the whole Customer creation. Keep in mind this is little likely to happen since frontend
-            # enforce at least one address with required fields, but this is kept because it's considered best practice to have
+            # enforces at least one address with required fields, but this is kept because it's considered best practice to have
             # this checking at backend 
             if address_line1 and city_town_id and state_region_id and country_id:
                 # Create CustomersAddresses record
@@ -73,16 +82,16 @@ def create_customer_logic(data):
                 new_address.postal_code = postal_code
                 new_address.address_status_id = active_status.status_id
                 db.session.add(new_address)
-        # It's harmless if there are no addresses to commit. Besides, place only one commit here makes
-        # the whole operation atomic, so if any error occurs creating the customer or addresses, the whole
-        # transaction will be rolled back and no partial data will be left in the DB
+        # Placing only one commit here makes the whole operation atomic, so if any
+        # error occurs creating the Customer or Addresses, the whole transaction will
+        # be rolled back and no partial data will be left in the DB
         db.session.commit() 
 
         token = generate_token(new_customer.customer_id)
         return {'message': 'Customer created successfully', 'token': token}, 201
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Error creating Customer: {e}")
+        logging.exception(f"Error creating Customer: {e}")
         return {'message': 'Failed to create Customer'}, 500
     
 def get_organisations_logic():
