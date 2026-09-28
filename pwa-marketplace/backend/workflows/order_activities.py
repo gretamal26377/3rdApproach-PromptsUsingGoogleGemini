@@ -99,7 +99,7 @@ async def process_refund(order_id: int, refund_amount: float) -> ProcessRefundRe
     
     # Simulate a non-retryable failure (rare)
     if random.random() < 0.05:
-         raise exceptions.ApplicationError("Payment Gateway rejected refund.", type="GATEWAY_REJECTION", non_retryable=True)
+         raise exceptions.ApplicationError("Payment Gateway rejected refund", type="GATEWAY_REJECTION", non_retryable=True)
 
     transaction_id = f"REF-{order_id}-{random.randint(1000, 9999)}"
     activity.logger.info(f"Refund successful for Order {order_id}. Txn ID: {transaction_id}")

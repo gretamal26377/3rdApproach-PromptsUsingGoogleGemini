@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import datetime
 import re
+from sqlite3 import IntegrityError
 import bleach
 from flask import request
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,8 +11,13 @@ from ..shared.database import db
 from ..shared.models import ( Customers, Stores, FeaturedStores, StoresProductsServices, Orders, OrdersDetails,
     EntityStatuses, OrderStatuses, Categories, ProductsServices, Organisations, Roles, Countries, StatesRegions, CitiesTowns,
     CustomersAddresses )
-from ..shared.utils import get_temporal_client
+from ..shared.utils import get_active_status, get_temporal_client
+from sqlalchemy.exc import SQLAlchemyError
 from workflows.order_workflow import OrderWorkflow
+
+# __name__ is used to get the module name for logging purposes.
+# This case will be 'customer_management' since this file is named customer_management.py
+logger = logging.getLogger(__name__)
 
 VALID_STATUS_CODES = [
         'open', 'paid', 'pending', 'filled', 'partial_filled', 'shipped', 'partial_shipped',
@@ -23,76 +29,83 @@ def create_customer_logic(data):
     """
     Logic to create a New Customer, including validation, sanitization, and DB insertion
     """
-    if not data: # Defensive: Check if data is None or empty
-        logging.warning("No data provided during create_customer_logic")
+    if not data:
+        logger.warning("No data provided")
         return {'message': 'No data provided'}, 400
+
     required_fields = ['customer_name', 'customer_password', 'customer_email', 'customer_phone']
-    if not all(field in data for field in required_fields):
-        logging.warning("Missing required fields during create_customer_logic")
-        return {'message': 'Missing required fields'}, 400
+    missing_or_empty = [f for f in required_fields if not str(data.get(f, '')).strip()]
+    if missing_or_empty:
+        logger.warning("Missing/empty fields: %s", missing_or_empty)
+        return {'message': 'Missing required fields', 'fields': missing_or_empty}, 400
+
+    addresses = data.get('customer_addresses', [])
+    if not addresses:
+        logger.warning("No customer addresses provided")
+        return {'message': 'At least one Customer Address is required'}, 400
+
     # Sanitize some of the input fields to prevent XSS attacks,
     # especially if they are displayed in the frontend
     customer_name = bleach.clean(data['customer_name'], strip=True)
-    customer_email = bleach.clean(data['customer_email'], strip=True)
+    customer_email = bleach.clean(data['customer_email'], strip=True).lower()
     customer_phone = bleach.clean(data['customer_phone'], strip=True)
+
     # Only allow registration if email is unique and "active" status exists in DB
     if Customers.query.filter_by(customer_email=customer_email).first():
         return {'message': 'Email already exists'}, 400
-    active_status = EntityStatuses.query.filter_by(status_code='active').first()
-    if not active_status:
-        logging.error("Active Status not found during create_customer_logic")
-        return {'message': 'Active Status not found'}, 500
-    try:
-        password_hash = generate_password_hash(data['customer_password'])
-        # Instantiate without kwargs to avoid constructor signature mismatch, then assign attributes
-        new_customer = Customers()
-        new_customer.customer_name = customer_name
-        new_customer.customer_email = customer_email
-        new_customer.customer_password_hash = password_hash
-        new_customer.customer_phone = customer_phone
-        new_customer.customer_status_id = active_status.status_id
-        db.session.add(new_customer)
 
-        # Handle customer_addresses if present
-        addresses = data.get('customer_addresses', [])
-        if not addresses:
-            logging.warning("No Customer Addresses provided during create_customer_logic")
-            return {'message': 'At least one Customer Address is required'}, 400
-        for addr in addresses:
-            # Defensive: check required address fields
-            address_line1 = bleach.clean(addr.get('address_line1', ''), strip=True)
-            address_line2 = bleach.clean(addr.get('address_line2', ''), strip=True)
-            country_id = addr.get('country_id')
-            state_region_id = addr.get('state_region_id')
-            city_town_id = addr.get('city_town_id')
-            postal_code = bleach.clean(addr.get('postal_code', ''), strip=True)
-            google_maps_url = bleach.clean(addr.get('google_maps_url', ''), strip=True)
-            # Only create address if minimum required fields are present. If not, it just jumps to the next address in the list
-            # (if any) without failing the whole Customer creation. Keep in mind this is little likely to happen since frontend
-            # enforces at least one address with required fields, but this is kept because it's considered best practice to have
-            # this checking at backend 
-            if address_line1 and city_town_id and state_region_id and country_id:
-                # Create CustomersAddresses record
-                new_address = CustomersAddresses()
-                new_address.customer_id = new_customer.customer_id
-                new_address.address_line1 = address_line1
-                new_address.address_line2 = address_line2
-                new_address.city_town_id = city_town_id
-                new_address.google_maps_url = google_maps_url
-                new_address.postal_code = postal_code
-                new_address.address_status_id = active_status.status_id
-                db.session.add(new_address)
+    # Raises ConfigurationError if active status is missing; handled globally
+    active_status = get_active_status()
+
+    # --- validation is done; nothing below this point returns without
+    #     either committing or rolling back ---
+
+    # Instantiate without kwargs to avoid constructor signature mismatch, then assign attributes
+    new_customer = Customers()
+    new_customer.customer_name = customer_name
+    new_customer.customer_email = customer_email
+    new_customer.customer_password_hash = generate_password_hash(data['customer_password'])
+    new_customer.customer_phone = customer_phone
+    new_customer.customer_status_id = active_status.status_id
+    db.session.add(new_customer)
+
+    # Handle customer_addresses
+    for addr in addresses:
+        address_line1 = bleach.clean(addr.get('address_line1', ''), strip=True)
+        address_line2 = bleach.clean(addr.get('address_line2', ''), strip=True)
+        country_id = addr.get('country_id')
+        state_region_id = addr.get('state_region_id')
+        city_town_id = addr.get('city_town_id')
+        postal_code = bleach.clean(addr.get('postal_code', ''), strip=True)
+        google_maps_url = bleach.clean(addr.get('google_maps_url', ''), strip=True)
+        if address_line1 and city_town_id and state_region_id and country_id:
+            # Instantiate a CustomersAddresses record
+            new_address = CustomersAddresses()
+            new_address.customer_id = new_customer.customer_id
+            new_address.address_line1 = address_line1
+            new_address.address_line2 = address_line2
+            new_address.city_town_id = city_town_id
+            new_address.google_maps_url = google_maps_url
+            new_address.postal_code = postal_code
+            new_address.address_status_id = active_status.status_id
+            db.session.add(new_address)
+
+    try:
         # Placing only one commit here makes the whole operation atomic, so if any
         # error occurs creating the Customer or Addresses, the whole transaction will
         # be rolled back and no partial data will be left in the DB
-        db.session.commit() 
-
-        token = generate_token(new_customer.customer_id)
-        return {'message': 'Customer created successfully', 'token': token}, 201
-    except Exception as e:
+        db.session.commit()
+    except IntegrityError:
         db.session.rollback()
-        logging.exception(f"Error creating Customer: {e}")
+        logger.warning("Duplicate email at commit time: %s", customer_email)
+        return {'message': 'Email already exists'}, 409
+    except SQLAlchemyError:
+        db.session.rollback()
+        logger.exception("Unexpected DB error creating customer")
         return {'message': 'Failed to create Customer'}, 500
+
+    token = generate_token(new_customer.customer_id)
+    return {'message': 'Customer created successfully', 'token': token}, 201
     
 def get_organisations_logic():
     try:

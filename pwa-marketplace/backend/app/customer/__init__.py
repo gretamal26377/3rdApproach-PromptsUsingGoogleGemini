@@ -2,6 +2,7 @@ from flask import Flask
 from ..shared.config import Config
 from ..shared.database import init_extensions, register_request_hooks
 from .customer_routes import customer_bp
+from ..shared.utils import get_active_status
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -16,5 +17,8 @@ def create_app(config_class=Config):
 
     # Register customer blueprint
     app.register_blueprint(customer_bp)
+
+    with app.app_context():
+        get_active_status()  # app refuses to boot on a misconfigured DB
 
     return app
