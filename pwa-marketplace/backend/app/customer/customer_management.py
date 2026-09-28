@@ -29,6 +29,7 @@ def create_customer_logic(data):
     """
     Logic to create a New Customer, including validation, sanitization, and DB insertion
     """
+    # Defensive: Check if data is None or empty
     if not data:
         logger.warning("No data provided")
         return {'message': 'No data provided'}, 400
@@ -54,7 +55,10 @@ def create_customer_logic(data):
     if Customers.query.filter_by(customer_email=customer_email).first():
         return {'message': 'Email already exists'}, 400
 
-    # Raises ConfigurationError if active status is missing; handled globally
+    # Raises ConfigurationError if active status is missing; handled globally.
+    # Despite this is Critical, it's cheched here because Best Practice is
+    # to validate first most common issues (like missing fields, invalid email, etc.) 
+    # before checking for less common issues (like missing reference data in DB)
     active_status = get_active_status()
 
     # --- validation is done; nothing below this point returns without
