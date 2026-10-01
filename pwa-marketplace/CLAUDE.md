@@ -86,7 +86,6 @@ A **microservices-inspired monorepo** split across three layers:
 pwa-marketplace/
 ├── backend/
 │   ├── app/
-│   │   ├── admin/
 │   │   ├── customer/
 │   │   ├── org_admin/
 │   │   ├── platform_admin/
