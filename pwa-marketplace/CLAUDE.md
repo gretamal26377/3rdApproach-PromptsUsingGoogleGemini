@@ -227,3 +227,11 @@ The project is under active development. The core architecture is established, b
 - `SEARCH_ENGINE_SWITCH.md` — how the pluggable search engine build arg works
 - `backend/docs/ER_DIAGRAM_README.md` — ER diagram generation instructions
 - `frontend/shared-lib/src/stories/` — Storybook component documentation
+
+---
+
+## Self-Maintenance Rule
+After any session where you add/remove a module, create a new route, change
+the DB schema, or introduce a new architectural pattern — append a summary
+of what changed to the "## Changelog" section at the bottom of this file.
+Only log structural or architectural changes, not routine bug fixes.
