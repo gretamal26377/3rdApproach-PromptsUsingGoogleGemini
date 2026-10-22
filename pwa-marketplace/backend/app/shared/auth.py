@@ -2,7 +2,6 @@ import logging
 import jwt  # importing jwt (json web token) for token generation and decoding
 from flask import jsonify, request, current_app
 from functools import wraps  # for creating decorators
-from .models import Users
 from .management import get_user_logic
 import datetime  # for handling date and time
 
