@@ -1,217 +1,117 @@
-# CLAUDE.md — Project Context for AI Assistants
+# AGENTS.md — Team Structure for pwa-marketplace
 
-## What This Project Is
+Defines how AI agents are organised when working on this repo. Three teams, one per audience. Each team owns a frontend and a backend that must stay aligned.
 
-A **multi-vendor e-commerce marketplace platform** under active development. Multiple independent Stores, each belonging to an Organisation, can list Products and Services. Customers use the platform to search, browse, cart, checkout, and track orders — all through a single unified interface.
+**Source of truth (settled unless the user explicitly revisits):**
+- `CLAUDE.md` — architecture, schema, naming conventions, workflows
+- `STYLEGUIDE.md` — all UI/UX rules, design tokens, shared-lib components
 
-Think of it as a lightweight MercadoLibre or Etsy, with a full back-office for both organisation-level and platform-level administration.
-
----
-
-## Agent Teams
-
-Team structure, access policy, security checklist, and the end-of-task report format are defined in AGENTS.md and loaded here via import:
-
-@AGENTS.md
+If this file conflicts with either, they win. Flag the conflict instead of choosing silently.
 
 ---
 
-## Who Uses It
+## Teams
 
-Three distinct user audiences, each with their own dedicated frontend and backend app:
+| Team | Audience | Frontend | Backend |
+|---|---|---|---|
+| **Customer** | Shoppers | `frontend/customer` (PWA + SSR) | `backend/app/customer` |
+| **Org Admin** | Organisation staff (Admin, Supervisor, Staff, Viewer) | `frontend/org-admin` (CSR) | `backend/app/org_admin` |
+| **Platform Admin** | Platform operators | `frontend/platform-admin` (CSR) | `backend/app/platform_admin` |
 
-**Customers** — browse stores, search for products/services, manage a shopping cart, checkout, and view order history.
+Shared code (used by all teams): `frontend/shared-lib`, `backend/app/shared` (models, DB, auth, search, utils).
 
-**Organisation Admins** — manage their organisation's stores, products/services, pricing, categories, and internal user roles (Admin, Supervisor, Staff, Viewer).
+### Team scope
 
-**Platform Admins** — oversee the entire platform from a bird's-eye view: all organisations, stores, users, and orders.
+- **Customer** — search/browse, stores, cart, checkout, order history. Owns PWA and SSR concerns.
+- **Org Admin** — stores, products/services, prices, categories, organisation users and roles.
+- **Platform Admin** — cross-organisation oversight of organisations, stores, users, orders.
 
----
+### Inside each team
 
-## User Roles (at Organisation level)
-
-| Role       | Access                                      |
-|------------|---------------------------------------------|
-| Admin      | Full management power                       |
-| Supervisor | Operational management                      |
-| Staff      | Daily paperwork/task management             |
-| Viewer     | Read-only, no modifications allowed         |
-
----
-
-## Architecture Overview
-
-A **microservices-inspired monorepo** split across three layers:
-
-### Frontend — React + Vite
-- Three separate React apps: `customer`, `org-admin`, `platform-admin`
-- All share a common component library: `frontend/shared-lib`
-- The customer app is a **PWA** with SSR support via `vite-plugin-ssr`
-- Admin frontends are CSR only
-- Styling: **Tailwind CSS** (utility-first, with custom design tokens)
-- Form validation: **Zod + React Hook Form**
-- Icons: **Lucide React**
-- UI components: custom primitives in `shared-lib/src/components/ui/`
-
-### Backend — Python Flask
-- Three separate Flask apps: `customer`, `org_admin`, `platform_admin`
-- Each has its own routes and business logic
-- Shared code (models, DB, auth, utils) lives in `app/shared/`
-- ORM: **SQLAlchemy** (managed via **Alembic** migrations)
-- Search: **pluggable at Docker build time** — Meilisearch (default) or Google Search Engine
-- Order state management: **Temporal Workflow Engine**
-
-### Database — MySQL
-- Single MySQL instance, managed via Docker
-- Schema defined in `database/init.sql`
-- Models in `backend/app/shared/models.py`
+Every team works as a frontend + backend pair:
+- **Backend member** — Flask routes and business logic in the team's app; uses shared models/auth.
+- **Frontend member** — React app; uses `shared-lib` primitives and follows `STYLEGUIDE.md`.
+- **Alignment rule** — the API contract (route, method, payload, error shape) is defined first by the backend member, then consumed by the frontend member. Never change one side of a contract without updating the other in the same task.
 
 ---
 
-## Project Structure (abbreviated)
+## Access policy
+
+- **Full cross-team access:** any team may read and write any part of the repo, including other teams' apps and shared code.
+- **The user is the sole reviewer.** Changes are applied to the working tree, uncommitted, on a feature branch. The user accepts or rejects them afterwards.
+- Never commit, push, merge, force-push, or delete branches without explicit approval.
+- Do not delete `*.old.*`, `*_copy*`, or `models_*.py` variants. They are intentional artifacts; ask first.
+
+### Cross-boundary reporting (mandatory)
+
+Because access is unrestricted, the review depends on visibility. At the end of every task, list under **Cross-boundary changes**:
+- Files edited outside the acting team's own app
+- Any change in `frontend/shared-lib` or `backend/app/shared`
+- Any change to auth, models/schema, Alembic migrations, `database/init.sql`, search, or Temporal order workflows
+- For each: what changed, why, and which other apps it can affect
+
+Shared-code changes should be backward-compatible by default. If a breaking change is unavoidable, say so explicitly and update every affected app in the same task.
+
+---
+
+## Workflow per task
+
+1. **Plan first** for anything touching more than one file or app: state the approach, affected teams, and cross-boundary files. Wait for approval on non-trivial plans.
+2. **Backend before frontend** when a contract changes.
+3. **Schema changes:** keep `models.py`, the Alembic migration, and `database/init.sql` consistent.
+4. **Tests:** add or update tests for changed behaviour; run them and report results honestly, including failures.
+5. **Summarise** using the report format below.
+
+---
+
+## Security and validation checklist
+
+Check every change against this list. **Proactively flag gaps even when not asked.**
+
+- **Server-side validation:** never rely on frontend (Zod/React Hook Form) validation. Validate and sanitise all input in Flask.
+- **Authentication:** every non-public route requires auth. Flag any route missing it.
+- **Authorisation by role:** enforce Admin/Supervisor/Staff/Viewer permissions on the backend. Viewer must be read-only server-side, not just hidden in the UI.
+- **Tenant isolation:** Org Admin queries must be scoped to the user's own organisation. Check every lookup by ID for cross-organisation access (IDOR).
+- **Customer data isolation:** customers can only access their own cart, orders, and profile.
+- **Platform Admin routes:** restricted to platform admins only; verify nothing is reachable from the other two apps.
+- **Database access:** use SQLAlchemy parameterised queries; no string-built SQL.
+- **Secrets:** never hard-code credentials or keys; use environment variables.
+- **Errors and logs:** no stack traces or sensitive data in responses or logs.
+- **Pricing and order integrity:** compute totals and prices server-side; never trust client-submitted amounts.
+
+---
+
+## Frontend rules (summary)
+
+Full detail lives in `STYLEGUIDE.md`.
+- Use `shared-lib` primitives before creating new components; update `STYLEGUIDE.md` if a new primitive is added.
+- Tailwind only, using the design tokens.
+- Forms never reset on validation failure; call `form.reset()` only after a successful create/update.
+- Dropdowns and checkboxes: use the `shared-lib` versions (animation, keyboard navigation, ARIA).
+
+---
+
+## End-of-task report format
 
 ```
-pwa-marketplace/
-├── backend/
-│   ├── app/
-│   │   ├── customer/
-│   │   ├── org_admin/
-│   │   ├── platform_admin/
-│   │   └── shared/          ← shared models, auth, DB, utils, search
-│   ├── alembic/             ← DB migrations
-│   ├── docs/                ← ER diagrams
-│   └── tests/
-├── database/
-│   ├── init.sql
-│   └── Dockerfile
-├── frontend/
-│   ├── customer/            ← PWA + SSR React app
-│   ├── org-admin/           ← CSR React app
-│   ├── platform-admin/      ← CSR React app
-│   └── shared-lib/          ← shared UI components and utilities
-├── docker-compose.yml
-├── STYLEGUIDE.md
-├── CLAUDE.md                ← this file
-└── README.md
-```
+## Summary
+What was done and why.
 
----
+## Files changed
+Grouped by team (Customer / Org Admin / Platform Admin / Shared).
 
-## Key Architectural Decisions
+## Cross-boundary changes
+Per the policy above, or "None".
 
-### Monorepo with Shared Code
-- `frontend/shared-lib` — shared React components, hooks, services, and UI primitives
-- `backend/app/shared` — shared Flask models, DB config, auth, and utilities
-- Each app remains independently deployable while avoiding duplication
+## Security / validation notes
+Gaps found, fixed, or left open.
 
-### Pluggable Search Engine
-Switched at Docker build time via a build argument:
-```sh
-docker build --build-arg SEARCH_ENGINE=meili -t backend:meili .
-docker build --build-arg SEARCH_ENGINE=google -t backend:google .
-```
-All backend code imports from `app.shared.search` regardless of which engine is active.
-
-### Order State Management
-Uses **Temporal Workflow Engine** for resilient, long-running order flows with proper state transitions.
-
-### create_app() Imports
-Each Flask app has its own factory. Always import from the correct submodule:
-```python
-from app.org_admin import create_app       # for org-admin context
-from app.platform_admin import create_app  # for platform-admin context
-from app.customer import create_app        # for customer context
-```
-There is **no global** `create_app()` in `app/__init__.py`.
-
----
-
-## Frontend Component Consistency Rules
-
-- Always check and follow `STYLEGUIDE.md` before creating or modifying any frontend component
-- Use and prefer UI primitives from `frontend/shared-lib/src/components/ui/` whenever possible
-- Only introduce new UI primitives if no suitable component exists; update `STYLEGUIDE.md` accordingly
-- All styling goes through **Tailwind CSS** — no custom CSS unless strictly necessary
-
-### Available UI Primitives (shared-lib)
-`Button`, `Input`, `Form`, `FormLabel`, `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell`, `Card`, `Alert`, `Badge`, `Carousel`, `Checkbox`, `Dialog`, `Dropdown`, `ScrollArea`, `ToggleSwitch`, `DarkModeToggle`
-
-### Design Tokens (globals.css + tailwind.config.js)
-| Token                  | Light Mode  | Dark Mode   |
-|------------------------|-------------|-------------|
-| `--color-background`   | `#e4e4e4`   | `#18181b`   |
-| `--color-text`         | `#18181b`   | `#ffffff`   |
-
-Custom Tailwind classes: `bg-background`, `text-text`, `dark:bg-background-dark`, `dark:text-text-dark`, `bg-primary`, `bg-secondary`, `bg-muted`, `bg-card`, `bg-input`, and their dark variants.
-
----
-
-## Accessibility & Animation Rules
-
-- All **dropdowns** must use smooth open/close animation (opacity + scale) and support keyboard navigation (Tab, Arrow keys, Enter/Space)
-- All **dropdowns** must use ARIA roles: `listbox`, `option`, `aria-expanded`, `aria-controls`, and trap focus when open
-- All **checkboxes** must have visible focus outlines, ARIA attributes, and animated checkmark feedback
-- Use `shared-lib` primitives for dropdowns and checkboxes to enforce these rules project-wide
-
----
-
-## Form Validation UX Rules
-
-These apply to **all** forms across all apps (signup, login, checkout, product management, etc.):
-
-- On validation failure: show a clear error message (`Alert` or `FormMessage`)
-- **Do NOT** clear or reset the form or its input values on failure
-- Keep all user input intact so the user can fix and resubmit immediately
-- Only call `form.reset()` after a **successful** create or update
-
----
-
-## Developer Workflows
-
-### Backend
-```sh
-# Run all tests
-python -m unittest discover -s pwa-marketplace/backend/tests -p '*_test.py' -v
-
-# Generate ER diagram
-python -m scripts.generate_er_diagram
-```
-
-### Frontend
-```sh
-# Install dependencies (from frontend/)
-pnpm install
-
-# Run customer app (dev)
-pnpm run dev
-
-# Run Storybook (from shared-lib)
-pnpm run storybook
-```
-
-### Database
-```sh
-cd database
-docker-compose up -d
-```
-
-### Full Stack (Docker Compose)
-```sh
-docker compose up
-# Customer frontend at http://localhost:3000
+## Tests
+What was run and the result.
 ```
 
 ---
 
-## Current Development Status
+## Keeping docs current
 
-The project is under active development. The core architecture is established, but several areas are still being refined. Signs of iteration visible in the codebase include multiple model file variants (`models_*.py`), `*.old.*` files, `_copy` files, and notes marked `GRL: Need review & update`. These are intentional artifacts of an evolving design.
-
----
-
-## References
-
-- `STYLEGUIDE.md` — UI/UX conventions, Tailwind patterns, component rules
-- `SEARCH_ENGINE_SWITCH.md` — how the pluggable search engine build arg works
-- `backend/docs/ER_DIAGRAM_README.md` — ER diagram generation instructions
-- `frontend/shared-lib/src/stories/` — Storybook component documentation
+After significant structural changes (new module, schema change, new pattern), **propose** updates to `CLAUDE.md` and this file in the summary. Do not edit either file without the user's approval.
